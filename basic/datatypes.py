@@ -58,3 +58,20 @@ unitsAR = ['px', 'px', 'degrees', 'degrees', '', '']
 fmtAR='%15.10f %15.10f %15.10f %15.10f %15.10f %s'
 for n, h in enumerate(datatypeAR):
     headerAlignmentResults += '{} {}\n'.format(h[0], '({})'.format(unitsAR[n])*(unitsAR[n]!=''))
+
+# To save the structure of NumPy structured arrays for local alignment results
+
+LOCAL_ALIGNMENT_RESULTS = [('ParticleIndex', 'i4'),
+                           ('AlignmentTransX', 'f4'),
+                           ('AlignmentTransY', 'f4'),
+                           ('TiltAngle', 'f4'),
+                           ('InPlaneRotation', 'f4'),
+                           ('Magnification', 'f4'),
+                           ('FileName', 'U1000')]
+
+headerLocalAlignmentResults = ''
+unitsLAR = ['', 'px', 'px', 'degrees', 'degrees', '', '']
+fmtAR = '%7d %15.10f %15.10f %15.10f %15.10f %15.10f %s'
+for n, h in enumerate(LOCAL_ALIGNMENT_RESULTS):
+    headerLocalAlignmentResults += '{} {}\n'.format(h[0], '({})'.format(unitsLAR[n]) * (unitsLAR[n] != ''))
+
