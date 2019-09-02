@@ -441,7 +441,7 @@ class ProjectionList(PyTomClass):
         return vol_bp
 
     def reconstructVolumes(self, particles, cubeSize, binning=1, applyWeighting=False,
-            showProgressBar=False, verbose=False, preScale=1, postScale=1):
+                           showProgressBar=False, verbose=False, preScale=1, postScale=1, alignResultFile=''):
         """
         reconstructVolumes: reconstruct a subtomogram given a particle object.
 
@@ -479,9 +479,21 @@ class ProjectionList(PyTomClass):
         imgDim = read(self._list[0].getFilename(),0,0,0,0,0,0,0,0,0,preScale,preScale,1).sizeX()        
         
         # stacks for images, projections angles etc.
-        [vol_img, vol_phi, vol_the, vol_offsetProjections] =  self.toProjectionStack(
-	    binning=binning, applyWeighting=applyWeighting,showProgressBar=False,
-	    verbose=False)
+        #[vol_img, vol_phi, vol_the, vol_offsetProjections] =  self.toProjectionStack(
+	#    binning=binning, applyWeighting=applyWeighting,showProgressBar=False,
+	#    verbose=False)
+
+        if not alignResultFile:
+            [vol_img, vol_phi, vol_the, vol_offsetProjections] =  self.toProjectionStack(
+                    binning=binning, applyWeighting=applyWeighting, showProgressBar=False,
+                    verbose=False)
+        else:
+            from pytom.reconstruction.generateAlignedTiltImagesInMemory import toProjectionStackFromAlignmentResultsFile
+            [vol_img, vol_phi, vol_the, vol_offsetProjections] = toProjectionStackFromAlignmentResultsFile(
+                alignResultFile, binning=binning, weighting=applyWeighting, showProgressBar=False, verbose=False)
+
+
+
 
         #volume storing center (x,y,z)   
         reconstructionPosition = vol(3, len(self) ,1)
@@ -767,9 +779,7 @@ class ProjectionList(PyTomClass):
                 progressBar.update(i)
 
         return [stack,phiStack,thetaStack,offsetStack]
-        
 
-                
     
     
     def saveAsProjectionStack(self,filename,scale=1,applyWeighting=False,showProgressBar=False,verbose=False):
@@ -837,8 +847,7 @@ class ProjectionList(PyTomClass):
                     print query
                 magnification = alignXML.xpath(query)
                 projection.setAlignmentMagnification(float(magnification[0].text))
-            
-    
+
             
 class Reconstruction(PyTomClass):            
 
@@ -869,7 +878,8 @@ class Reconstruction(PyTomClass):
         """
         
         raise RuntimeError('You must run this function on a child of Reconstruction')
-        
+
+
 class WeightedBackprojection(PyTomClass):
     """
     WeightedBackprojection: A class that can do everything related to WB
