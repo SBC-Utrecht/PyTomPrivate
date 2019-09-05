@@ -476,7 +476,7 @@ class ProjectionList(PyTomClass):
             progressBar.update(0)
             numberParticleVolumes = 0
         
-        imgDim = read(self._list[0].getFilename(),0,0,0,0,0,0,0,0,0,preScale,preScale,1).sizeX()        
+        imgDim = read(self._list[0].getFilename(),0,0,0,0,0,0,0,0,0,preScale,preScale,1).sizeX()
         
         # stacks for images, projections angles etc.
         #[vol_img, vol_phi, vol_the, vol_offsetProjections] =  self.toProjectionStack(
