@@ -441,7 +441,8 @@ class ProjectionList(PyTomClass):
         return vol_bp
 
     def reconstructVolumes(self, particles, cubeSize, binning=1, applyWeighting=False,
-                           showProgressBar=False, verbose=False, preScale=1, postScale=1, alignResultFile=''):
+                           showProgressBar=False, verbose=False, preScale=1, postScale=1,
+                           alignResultFile=''):
         """
         reconstructVolumes: reconstruct a subtomogram given a particle object.
 
