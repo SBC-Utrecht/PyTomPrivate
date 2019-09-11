@@ -42,13 +42,17 @@ if __name__ == '__main__':
                                    ScriptOption(['-g', '--createGraphics'],
                                                 'Flag to turn on to create graphical reports of intermediate steps of '
                                                 'the particle polishing', False, True),
-                                   ScriptOption(['-h', '--help'],                 'Help.', False, True)])
+                                   ScriptOption(['-n', '--numberOfParticles'],
+                                                'To take a subset of the particlelist for debugging purposes (int)',
+                                                True, True),
+                                   ScriptOption(['-h', '--help'],
+                                                'Help.', False, True)])
     if len(sys.argv) == 1:
         print helper
         sys.exit()
     try:
         pl_filename, proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
-         create_graphics, b_help = parse_script_options(sys.argv[1:], helper)
+         create_graphics, number_of_particles, b_help = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
         sys.exit()
@@ -105,9 +109,15 @@ if __name__ == '__main__':
         proj.append(p.getFilename())
         tilt_angles.append(p.getTiltAngle())
 
-    # pass everything to the function in reconstruction/reconstruct_local_alignment.py
-    from pytom.reconstruction.reconstruct_local_alignment import local_alignment
     print tilt_angles
 
+    # pass everything to the function in reconstruction/reconstruct_local_alignment.py
+    from pytom.reconstruction.reconstruct_local_alignment import local_alignment
+
+    if number_of_particles:
+        number_of_particles = int(number_of_particles)
+    else:
+        number_of_particles = -1
+
     local_alignment(proj, vol_size, binning, offset, tilt_angles, pl_filename, proj_dir, reconstruction_method,
-                    infr_iter, create_graphics, create_subtomograms, averaged_subtomogram)
+                    infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles)

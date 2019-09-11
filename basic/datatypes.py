@@ -28,9 +28,6 @@ fmt='%11.6f %11.6f %6.2f %4d %6.2f %4.2f %11.6f %11.6f %4d %7.3f %7.3f %7.3f %6.
 for n, h in enumerate(datatype):
     headerText += '{} {}\n'.format(h[0], '({})'.format(units[n])*(units[n]!=''))
 
-for n, h in enumerate(datatype):
-    headerText0 += '{} {}\n'.format(h[0], '({})'.format(units[n])*(units[n]!=''))
-
 datatypeMR = [('MarkerIndex', 'i4'),
               ('OffsetX',     'f4'),
               ('OffsetY',     'f4'),
@@ -71,7 +68,7 @@ LOCAL_ALIGNMENT_RESULTS = [('ParticleIndex', 'i4'),
 
 headerLocalAlignmentResults = ''
 unitsLAR = ['', 'px', 'px', 'degrees', 'degrees', '', '']
-fmtAR = '%7d %15.10f %15.10f %15.10f %15.10f %15.10f %s'
+fmtLAR = '%7d %15.10f %15.10f %15.10f %15.10f %15.10f %s'
 for n, h in enumerate(LOCAL_ALIGNMENT_RESULTS):
     headerLocalAlignmentResults += '{} {}\n'.format(h[0], '({})'.format(unitsLAR[n]) * (unitsLAR[n] != ''))
 

@@ -104,8 +104,8 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
 
 
 def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
-                    projection_method='WBP', infr_iterations=1, create_graphics=True, create_subtomograms=False,
-                    averaged_subtomogram=False):
+                    projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
+                    averaged_subtomogram=False, number_of_particles=-1):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
@@ -124,8 +124,30 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     :param create_subtomograms: to flag if initial subtomograms of the particles should be made (takes a long time!)
     :param averaged_subtomogram: to give a path to an averaged subtomogram to be used instead of subtomograms of all
                 particles separately (False for off, otherwise a string)
+    :param number_of_particles: to use a subset of the particles for the particle polishing
     :return: nothing, it writes everything to disk
     """
+    # Some basic asserts to catch possible mistakes
+    assert number_of_particles == -1 or number_of_particles > 0
+    assert infr_iterations > 0
+    assert binning > 0
+    assert vol_size > 0
+    assert vol_size % 2 == 0
+    assert projection_method == "WBP" or projection_method == "INFR"
+    assert len(offset) == 3
+    assert isinstance(projections, list)
+    assert isinstance(vol_size, int)
+    assert isinstance(binning, int)
+    assert isinstance(offset, tuple)
+    assert isinstance(tilt_angles, list)
+    assert isinstance(particle_list_filename, str)
+    assert isinstance(projection_directory, str)
+    assert isinstance(infr_iterations, int)
+    assert isinstance(create_graphics, bool)
+    assert isinstance(create_subtomograms, bool)
+    assert isinstance(averaged_subtomogram, str) or averaged_subtomogram is False
+    assert isinstance(number_of_particles, int)
+
     import numpy as np
     import glob
     from pytom.tompy.mpi import MPI
@@ -138,6 +160,9 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
     particlelist = ParticleList()
     particlelist.fromXMLFile(particle_list_filename)
+
+    if number_of_particles != -1:
+        particlelist = particlelist[:number_of_particles]
 
     particle_list_name = "particleList_TM_tomogram_010_WBP"
 
@@ -166,9 +191,12 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
         else:
             subtomogram = subtomograms[particle_number]
 
+        rot = (particle.getRotation().getZ1(), particle.getRotation().getX(), particle.getRotation().getZ2())
+        # getX() Z1() Z2() (phi: z1, the: x, psi: z2) test forwards or backwards
+
         # loop over tiltrange, take patch and cross correlate with reprojected subtomogram
         for img, ang in zip(projections, tilt_angles):
-            input_to_processes.append([ang, subtomogram, offset, vol_size, particle.getPickPosition().toVector(),
+            input_to_processes.append([ang, subtomogram, offset, vol_size, particle.getPickPosition().toVector(), rot,
                                        particle.getFilename(), particle_number, binning, img, create_graphics])
 
     print(len(input_to_processes))
@@ -194,11 +222,12 @@ def run_single_tilt_angle_unpack(inp):
     :param inp: the arguments to "run_single_tilt_angle" in the same order in a single list (iterable)
     :return: the value from "run_single_tilt_angle"
     """
-    return run_single_tilt_angle(inp[0], inp[1], inp[2], inp[3], inp[4], inp[5], inp[6], inp[7], inp[8])
+    return run_single_tilt_angle(
+        inp[0], inp[1], inp[2], inp[3], inp[4], inp[5], inp[6], inp[7], inp[8], inp[9], inp[10])
 
 
-def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position, particle_filename, particle_number,
-                          binning, img, create_graphics=False):
+def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position, particle_rotation,  particle_filename,
+                          particle_number, binning, img, create_graphics=False):
     """
     To run a single tilt angle to allow for parallel computing
 
@@ -208,6 +237,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     :param vol_size: the size of the volume to be reconstructed (in pixels)
     :param particle_position: the position of the particle in vector format,
                 as given by particle.pickPosition().toVector()
+    :param particle_rotation: the rotation of the particle (Z1/phi, X/the, Z2/psi)
     :param particle_filename: the filename of the particle, as given by particle.getfilename()
     :param particle_number: the number of the particle, to allow for unique mapping
     :param binning: the binning factor used
@@ -215,6 +245,19 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     :param create_graphics: to flag if images should be created for human inspection of the work done
     :return: the newly found positions of the particle, as a list  in the LOCAL_ALIGNMENT_RESULTS format
     """
+    assert isinstance(ang, float)
+    assert isinstance(subtomogram, str)
+    assert isinstance(offset, tuple)
+    assert isinstance(vol_size, int)
+    assert isinstance(particle_position, tuple)
+    assert isinstance(particle_rotation, tuple)
+    assert isinstance(particle_filename, str)
+    assert isinstance(particle_number, int)
+    assert isinstance(binning, int)
+    assert binning > 0
+    assert isinstance(img, str)
+    assert isinstance(create_graphics, bool)
+
     print(ang)
     from pytom.tompy.transform import rotate3d
     import numpy as np
@@ -236,8 +279,10 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     z = (z + offset[2]) * binning
 
     # Get template
-    rotated = rotate3d(subtomogram, the=ang)  # 'the' is the rotational axis
-    template = rotated.sum(axis=2)
+    # first rotate towards orientation of the particle, then to the tilt angle
+    rotated1 = rotate3d(subtomogram, phi=particle_rotation[0], the=particle_rotation[1], psi=particle_rotation[2])
+    rotated2 = rotate3d(rotated1, the=ang)  # 'the' is the rotational axis
+    template = rotated2.sum(axis=2)
 
     # Get coordinates of the paricle adjusted for the tilt angle
     yy = y  # assume the rotation axis is around y
@@ -252,20 +297,20 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     ccf = normalized_cross_correlation_numpy(template, patch)
     points2d = find_sub_pixel_max_value_2d(ccf)
 
+    x_diff = points2d[0] - vol_size / 2
+    y_diff = points2d[1] - vol_size / 2
+
     if create_graphics:
         m_style = dict(color='tab:blue', linestyle=':', marker='o', markersize=5, markerfacecoloralt='tab:red')
         m_style_alt = dict(color='tab:red', linestyle=':', marker='o', markersize=5, markerfacecoloralt='tab:blue')
-        v_m_style = dict(color='tab:blue', linestyle=':', marker='o', markersize=2, markerfacecoloralt='tab:red')
-        v_m_style_alt = dict(color='tab:red', linestyle=':', marker='o', markersize=2, markerfacecoloralt='tab:blue')
 
         points = find_sub_pixel_max_value(ccf)
 
         nx, ny, nz = particle_position
-        nx += (points2d[0] - vol_size / 2) / binning
-        ny += (points2d[1] - vol_size / 2) / binning
+        nx += x_diff
+        ny += y_diff
 
-        npatch = cut_from_projection(img, [xx + points2d[0] - vol_size / 2, yy + points2d[1] - vol_size / 2],
-                                     [vol_size, vol_size])
+        npatch = cut_from_projection(img, [xx + x_diff, yy + y_diff], [vol_size, vol_size])
         npatch = npatch - np.mean(npatch)
 
         nccf = normalized_cross_correlation_numpy(template, npatch.squeeze())
@@ -274,78 +319,77 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
 
         import pylab as pp
 
-        vr = 7
-        grid = pp.GridSpec(vr * 3, 3, wspace=0.4, hspace=0.3)
+        grid = pp.GridSpec(3, 3, wspace=0, hspace=0.35, left=0.05, right=0.95, top=0.90, bottom=0.05)
 
-        ax_0_0 = pp.subplot(grid[0:vr - 1, 0])
-        ax_0_1 = pp.subplot(grid[0:vr - 1, 1])
-        ax_0_2 = pp.subplot(grid[0:vr - 1, 2])
-        ax_1_0 = pp.subplot(grid[vr:2 * vr - 1, 0])
-        ax_1_1 = pp.subplot(grid[vr:2 * vr - 1, 1])
-        ax_1_2 = pp.subplot(grid[vr:2 * vr - 1, 2])
-        ax_2_0 = pp.subplot(grid[2 * vr:3 * vr - 1, 0])
-        ax_2_1 = pp.subplot(grid[2 * vr:3 * vr - 1, 1])
-        ax_2_2 = []
-        for n in range(2 * vr, 3 * vr):
-            ax_2_2.append(pp.subplot(grid[n, 2]))
+        ax_0_0 = pp.subplot(grid[0, 0])
+        ax_0_1 = pp.subplot(grid[0, 1])
+        ax_0_2 = pp.subplot(grid[0, 2])
+        ax_1_0 = pp.subplot(grid[1, 0])
+        ax_1_1 = pp.subplot(grid[1, 1])
+        ax_1_2 = pp.subplot(grid[1, 2])
+        ax_2_0 = pp.subplot(grid[2, 0])
+        ax_2_1 = pp.subplot(grid[2, 1])
+        ax_2_2 = pp.subplot(grid[2, 2])
 
-        ax_0_0.text(0, -3, "Cutout")
+        ax_0_0.axis('off')
+        ax_0_1.axis('off')
+        ax_0_2.axis('off')
+        ax_1_0.axis('off')
+        ax_1_1.axis('off')
+        ax_1_2.axis('off')
+        ax_2_0.axis('off')
+        ax_2_1.axis('off')
+        ax_2_2.axis('off')
+
+        axis_title(ax_0_0, "Cutout")
         ax_0_0.imshow(patch)
-        ax_0_1.text(0, -3, "Template (projected subtomogram)")
+        axis_title(ax_0_1, "Template")
         ax_0_1.imshow(template)
-        ax_0_2.text(0, -3, "Shifted Cutout (based on cross correlation)")
+        axis_title(ax_0_2, "Shifted Cutout\n(based on cross correlation)")
         ax_0_2.imshow(npatch.squeeze())
 
-        ax_1_0.text(0, -3, u"Cross correlation cutout × template")
+        axis_title(ax_1_0, u"Cross correlation\ncutout × template")
         ax_1_0.imshow(ccf)
         ax_1_0.plot([p[1] for p in points], [p[0] for p in points], fillstyle='none', **m_style)
         ax_1_0.plot([points2d[0]], [points2d[1]], fillstyle='none', **m_style_alt)
         ax_1_0.plot([vol_size / 2], [vol_size / 2], ",k")
 
-        ax_1_1.text(0, 0,
-                    "Red: 2D spline interpolation, x: {:f} y: {:f}\nBlue: 1D spline interpolation, x: {:f} y: {:f}"
+        ax_1_1.text(0.5, 0.8,
+                    "Red: 2D spline interpolation\nx: {:f}\ny: {:f}\nBlue: 1D spline interpolation\nx: {:f}\ny: {:f}"
                     "\nBlack: center".format(
-                        points2d[0] - vol_size / 2, points2d[1] - vol_size / 2, points[0][0] - vol_size / 2,
-                        points[0][1] - vol_size / 2))
-        ax_1_1.axis('off')
+                        x_diff, y_diff, points[0][0] - vol_size / 2, points[0][1] - vol_size / 2), fontsize=8,
+                    horizontalalignment='center', verticalalignment='center', transform=ax_1_1.transAxes)
 
-        ax_1_2.text(0, -3, u"Cross correlation shifted cutout × template")
+        axis_title(ax_1_2, u"Cross correlation\nshifted cutout × template")
         ax_1_2.imshow(nccf)
         ax_1_2.plot([p[1] for p in npoints], [p[0] for p in npoints], fillstyle='none', **m_style)
         ax_1_2.plot([npoints2d[0]], [npoints2d[1]], fillstyle='none', **m_style_alt)
         ax_1_2.plot([vol_size / 2], [vol_size / 2], ",k")
 
-        ax_2_0.text(0, -3, u"Zoom into red peak in CC cutout × template")
-        ax_2_0.get_xaxis().set_visible(False)
-        ax_2_0.get_yaxis().set_visible(False)
+        axis_title(ax_2_0, u"Zoom into red peak\nin CC cutout × template")
         d = 10
         peak = ccf[int(points2d[0]) - d:int(points2d[0]) + d, int(points2d[1]) - d:int(points2d[1] + d)]
         ax_2_0.imshow(peak)
 
-        ax_2_1.text(0, -3, u"Zoom into red peak in CC cutout × template, interpolated")
-        ax_2_1.get_xaxis().set_visible(False)
-        ax_2_1.get_yaxis().set_visible(False)
+        axis_title(ax_2_1, u"Zoom into red peak\nin CC cutout × template\ninterpolated")
         ax_2_1.imshow(points2d[2])
 
-        ax_2_2[0].text(0, -3, "Sections of the peak and interpolated figures")
-        for n, ax in enumerate(ax_2_2):
-            ax.get_xaxis().set_visible(False)
-            ax.get_yaxis().set_visible(False)
-            stripe = (n + 0.5) / (vr + 1)
-            peak_stripe = peak[:, int(stripe * peak.shape[1])]
-            ax.plot(np.arange(0.0, 1.0, 1.0 / peak.shape[1]), peak_stripe / np.amax(peak_stripe),
-                    **v_m_style)
-            points2d_stripe = points2d[2][:, int(stripe * points2d[2].shape[1])]
-            ax.plot(np.arange(0.0, 1.0, 1.0 / points2d[2].shape[1]), points2d_stripe / np.amax(points2d_stripe),
-                    **v_m_style_alt)
+        axis_title(ax_2_2, u"Cutout\nGaussian filter σ3")
+        import scipy
+        ax_2_2.imshow(scipy.ndimage.gaussian_filter(patch, 3))
 
-        pp.savefig("polish_particle_{:04d}_tiltimage_{:02d}.png".format(particle_number, ang))
+        pp.savefig("polish_particle_{:04d}_tiltimage_{:05.2f}.png".format(particle_number, ang))
 
     # progressbar.increment_amount()
-    return particle_number, points2d[0] - vol_size / 2, points2d[1] - vol_size / 2, ang, 0, 0, particle_filename
+    return particle_number, x_diff, y_diff, ang, 0, 0, particle_filename
 
 
-def run_polished_subtomograms(particle_list_filename, projection_directory, particle_polish_file, binning, offset, vol_size):
+def axis_title(axis, title):
+    axis.text(0.5, 1.05, title, fontsize=8, horizontalalignment='center', transform=axis.transAxes)
+
+
+def run_polished_subtomograms(particle_list_filename, projection_directory, particle_polish_file, binning, offset,
+                              vol_size):
     """
     Reconstructs subtomograms based on a polished particlelist, writes these to the places as specified in particlelist
 
@@ -361,14 +405,13 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
     cwd = os.getcwd()
 
     batchfile = """#!/usr/bin/bash
-#SBATCH --time        1:00:00
+#SBATCH --time        12:00:00
 #SBATCH -N 1
 #SBATCH --partition defq
-#SBATCH --ntasks-per-node 1
+#SBATCH --ntasks-per-node 20
 #SBATCH --job-name    polishedReconstr                                                                       
 #SBATCH --error="../LogFiles/%j-polished_subtomograms.err"
 #SBATCH --output="../LogFiles/%j-polished_subtomograms.out"
-#SBATCH --oversubscribe   
 
 module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
 
@@ -378,16 +421,20 @@ reconstructWB.py --particleList {:s} \
 --projectionDirectory {:s} \
 --coordinateBinning {:d} \
 --size {:d} \
---applyWeighting 0 \
+--applyWeighting \
 --projBinning 1 \
 --recOffset {:d},{:d},{:d} \
---particlePolishFile {:s}""".format(cwd, particle_list_filename, projection_directory, binning, vol_size, offset[0],
-                                    offset[1], offset[2], particle_polish_file)
+--particlePolishFile {:s}
+
+mpiexec -n 20 pytom /data2/dschulte/pytom-develop/pytom/frm/FRMAlignment.py \
+-j /data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/job_description.xml"""\
+        .format(cwd, particle_list_filename, projection_directory, binning, vol_size, offset[0], offset[1], offset[2],
+                particle_polish_file)
 
     f = open("polished_subtomograms.sh", "w+")
     f.write(batchfile)
     f.close()
-    # os.system('sbatch polished_subtomograms.sh')
+    os.system('sbatch polished_subtomograms.sh')
 
 
 def normalized_cross_correlation_numpy(first, second):
