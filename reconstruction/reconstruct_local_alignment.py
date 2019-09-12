@@ -105,7 +105,7 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
 
 def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
                     projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
-                    averaged_subtomogram=False, number_of_particles=-1):
+                    averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
@@ -200,17 +200,19 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
                                        particle.getFilename(), particle_number, binning, img, create_graphics])
 
     print(len(input_to_processes))
-    print("Created the input array\nStarting on running the processes")
-
-    output = mpi.parfor(run_single_tilt_angle_unpack, input_to_processes)
-
-    print("Ran the processes")
+    print("Created the input array")
 
     results_file = "local_alignment_results.txt"
 
-    from pytom.basic.datatypes import fmtLAR, headerLocalAlignmentResults, LOCAL_ALIGNMENT_RESULTS
-    np.savetxt(results_file, np.array(output, dtype=LOCAL_ALIGNMENT_RESULTS), fmt=fmtLAR,
-               header=headerLocalAlignmentResults)
+    if not skip_alignment:
+        print("Started on running the process")
+        output = mpi.parfor(run_single_tilt_angle_unpack, input_to_processes)
+
+        from pytom.basic.datatypes import fmtLAR, headerLocalAlignmentResults, LOCAL_ALIGNMENT_RESULTS
+        np.savetxt(results_file, np.array(output, dtype=LOCAL_ALIGNMENT_RESULTS), fmt=fmtLAR,
+                   header=headerLocalAlignmentResults)
+
+        print("Ran the processes")
 
     run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size)
     mpi.end()
@@ -404,11 +406,11 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
     import os
     cwd = os.getcwd()
 
-    batchfile = """#!/usr/bin/bash
+    first_batchfile = """#!/usr/bin/bash
 #SBATCH --time        12:00:00
 #SBATCH -N 1
 #SBATCH --partition defq
-#SBATCH --ntasks-per-node 20
+#SBATCH --ntasks-per-node 1
 #SBATCH --job-name    polishedReconstr                                                                       
 #SBATCH --error="../LogFiles/%j-polished_subtomograms.err"
 #SBATCH --output="../LogFiles/%j-polished_subtomograms.out"
@@ -424,17 +426,50 @@ reconstructWB.py --particleList {:s} \
 --applyWeighting \
 --projBinning 1 \
 --recOffset {:d},{:d},{:d} \
---particlePolishFile {:s}
-
-mpiexec -n 20 pytom /data2/dschulte/pytom-develop/pytom/frm/FRMAlignment.py \
--j /data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/job_description.xml"""\
+--particlePolishFile {:s}"""\
         .format(cwd, particle_list_filename, projection_directory, binning, vol_size, offset[0], offset[1], offset[2],
                 particle_polish_file)
 
     f = open("polished_subtomograms.sh", "w+")
-    f.write(batchfile)
+    f.write(first_batchfile)
     f.close()
-    os.system('sbatch polished_subtomograms.sh')
+
+    second_batchfile = """#!/usr/bin/bash
+#SBATCH --time        12:00:00
+#SBATCH -N 3
+#SBATCH --partition defq
+#SBATCH --ntasks-per-node 20
+#SBATCH --job-name    polishedReconstr                                                                       
+#SBATCH --error="../LogFiles/%j-polished_subtomograms.err"
+#SBATCH --output="../LogFiles/%j-polished_subtomograms.out"
+
+module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
+
+cd {:s}
+
+mpiexec -n 60 pytom /data2/dschulte/pytom-develop/pytom/frm/FRMAlignment.py \
+    -j /data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/job_description.xml""" \
+        .format(cwd)
+    f = open("frm_align.sh", "w+")
+    f.write(second_batchfile)
+    f.close()
+
+    import subprocess
+    out = subprocess.check_output(['sbatch', 'polished_subtomograms.sh'])
+    print("Started reconstruction")
+
+    if out.startswith("Submitted batch job "):
+        pid = out.split(" ")[3]
+        out = subprocess.check_output(['sbatch', '--dependency=afterok:{:s}'.format(pid.strip()), 'frm_align.sh'])
+
+        if out.startswith("Submitted batch job "):
+            print("Reconstruction and FRM alignment scheduled")
+        else:
+            print("Could not start the FRM alignment script:\n" + out)
+            raise Exception("Could not start the FRM alignment script: " + out)
+    else:
+        print("Could not start the reconstruction script:\n" + out)
+        raise Exception("Could not start the reconstruction script: " + out)
 
 
 def normalized_cross_correlation_numpy(first, second):

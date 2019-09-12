@@ -45,6 +45,9 @@ if __name__ == '__main__':
                                    ScriptOption(['-n', '--numberOfParticles'],
                                                 'To take a subset of the particlelist for debugging purposes (int)',
                                                 True, True),
+                                   ScriptOption(['--skipAlignment'],
+                                                'Skips the alignment/particle polish phase, only does the '
+                                                'reconstruction and FRM alignment.', False, True),
                                    ScriptOption(['-h', '--help'],
                                                 'Help.', False, True)])
     if len(sys.argv) == 1:
@@ -52,7 +55,7 @@ if __name__ == '__main__':
         sys.exit()
     try:
         pl_filename, proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
-         create_graphics, number_of_particles, b_help = parse_script_options(sys.argv[1:], helper)
+         create_graphics, number_of_particles, skip_alignment, b_help = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
         sys.exit()
@@ -85,6 +88,11 @@ if __name__ == '__main__':
         create_graphics = True
     else:
         create_graphics = False
+
+    if skip_alignment:
+        skip_alignment = True
+    else:
+        skip_alignment = False
 
     if infr_iter:
         infr_iter = int(infr_iter)
@@ -120,4 +128,4 @@ if __name__ == '__main__':
         number_of_particles = -1
 
     local_alignment(proj, vol_size, binning, offset, tilt_angles, pl_filename, proj_dir, reconstruction_method,
-                    infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles)
+                    infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles, skip_alignment)
