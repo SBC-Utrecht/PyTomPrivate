@@ -13,16 +13,28 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
     """
     To create subtomograms of all particles in the list
 
-    :param particlelist: list with all particles (ParticleList())
-    :param projection_directory: the directory of the projections (str)
-    :param offset: the offset (x,y,z)
-    :param binning: the binningfactor used (int)
-    :param vol_size: the size of the volume to be reconstructed (in pixels, int)
-    :param tilt_angles: the tilt angles as belonging to the projections (list(int))
-    :param reconstruction_method: the method used to reconstruct the volumes (choose "WBP" or "INFR")
-    :param infr_iterations: the amount of iterations used when choosing INFR (int)
-    :return: nothing, writes the volumes to disk
+    @param particlelist: list with all particles
+    @type particlelist: ParticleList
+    @param projection_directory: the directory of the projections
+    @type projection_directory: str
+    @param offset: the offset
+    @type offset: (int, int, int)
+    @param binning: the binningfactor used
+    @type binning: int
+    @param vol_size: the size of the volume to be reconstructed (in pixels)
+    @type vol_size: int
+    @param tilt_angles: the tilt angles as belonging to the projections
+    @type tilt_angles: list(int)
+    @param reconstruction_method: the method used to reconstruct the volumes (choose "WBP" or "INFR")
+    @type reconstruction_method: str
+    @param infr_iterations: the amount of iterations used when choosing INFR (int)
+    @type infr_iterations: int
+    @return: nothing, writes the volumes to disk
+    @returntype: void
     """
+    assert isinstance(offset, tuple) and len(offset) == 3
+    assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
+
     from math import cos, sin, pi
     from pytom.tompy.transform import cut_from_projection
     from nufft.reconstruction import fourier_2d1d_iter_reconstruct, fourier_2d1d_gridding_reconstruct
@@ -109,36 +121,51 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
-    :param projections: a list with filenames of projections (list(Str))
-    :param vol_size: the size of the volume to build the new subtomogram in (in pixels)
-    :param binning: the binning factor used
-    :param offset: the offset used (x, y, z)
-    :param tilt_angles: the list of tiltangles used (list(Int))
-    :param particle_list_filename: the filename of the particlelist
-    :param projection_directory: the directory of the projections
-    :param projection_method: the projection method used when create_subtomograms is True
-                (possible values: WBP and INFR)
-    :param infr_iterations: the amount of iterations to use when INFR projection is used
-    :param create_graphics: to create plots of major parts of the algorithm, mainly used for debugging
-                and initial creation
-    :param create_subtomograms: to flag if initial subtomograms of the particles should be made (takes a long time!)
-    :param averaged_subtomogram: to give a path to an averaged subtomogram to be used instead of subtomograms of all
-                particles separately (False for off, otherwise a string)
-    :param number_of_particles: to use a subset of the particles for the particle polishing
-    :return: nothing, it writes everything to disk
+    @param projections: a list with filenames of projections
+    @type projections: list(str)
+    @param vol_size: the size of the volume to build the new subtomogram in (in pixels)
+    @type vol_size: int
+    @param binning: the binning factor used
+    @type binning: int
+    @param offset: the offset used (x, y, z)
+    @type offset: (int, int, int)
+    @param tilt_angles: the list of tiltangles used
+    @type tilt_angles: list(int)
+    @param particle_list_filename: the filename of the particlelist
+    @type particle_list_filename: str
+    @param projection_directory: the directory of the projections
+    @type projection_directory: str
+    @param projection_method: the projection method used when create_subtomograms is True
+               (possible values: WBP and INFR)
+    @type projection_method: str
+    @param infr_iterations: the amount of iterations to use when INFR projection is used
+    @type infr_iterations: int
+    @param create_graphics: to create plots of major parts of the algorithm, mainly used for debugging
+               and initial creation
+    @type create_graphics: bool
+    @param create_subtomograms: to flag if initial subtomograms of the particles should be made (takes a long time!)
+    @type create_subtomograms: bool
+    @param averaged_subtomogram: to give a path to an averaged subtomogram to be used instead of subtomograms of all
+               particles separately (False for off, otherwise a string)
+    @type averaged_subtomogram: bool or str
+    @param number_of_particles: to use a subset of the particles for the particle polishing
+    @type number_of_particles: int
+    @param skip_alignment: skips the alignment phase, does not do particle polishing
+    @type skip_alignment: bool
+    @return: nothing, it writes everything to disk
+    @returntype: void
     """
-    # Some basic asserts to catch possible mistakes
     assert number_of_particles == -1 or number_of_particles > 0
     assert infr_iterations > 0
     assert binning > 0
     assert vol_size > 0
     assert vol_size % 2 == 0
     assert projection_method == "WBP" or projection_method == "INFR"
-    assert len(offset) == 3
     assert isinstance(projections, list)
     assert isinstance(vol_size, int)
     assert isinstance(binning, int)
-    assert isinstance(offset, tuple)
+    assert isinstance(offset, tuple) and len(offset) == 3
+    assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
     assert isinstance(tilt_angles, list)
     assert isinstance(particle_list_filename, str)
     assert isinstance(projection_directory, str)
@@ -147,6 +174,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     assert isinstance(create_subtomograms, bool)
     assert isinstance(averaged_subtomogram, str) or averaged_subtomogram is False
     assert isinstance(number_of_particles, int)
+    assert isinstance(skip_alignment, bool)
 
     import numpy as np
     import glob
@@ -221,8 +249,10 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 def run_single_tilt_angle_unpack(inp):
     """
     unpack a list with arguments to "run_single_tilt_angle"
-    :param inp: the arguments to "run_single_tilt_angle" in the same order in a single list (iterable)
-    :return: the value from "run_single_tilt_angle"
+    @param inp: the arguments to "run_single_tilt_angle" in the same order in a single list (iterable)
+    @type inp: list/something with indexing
+    @return: the value from "run_single_tilt_angle"
+    @returntype: list
     """
     return run_single_tilt_angle(
         inp[0], inp[1], inp[2], inp[3], inp[4], inp[5], inp[6], inp[7], inp[8], inp[9], inp[10])
@@ -233,23 +263,36 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     """
     To run a single tilt angle to allow for parallel computing
 
-    :param ang: the tilt angle
-    :param subtomogram: the filename of the subtomogram
-    :param offset: the offset used (x,y,z)
-    :param vol_size: the size of the volume to be reconstructed (in pixels)
-    :param particle_position: the position of the particle in vector format,
-                as given by particle.pickPosition().toVector()
-    :param particle_rotation: the rotation of the particle (Z1/phi, X/the, Z2/psi)
-    :param particle_filename: the filename of the particle, as given by particle.getfilename()
-    :param particle_number: the number of the particle, to allow for unique mapping
-    :param binning: the binning factor used
-    :param img: the filename of the projection to be used
-    :param create_graphics: to flag if images should be created for human inspection of the work done
-    :return: the newly found positions of the particle, as a list  in the LOCAL_ALIGNMENT_RESULTS format
+    @param ang: the tilt angle
+    @type ang: int
+    @param subtomogram: the filename of the subtomogram
+    @type subtomogram: str
+    @param offset: the offset used (x,y,z)
+    @type offset: (int, int, int)
+    @param vol_size: the size of the volume to be reconstructed (in pixels)
+    @type vol_size: int
+    @param particle_position: the position of the particle in vector format,
+               as given by particle.pickPosition().toVector()
+    @type particle_position: tuple
+    @param particle_rotation: the rotation of the particle (Z1/phi, X/the, Z2/psi)
+    @type particle_rotation: tuple
+    @param particle_filename: the filename of the particle, as given by particle.getfilename()
+    @type particle_filename: str
+    @param particle_number: the number of the particle, to allow for unique mapping
+    @type particle_number: int
+    @param binning: the binning factor used
+    @type binning: int
+    @param img: the filename of the projection to be used
+    @type img: str
+    @param create_graphics: to flag if images should be created for human inspection of the work done
+    @type create_graphics: bool
+    @return: the newly found positions of the particle, as a list  in the LOCAL_ALIGNMENT_RESULTS format
+    @returntype: list
     """
     assert isinstance(ang, float)
     assert isinstance(subtomogram, str)
-    assert isinstance(offset, tuple)
+    assert isinstance(offset, tuple) and len(offset) == 3
+    assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
     assert isinstance(vol_size, int)
     assert isinstance(particle_position, tuple)
     assert isinstance(particle_rotation, tuple)
@@ -395,14 +438,29 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
     """
     Reconstructs subtomograms based on a polished particlelist, writes these to the places as specified in particlelist
 
-    :param particle_list_filename: The name of the file of the particlelist
-    :param projection_directory: The name of the directory containing the projections
-    :param particle_polish_file: The name of the file containing the polished alignment results
-    :param binning: The binning factor
-    :param offset: The reconstruction offset
-    :param vol_size: The size of the particle
-    :return: void
+    @param particle_list_filename: The name of the file of the particlelist
+    @type particle_list_filename: str
+    @param projection_directory: The name of the directory containing the projections
+    @type projection_directory: str
+    @param particle_polish_file: The name of the file containing the polished alignment results
+    @type particle_polish_file: str
+    @param binning: The binning factor
+    @type binning: int
+    @param offset: The reconstruction offset
+    @type offset: (int, int, int)
+    @param vol_size: The size of the particle
+    @type vol_size: int
+    @return: void
+    @returntype: void
     """
+    assert isinstance(particle_list_filename, str)
+    assert isinstance(projection_directory, str)
+    assert isinstance(particle_polish_file, str)
+    assert isinstance(binning, int)
+    assert isinstance(offset, tuple) and len(offset) == 3
+    assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
+    assert isinstance(vol_size, int)
+
     import os
     cwd = os.getcwd()
 
@@ -411,7 +469,7 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
 #SBATCH -N 1
 #SBATCH --partition defq
 #SBATCH --ntasks-per-node 1
-#SBATCH --job-name    polishedReconstr                                                                       
+#SBATCH --job-name    polishedReconstruction                                                                     
 #SBATCH --error="../LogFiles/%j-polished_subtomograms.err"
 #SBATCH --output="../LogFiles/%j-polished_subtomograms.out"
 
@@ -434,14 +492,22 @@ reconstructWB.py --particleList {:s} \
     f.write(first_batchfile)
     f.close()
 
-    second_batchfile = """#!/usr/bin/bash
+    import subprocess
+    out = subprocess.check_output(['sbatch', 'polished_subtomograms.sh'])
+    print("Started reconstruction")
+
+    if out.startswith("Submitted batch job "):
+        pid = out.split(" ")[3]
+
+        second_batchfile = """#!/usr/bin/bash
 #SBATCH --time        12:00:00
 #SBATCH -N 3
 #SBATCH --partition defq
 #SBATCH --ntasks-per-node 20
-#SBATCH --job-name    polishedReconstr                                                                       
+#SBATCH --job-name    polishedFRMAlign                                                                       
 #SBATCH --error="../LogFiles/%j-polished_subtomograms.err"
 #SBATCH --output="../LogFiles/%j-polished_subtomograms.out"
+#SBATCH --dependency=afterok:{:s}
 
 module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
 
@@ -449,18 +515,12 @@ cd {:s}
 
 mpiexec -n 60 pytom /data2/dschulte/pytom-develop/pytom/frm/FRMAlignment.py \
     -j /data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/job_description.xml""" \
-        .format(cwd)
-    f = open("frm_align.sh", "w+")
-    f.write(second_batchfile)
-    f.close()
+    .format(pid, cwd)
+        f = open("frm_align.sh", "w+")
+        f.write(second_batchfile)
+        f.close()
 
-    import subprocess
-    out = subprocess.check_output(['sbatch', 'polished_subtomograms.sh'])
-    print("Started reconstruction")
-
-    if out.startswith("Submitted batch job "):
-        pid = out.split(" ")[3]
-        out = subprocess.check_output(['sbatch', '--dependency=afterok:{:s}'.format(pid.strip()), 'frm_align.sh'])
+        out = subprocess.check_output(['sbatch', 'frm_align.sh'])
 
         if out.startswith("Submitted batch job "):
             print("Reconstruction and FRM alignment scheduled")
@@ -476,10 +536,17 @@ def normalized_cross_correlation_numpy(first, second):
     """
     Do a cross correlation based on numpy
 
-    :param first: The first dataset (numpy 2D)
-    :param second: The second dataset (numpy 2D)
-    :return: The cross correlation result (shape == first.shape == second.shape)
+    @param first: The first dataset (numpy 2D)
+    @type first: numpy array 2D
+    @param second: The second dataset (numpy 2D)
+    @type second: numpy array 2D
+    @return: The cross correlation result
+    @returntype: numpy array 2D
+
+    @requires: the shape of first to be equal to the shape of second
     """
+    assert first.shape == second.shape
+
     import numpy.fft as nf
     import numpy as np
 
@@ -494,11 +561,20 @@ def normalized_cross_correlation_mask_numpy(first, second, mask):
     """
     Do cross correlation with a running mask based on numpy
 
-    :param first: The first dataset (numpy 2D)
-    :param second: The second dataset (numpy 2D)
-    :param mask: The mask (numpy 2D) same size as first and second
-    :return: The cross correlation result (shape == first.shape == second.shape)
+    @param first: The first dataset (numpy 2D)
+    @type first: numpy array 2D
+    @param second: The second dataset (numpy 2D)
+    @type second: numpy array 2D
+    @param mask: The mask
+    @type mask: numpy array 2D
+    @return: The cross correlation result
+    @returntype: numpy array 2D
+
+    @requires: the shape of first to be equal to the shape of second and the shape of the mask
     """
+    assert first.shape == second.shape
+    assert first.shape == mask.shape
+
     import numpy.fft as nf
     import numpy as np
 
@@ -512,10 +588,17 @@ def norm_inside_mask(inp, mask):
     """
     To normalise a 2D array within a mask
 
-    :param inp: A 2D array to be normalized.
-    :param mask: A 2D array of the same size as the input to mask of parts of the inp.
-    :return: A normalized 2D array.
+    @param inp: A 2D array to be normalized.
+    @type inp: numpy array 2D
+    @param mask: A 2D array of the same size as the input to mask of parts of the inp.
+    @type mask: numpy array 2D
+    @return: A normalized 2D array.
+    @returntype: numpy array 2D
+
+    @requires: the shape of inp to be equal to the shape of the mask
     """
+    assert inp.shape == mask.shape
+
     import numpy as np
 
     mea = np.divide(np.sum(np.multiply(inp, mask)), np.sum(mask))
@@ -527,10 +610,13 @@ def find_sub_pixel_max_value(inp, k=4):
     """
     To find the highest point in a 2D array, with subpixel accuracy based on 1D spline interpolation .
 
-    :param inp: A 2D numpy array containing the data points.
-    :param k: The smoothing factor used in the spline interpolation, must be 1 <= k <= 5.
-    :return: A list of all points of maximal value in the structure of tuples with the x position, the y position and
+    @param inp: A 2D numpy array containing the data points.
+    @type inp: numpy array 2D
+    @param k: The smoothing factor used in the spline interpolation, must be 1 <= k <= 5.
+    @type k: int
+    @return: A list of all points of maximal value in the structure of tuples with the x position, the y position and
         the value.
+    @returntype: list
     """
     import numpy as np
     from scipy.interpolate import InterpolatedUnivariateSpline
