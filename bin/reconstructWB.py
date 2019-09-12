@@ -36,7 +36,8 @@ if __name__ == '__main__':
                                 ScriptOption(['-b','--coordinateBinning'], 'Binning factor of coordinates. If particle coordinates are determined in binned volume (with respect to projections) this binning factor needs to be specified.', arg=True, optional=True),
                                 ScriptOption(['-o','--recOffset'], 'Cropping offset of the binned tomogram.', arg=True, optional=False),
                                 ScriptOption(['--projBinning'], 'Bin projections BEFORE reconstruction. 1 is no binning, 2 will merge two voxels to one, 3 -> 1, 4 ->1 ...', arg=True, optional=True),
-                                ScriptOption(['-a', 'alignResultFile'], 'Use an alignmentResultFile to generate the aligned files in memory.', arg=True, optional=True),
+                                ScriptOption(['-a', '--alignResultFile'], 'Use an alignmentResultFile to generate the aligned files in memory.', arg=True, optional=True),
+                                ScriptOption(['-r', '--particlePolishFile'], 'Use an particlePolishFile to generate the polished cutouts.', arg=True, optional=True),
                                 ScriptOption(['--help'], 'Print this help.', arg=False, optional=False)])
     
     if len(sys.argv) == 1:
@@ -48,7 +49,7 @@ if __name__ == '__main__':
     aw = False
     
     try:
-        tomogram, particleListXMLPath, projectionList, projectionDirectory, aw, size, coordinateBinning, recOffset, projBinning, alignmentResultFile, help= parse_script_options(sys.argv[1:], helper)
+        tomogram, particleListXMLPath, projectionList, projectionDirectory, aw, size, coordinateBinning, recOffset, projBinning, alignmentResultFile, particlePolishFile, help= parse_script_options(sys.argv[1:], helper)
     
     except Exception as e:
         print e
@@ -91,6 +92,13 @@ if __name__ == '__main__':
         raise RuntimeError('Neither projectionList existed nor the projectionDirectory you specified! Abort')
 
 
+    if checkFileExists(particlePolishFile):
+        from pytom.basic.datatypes import LOCAL_ALIGNMENT_RESULTS
+        import numpy
+
+        polishedCoordinates = numpy.loadtxt(particlePolishFile,dtype=LOCAL_ALIGNMENT_RESULTS)
+
+
     if alignmentResultFile and not checkFileExists(alignmentResultFile):
         raise Exception('alignmentResultFile does not exists. Please provide an existing file or omit this flag.')
 
@@ -118,10 +126,14 @@ if __name__ == '__main__':
             sys.exit()
 
         from pytom.basic.structures import PickPosition
-        for particle in particleList:
+        for n, particle in enumerate(particleList):
             pickPosition = particle.getPickPosition()
             x = (pickPosition.getX()*coordinateBinning+ recOffset[0])/projBinning
             y = (pickPosition.getY()*coordinateBinning+ recOffset[1])/projBinning
+            if particlePolishFile and len(polishedCoordinates['AlignmentTransX']) == len(particleList):
+                x += polishedCoordinates['AlignmentTransX'][n] / projBinning
+                y += polishedCoordinates['AlignmentTransY'][n] / projBinning
+                particle.setFilename(particle.getFilename()[:-3]+"_polished.em")
             z = (pickPosition.getZ()*coordinateBinning+ recOffset[2])/projBinning
             particle.setPickPosition( PickPosition(x=x, y=y, z=z))
          

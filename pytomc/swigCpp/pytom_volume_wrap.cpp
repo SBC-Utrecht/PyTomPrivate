@@ -3608,7 +3608,7 @@ SWIGINTERNINLINE PyObject*
 
 
 SWIGINTERNINLINE PyObject*
-SWIG_From_std_complex_Sl_float_Sg_  (/*@SWIG:/usr/local/Cellar/swig/3.0.12/share/swig/3.0.12/typemaps/swigmacros.swg,104,%ifcplusplus@*/
+SWIG_From_std_complex_Sl_float_Sg_  (/*@SWIG:/usr/local/share/swig/3.0.12/typemaps/swigmacros.swg,104,%ifcplusplus@*/
 
 const std::complex<float>&
 
