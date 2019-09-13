@@ -103,22 +103,6 @@ if __name__ == '__main__':
     # force the user to specify even-sized volume
     assert vol_size % 2 == 0
 
-    # load projection list
-    from pytom.reconstruction.reconstructionStructures import ProjectionList
-
-    projections = ProjectionList()
-    projections.loadDirectory(proj_dir)
-    projections.sort()
-
-    # create the list of projectionfilenames and tiltangles
-    proj = []
-    tilt_angles = []
-    for p in projections:
-        proj.append(p.getFilename())
-        tilt_angles.append(p.getTiltAngle())
-
-    print tilt_angles
-
     # pass everything to the function in reconstruction/reconstruct_local_alignment.py
     from pytom.reconstruction.reconstruct_local_alignment import local_alignment
 
@@ -127,5 +111,35 @@ if __name__ == '__main__':
     else:
         number_of_particles = -1
 
-    local_alignment(proj, vol_size, binning, offset, tilt_angles, pl_filename, proj_dir, reconstruction_method,
-                    infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles, skip_alignment)
+    # Split particlelist based on filename
+    # Map filename to right projection directory
+
+    print("Parsed arguments")
+
+    names = [("particleList_TM_tomogram_010_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_000/alignment/marker_0001_-60.0,60.0/"),
+             ("particleList_TM_tomogram_011_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_001/alignment/marker_0001_-60.0,60.0/"),
+             ("particleList_TM_tomogram_012_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_002/alignment/marker_0001_-60.0,60.0/"),
+             ("particleList_TM_tomogram_013_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_003/alignment/marker_0001_-60.0,60.0/")]
+    for i, n in enumerate(names):
+        print("Running "+n[0])
+        proj_dir = n[1]
+
+        # load projection list
+        from pytom.reconstruction.reconstructionStructures import ProjectionList
+
+        projections = ProjectionList()
+        projections.loadDirectory(proj_dir)
+        projections.sort()
+
+        # create the list of projectionfilenames and tiltangles
+        proj = []
+        tilt_angles = []
+        for p in projections:
+            proj.append(p.getFilename())
+            tilt_angles.append(p.getTiltAngle())
+
+        local_alignment(proj, vol_size, binning, offset, tilt_angles, pl_filename, proj_dir, reconstruction_method,
+                        infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles,
+                        skip_alignment, n[0], 1 if n == 3 else 0)
+        print("Finished "+n[0])
+

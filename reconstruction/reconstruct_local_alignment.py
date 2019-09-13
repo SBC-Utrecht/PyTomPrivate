@@ -18,7 +18,7 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
     @param projection_directory: the directory of the projections
     @type projection_directory: str
     @param offset: the offset
-    @type offset: (int, int, int)
+    @type offset: list(int, int, int)
     @param binning: the binningfactor used
     @type binning: int
     @param vol_size: the size of the volume to be reconstructed (in pixels)
@@ -32,8 +32,16 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
     @return: nothing, writes the volumes to disk
     @returntype: void
     """
-    assert isinstance(offset, tuple) and len(offset) == 3
+    import os.path
+    assert isinstance(projection_directory, str)
+    assert os.path.isdir(projection_directory)
+    assert isinstance(offset, list) and len(offset) == 3
     assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
+    assert isinstance(binning, int)
+    assert isinstance(vol_size, int)
+    assert isinstance(tilt_angles, int)
+    assert reconstruction_method == "WBP" or reconstruction_method == "INFR"
+    assert isinstance(infr_iterations, int) and infr_iterations > 0
 
     from math import cos, sin, pi
     from pytom.tompy.transform import cut_from_projection
@@ -111,13 +119,11 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
             # reconstruct INFR
             v = fourier_2d1d_iter_reconstruct(subregions, tilt_angles, infr_iterations)
             write("Subtomograms/{:s}/particle_{:d}.em".format(particlelist.getFilename(), m), v)
-    else:
-        raise Exception(reconstruction_method + " is not a known reconstruction method, use WBP or INFR")
 
 
 def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
                     projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
-                    averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False):
+                    averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False, particle_list_name="", start_glocal=True):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
@@ -128,7 +134,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     @param binning: the binning factor used
     @type binning: int
     @param offset: the offset used (x, y, z)
-    @type offset: (int, int, int)
+    @type offset: list(int, int, int)
     @param tilt_angles: the list of tiltangles used
     @type tilt_angles: list(int)
     @param particle_list_filename: the filename of the particlelist
@@ -164,7 +170,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     assert isinstance(projections, list)
     assert isinstance(vol_size, int)
     assert isinstance(binning, int)
-    assert isinstance(offset, tuple) and len(offset) == 3
+    assert isinstance(offset, list) and len(offset) == 3
     assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
     assert isinstance(tilt_angles, list)
     assert isinstance(particle_list_filename, str)
@@ -186,13 +192,19 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     # load particle list
     from pytom.basic.structures import ParticleList
 
+    particlelist1 = ParticleList()
+    particlelist1.fromXMLFile(particle_list_filename)
+
     particlelist = ParticleList()
-    particlelist.fromXMLFile(particle_list_filename)
+
+    for p in particlelist1:
+        if particle_list_name in p.getFilename():
+            particlelist.append(p)
 
     if number_of_particles != -1:
         particlelist = particlelist[:number_of_particles]
 
-    particle_list_name = "particleList_TM_tomogram_010_WBP"
+    print(len(particlelist))
 
     # If needed create all subtomograms
     if create_subtomograms:
@@ -230,7 +242,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     print(len(input_to_processes))
     print("Created the input array")
 
-    results_file = "local_alignment_results.txt"
+    results_file = "local_alignment_results_{:s}.txt".format(particle_list_name)
 
     if not skip_alignment:
         print("Started on running the process")
@@ -242,7 +254,9 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
         print("Ran the processes")
 
-    run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size)
+    if start_glocal:
+        run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal)
+
     mpi.end()
 
 
@@ -268,7 +282,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     @param subtomogram: the filename of the subtomogram
     @type subtomogram: str
     @param offset: the offset used (x,y,z)
-    @type offset: (int, int, int)
+    @type offset: list(int, int, int)
     @param vol_size: the size of the volume to be reconstructed (in pixels)
     @type vol_size: int
     @param particle_position: the position of the particle in vector format,
@@ -291,7 +305,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     """
     assert isinstance(ang, float)
     assert isinstance(subtomogram, str)
-    assert isinstance(offset, tuple) and len(offset) == 3
+    assert isinstance(offset, list) and len(offset) == 3
     assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
     assert isinstance(vol_size, int)
     assert isinstance(particle_position, tuple)
@@ -434,7 +448,7 @@ def axis_title(axis, title):
 
 
 def run_polished_subtomograms(particle_list_filename, projection_directory, particle_polish_file, binning, offset,
-                              vol_size):
+                              vol_size, start_glocal):
     """
     Reconstructs subtomograms based on a polished particlelist, writes these to the places as specified in particlelist
 
@@ -447,7 +461,7 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
     @param binning: The binning factor
     @type binning: int
     @param offset: The reconstruction offset
-    @type offset: (int, int, int)
+    @type offset: list(int, int, int)
     @param vol_size: The size of the particle
     @type vol_size: int
     @return: void
@@ -457,11 +471,15 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
     assert isinstance(projection_directory, str)
     assert isinstance(particle_polish_file, str)
     assert isinstance(binning, int)
-    assert isinstance(offset, tuple) and len(offset) == 3
+    assert isinstance(offset, list) and len(offset) == 3
     assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
     assert isinstance(vol_size, int)
 
-    import os
+    import os.path
+    assert os.path.isfile(particle_list_filename)
+    assert os.path.isfile(particle_polish_file)
+    assert os.path.isdir(projection_directory)
+
     cwd = os.getcwd()
 
     first_batchfile = """#!/usr/bin/bash
@@ -472,6 +490,7 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
 #SBATCH --job-name    polishedReconstruction                                                                     
 #SBATCH --error="../LogFiles/%j-polished_subtomograms.err"
 #SBATCH --output="../LogFiles/%j-polished_subtomograms.out"
+#SBATCH --oversubscribe
 
 module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
 
@@ -496,38 +515,50 @@ reconstructWB.py --particleList {:s} \
     out = subprocess.check_output(['sbatch', 'polished_subtomograms.sh'])
     print("Started reconstruction")
 
-    if out.startswith("Submitted batch job "):
+    if start_glocal and out.startswith("Submitted batch job "):
         pid = out.split(" ")[3]
 
-        second_batchfile = """#!/usr/bin/bash
-#SBATCH --time        12:00:00
-#SBATCH -N 3
+        mask_filename = "/data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/FRM_mask_200_70_4.mrc"
+        jobname = "test-combo-13-09-19"
+        iterations = 8
+        pixelsize = 2.64
+        particleDiameter = 300
+
+        glocal_batchfile = """#!/usr/bin/bash
+#SBATCH --time        48:00:00
+#SBATCH -N 4
 #SBATCH --partition defq
 #SBATCH --ntasks-per-node 20
-#SBATCH --job-name    polishedFRMAlign                                                                       
-#SBATCH --error="../LogFiles/%j-polished_subtomograms.err"
-#SBATCH --output="../LogFiles/%j-polished_subtomograms.out"
+#SBATCH --job-name    pGLocalAlign                                                                       
+#SBATCH --error="../LogFiles/%j-GLocal_polished_subtomograms.err"
+#SBATCH --output="../LogFiles/%j-GLocal_polished_subtomograms.out"
 #SBATCH --dependency=afterok:{:s}
 
 module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
 
 cd {:s}
 
-mpiexec -n 60 pytom /data2/dschulte/pytom-develop/pytom/frm/FRMAlignment.py \
-    -j /data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/job_description.xml""" \
-    .format(pid, cwd)
-        f = open("frm_align.sh", "w+")
-        f.write(second_batchfile)
+mpiexec -n 80 pytom GLocalJob.py \
+    -p {:s}
+    --mask {:s}
+    --sphericalMask
+    --destination Alignment/GLocal/{:s}/
+    --numberIterations {:d}
+    --pixelSize {:f}
+    --particleDiameter {:d}
+    --jobName /Alignment/Glocal/{:s}/job.xml""".format(pid, cwd, particle_list_filename, mask_filename, jobname, iterations, pixelsize, particleDiameter, jobname)
+        f = open("glocal_align.sh", "w+")
+        f.write(glocal_batchfile)
         f.close()
 
-        out = subprocess.check_output(['sbatch', 'frm_align.sh'])
+        out = subprocess.check_output(['sbatch', 'glocal_align.sh'])
 
         if out.startswith("Submitted batch job "):
-            print("Reconstruction and FRM alignment scheduled")
+            print("Reconstruction and Glocal alignment scheduled")
         else:
-            print("Could not start the FRM alignment script:\n" + out)
-            raise Exception("Could not start the FRM alignment script: " + out)
-    else:
+            print("Could not start the Glocal alignment script:\n" + out)
+            raise Exception("Could not start the Glocal alignment script: " + out)
+    elif not start_glocal:
         print("Could not start the reconstruction script:\n" + out)
         raise Exception("Could not start the reconstruction script: " + out)
 
@@ -546,6 +577,7 @@ def normalized_cross_correlation_numpy(first, second):
     @requires: the shape of first to be equal to the shape of second
     """
     assert first.shape == second.shape
+    assert len(first.shape) == 2
 
     import numpy.fft as nf
     import numpy as np
@@ -574,6 +606,7 @@ def normalized_cross_correlation_mask_numpy(first, second, mask):
     """
     assert first.shape == second.shape
     assert first.shape == mask.shape
+    assert len(first.shape) == 2
 
     import numpy.fft as nf
     import numpy as np
@@ -598,6 +631,7 @@ def norm_inside_mask(inp, mask):
     @requires: the shape of inp to be equal to the shape of the mask
     """
     assert inp.shape == mask.shape
+    assert len(inp.shape) == 2
 
     import numpy as np
 
@@ -618,6 +652,9 @@ def find_sub_pixel_max_value(inp, k=4):
         the value.
     @returntype: list
     """
+    assert len(inp.shape) == 2
+    assert isinstance(k, int) and 1 <= k <= 5
+
     import numpy as np
     from scipy.interpolate import InterpolatedUnivariateSpline
 
@@ -661,15 +698,29 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10,
     To find the highest point in a given numpy array based on 2d spline interpolation, returns the maximum with subpixel
     precision.
 
-    :param inp: The input data array (numpy 2D)
-    :param interpolate_factor: The amount of interpolation to be done
-    :param smoothing: The amount of smoothing in the spline interpolation
-    :param dim: The dimensions of the peak cutout, which is interpolated to find the subpixel maximum
-    :param border_size: The amount of pixels (after interpolation) to disregard in the peak cutout
-    :param ignore_border: The amount of pixels to disregard in the initial finding of the initial maximum, to force the
-        found maximum to be more in the center
-    :return: The subpixel maximum (x, y, the interpolated peak (excluding the border area))
+    @param inp: The input data array (numpy 2D)
+    @type inp: numpy array 2D
+    @param interpolate_factor: The amount of interpolation to be done
+    @type interpolate_factor: int
+    @param smoothing: The amount of smoothing in the spline interpolation
+    @type smoothing: int
+    @param dim: The dimensions of the peak cutout, which is interpolated to find the subpixel maximum
+    @type dim: int
+    @param border_size: The amount of pixels (after interpolation) to disregard in the peak cutout
+    @type border_size: int
+    @param ignore_border: The amount of pixels to disregard in the initial finding of the initial maximum, to force the
+       found maximum to be more in the center
+    @type ignore_border: int
+    @return: The subpixel maximum (x, y, the interpolated peak (excluding the border area))
+    @returntype: tuple
     """
+    assert len(inp.shape) == 2
+    assert isinstance(interpolate_factor, int) and interpolate_factor > 0
+    assert isinstance(smoothing, float) and smoothing >= 0
+    assert isinstance(dim, int) and dim > 0
+    assert isinstance(border_size, int) and border_size > 0
+    assert isinstance(ignore_border, int) and ignore_border > 0
+
     import numpy as np
     from scipy import interpolate
     import warnings
