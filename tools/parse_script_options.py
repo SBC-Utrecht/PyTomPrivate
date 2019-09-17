@@ -46,7 +46,11 @@ def parse_script_options(args, helper):
                 if helper.options[i].arg:
                     res[i] = a
                 else:
-                    res[i] = True
+                        res[i] = True
                 break
-    
+
+    for i,_ in enumerate(res):
+        if res[i] is None and not helper.options[i].optional:
+            raise Exception("Required argument not passed, use any of the following: " + " ".join(helper.options[i].option_str))
+
     return res
