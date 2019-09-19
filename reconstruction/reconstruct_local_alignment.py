@@ -121,7 +121,7 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
             write("Subtomograms/{:s}/particle_{:d}.em".format(particlelist.getFilename(), m), v)
 
 
-def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
+def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory, mpi,
                     projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
                     averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False, particle_list_name="", start_glocal=True):
     """
@@ -184,10 +184,6 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
     import numpy as np
     import glob
-    from pytom.tompy.mpi import MPI
-
-    mpi = MPI()
-    mpi.begin()
 
     # load particle list
     from pytom.basic.structures import ParticleList
@@ -216,7 +212,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     if not averaged_subtomogram:
         subtomograms = [f for f in glob.glob("Subtomograms/{:s}/*".format(particle_list_name))]
 
-    print("Creating the input array")
+    print("{:s}> Creating the input array".format(gettime()))
 
     # from pytom.tools.ProgressBar import FixedProgBar
     # progressBar = FixedProgBar(0, len(input_to_processes), 'Particle volumes generated ')
@@ -240,24 +236,23 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
                                        particle.getFilename(), particle_number, binning, img, create_graphics])
 
     print(len(input_to_processes))
-    print("Created the input array")
+    print("{:s}> Created the input array".format(gettime()))
 
     results_file = "local_alignment_results_{:s}.txt".format(particle_list_name)
 
     if not skip_alignment:
-        print("Started on running the process")
+        print("{:s}> Started on running the process".format(gettime()))
+
         output = mpi.parfor(run_single_tilt_angle_unpack, input_to_processes)
 
         from pytom.basic.datatypes import fmtLAR, headerLocalAlignmentResults, LOCAL_ALIGNMENT_RESULTS
         np.savetxt(results_file, np.array(output, dtype=LOCAL_ALIGNMENT_RESULTS), fmt=fmtLAR,
                    header=headerLocalAlignmentResults)
 
-        print("Ran the processes")
+        print("{:s}> Ran the processes".format(gettime()))
 
     if start_glocal:
         run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal)
-
-    mpi.end()
 
 
 def run_single_tilt_angle_unpack(inp):
@@ -303,19 +298,19 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     @return: the newly found positions of the particle, as a list  in the LOCAL_ALIGNMENT_RESULTS format
     @returntype: list
     """
-    assert isinstance(ang, float)
-    assert isinstance(subtomogram, str)
-    assert isinstance(offset, list) and len(offset) == 3
-    assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
-    assert isinstance(vol_size, int)
-    assert isinstance(particle_position, tuple)
-    assert isinstance(particle_rotation, tuple)
-    assert isinstance(particle_filename, str)
-    assert isinstance(particle_number, int)
-    assert isinstance(binning, int)
-    assert binning > 0
-    assert isinstance(img, str)
-    assert isinstance(create_graphics, bool)
+    # assert isinstance(ang, float)
+    # assert isinstance(subtomogram, str)
+    # assert isinstance(offset, list) and len(offset) == 3
+    # assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
+    # assert isinstance(vol_size, int)
+    # assert isinstance(particle_position, tuple)
+    # assert isinstance(particle_rotation, tuple)
+    # assert isinstance(particle_filename, str)
+    # assert isinstance(particle_number, int)
+    # assert isinstance(binning, int)
+    # assert binning > 0
+    # assert isinstance(img, str)
+    # assert isinstance(create_graphics, bool)
 
     print(ang)
     from pytom.tompy.transform import rotate3d
@@ -353,7 +348,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     patch = patch.squeeze()
 
     # Cross correlate the template and patch, this should give the pixel shift it is after
-    ccf = normalized_cross_correlation_numpy(template, patch)
+    ccf = normalised_cross_correlation_numpy(template, patch)
     points2d = find_sub_pixel_max_value_2d(ccf)
 
     x_diff = points2d[0] - vol_size / 2
@@ -372,7 +367,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
         npatch = cut_from_projection(img, [xx + x_diff, yy + y_diff], [vol_size, vol_size])
         npatch = npatch - np.mean(npatch)
 
-        nccf = normalized_cross_correlation_numpy(template, npatch.squeeze())
+        nccf = normalised_cross_correlation_numpy(template, npatch.squeeze())
         npoints = find_sub_pixel_max_value(nccf)
         npoints2d = find_sub_pixel_max_value_2d(nccf)
 
@@ -402,8 +397,14 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
 
         axis_title(ax_0_0, "Cutout")
         ax_0_0.imshow(patch)
+        # np.savetxt("cutout_{:04d}_tiltimage_{:05.2f}.txt".format(particle_number, ang), patch)
+        # bigpatch = cut_from_projection(img, [xx, yy], [vol_size*2, vol_size*2])
+        # bigpatch = bigpatch - np.mean(bigpatch)
+        # bigpatch = bigpatch.squeeze()
+        # np.savetxt("bigcutout_{:04d}_tiltimage_{:05.2f}.txt".format(particle_number, ang), bigpatch)
         axis_title(ax_0_1, "Template")
         ax_0_1.imshow(template)
+        # np.savetxt("template_{:04d}_tiltimage_{:05.2f}.txt".format(particle_number, ang), template)
         axis_title(ax_0_2, "Shifted Cutout\n(based on cross correlation)")
         ax_0_2.imshow(npatch.squeeze())
 
@@ -563,7 +564,7 @@ mpiexec -n 80 pytom GLocalJob.py \
         raise Exception("Could not start the reconstruction script: " + out)
 
 
-def normalized_cross_correlation_numpy(first, second):
+def normalised_cross_correlation_numpy(first, second):
     """
     Do a cross correlation based on numpy
 
@@ -576,8 +577,8 @@ def normalized_cross_correlation_numpy(first, second):
 
     @requires: the shape of first to be equal to the shape of second
     """
-    assert first.shape == second.shape
-    assert len(first.shape) == 2
+    # assert first.shape == second.shape
+    # assert len(first.shape) == 2
 
     import numpy.fft as nf
     import numpy as np
@@ -589,7 +590,18 @@ def normalized_cross_correlation_numpy(first, second):
     return np.real(nf.fftshift(nf.ifftn(np.multiply(nf.fftn(second), np.conj(nf.fftn(first)))))) / prod
 
 
-def normalized_cross_correlation_mask_numpy(first, second, mask):
+def normalised_cross_correlation_cupy(first, second):
+    import cupy.fft as nf
+    import cupy as np
+
+    prod = 1
+    for d in first.shape:
+        prod *= d
+
+    return np.real(nf.fftshift(nf.ifftn(np.multiply(nf.fftn(second), np.conj(nf.fftn(first)))))) / prod
+
+
+def normalised_cross_correlation_mask_numpy(first, second, mask):
     """
     Do cross correlation with a running mask based on numpy
 
@@ -604,9 +616,9 @@ def normalized_cross_correlation_mask_numpy(first, second, mask):
 
     @requires: the shape of first to be equal to the shape of second and the shape of the mask
     """
-    assert first.shape == second.shape
-    assert first.shape == mask.shape
-    assert len(first.shape) == 2
+    # assert first.shape == second.shape
+    # assert first.shape == mask.shape
+    # assert len(first.shape) == 2
 
     import numpy.fft as nf
     import numpy as np
@@ -630,8 +642,8 @@ def norm_inside_mask(inp, mask):
 
     @requires: the shape of inp to be equal to the shape of the mask
     """
-    assert inp.shape == mask.shape
-    assert len(inp.shape) == 2
+    # assert inp.shape == mask.shape
+    # assert len(inp.shape) == 2
 
     import numpy as np
 
@@ -652,8 +664,8 @@ def find_sub_pixel_max_value(inp, k=4):
         the value.
     @returntype: list
     """
-    assert len(inp.shape) == 2
-    assert isinstance(k, int) and 1 <= k <= 5
+    # assert len(inp.shape) == 2
+    # assert isinstance(k, int) and 1 <= k <= 5
 
     import numpy as np
     from scipy.interpolate import InterpolatedUnivariateSpline
@@ -714,12 +726,12 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10,
     @return: The subpixel maximum (x, y, the interpolated peak (excluding the border area))
     @returntype: tuple
     """
-    assert len(inp.shape) == 2
-    assert isinstance(interpolate_factor, int) and interpolate_factor > 0
-    assert isinstance(smoothing, float) and smoothing >= 0
-    assert isinstance(dim, int) and dim > 0
-    assert isinstance(border_size, int) and border_size > 0
-    assert isinstance(ignore_border, int) and ignore_border > 0
+    # assert len(inp.shape) == 2
+    # assert isinstance(interpolate_factor, int) and interpolate_factor > 0
+    # assert isinstance(smoothing, float) and smoothing >= 0
+    # assert isinstance(dim, int) and dim > 0
+    # assert isinstance(border_size, int) and border_size > 0
+    # assert isinstance(ignore_border, int) and ignore_border > 0
 
     import numpy as np
     from scipy import interpolate
@@ -756,3 +768,8 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10,
         result = (float(result[1])/interpolate_factor + y_start, float(result[0])/interpolate_factor + x_start)
 
         return result[0], result[1], cropped_inter_grid
+
+
+def gettime():
+    from time import gmtime, strftime
+    return strftime("%H:%M:%S", gmtime())

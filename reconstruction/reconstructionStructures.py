@@ -440,104 +440,10 @@ class ProjectionList(PyTomClass):
 
         return vol_bp
 
+
     def reconstructVolumes(self, particles, cubeSize, binning=1, applyWeighting=False,
                            showProgressBar=False, verbose=False, preScale=1, postScale=1,
-                           alignResultFile=''):
-        """
-        reconstructVolumes: reconstruct a subtomogram given a particle object.
-
-        @param particles: A list of particles
-        @type particles: L{pytom.basic.structures.ParticleList}
-        @param cubeSize: 3D Size of reconstructed particle (here, x == y == z)
-        @param binning: binning of projections
-        @param applyWeighting: Will apply weighting for weighted backprojection to projection. Default is off (False)!
-        @param showProgressBar: False by default
-        @param verbose: False by default
-        @param preScale: Scale (bin) the projections BEFORE reconstruction
-        @param postScale: Scale the tomogram AFTER reconstruction  
-        """
-        from pytom_volume import vol,paste,backProject,complexRealMult
-        from pytom.basic.files import readProxy as read
-        from pytom.tools.ProgressBar import FixedProgBar
-        from pytom.basic.fourier import fft,ifft
-        from pytom.basic.filter import circleFilter,rampFilter,fourierFilterShift
-    
-        if len(self) == 0:
-            print RuntimeWarning('This ProjectionList contains no projections!Abort!')
-            return 
-        
-        if len(particles) == 0:
-            raise RuntimeError('ParticleList is empty!')
-        
-        if cubeSize.__class__ != int:
-            raise TypeError('reconstructVolumes: Parameter cubeSize must be of type int!')
-        
-        if showProgressBar:
-            progressBar = FixedProgBar(0,len(particles),'Particle volumes generated ')
-            progressBar.update(0)
-            numberParticleVolumes = 0
-        
-        imgDim = read(self._list[0].getFilename(),0,0,0,0,0,0,0,0,0,preScale,preScale,1).sizeX()
-        
-        # stacks for images, projections angles etc.
-        #[vol_img, vol_phi, vol_the, vol_offsetProjections] =  self.toProjectionStack(
-	#    binning=binning, applyWeighting=applyWeighting,showProgressBar=False,
-	#    verbose=False)
-
-        if not alignResultFile:
-            [vol_img, vol_phi, vol_the, vol_offsetProjections] =  self.toProjectionStack(
-                    binning=binning, applyWeighting=applyWeighting, showProgressBar=False,
-                    verbose=False)
-        else:
-            from pytom.reconstruction.generateAlignedTiltImagesInMemory import toProjectionStackFromAlignmentResultsFile
-            [vol_img, vol_phi, vol_the, vol_offsetProjections] = toProjectionStackFromAlignmentResultsFile(
-                alignResultFile, binning=binning, weighting=applyWeighting, showProgressBar=False, verbose=False)
-
-
-
-
-        #volume storing center (x,y,z)   
-        reconstructionPosition = vol(3, len(self) ,1)
-        reconstructionPosition.setAll(0.0)
-       
-        vol_bp = vol(cubeSize, cubeSize, cubeSize)
-        
-        for particleIndex in xrange(len(particles)):    
-            p = particles[particleIndex]
-            
-            if verbose:
-                print p
-            
-            vol_bp.setAll(0.0)
-            
-            # adjust coordinates of subvolumes to binned reconstruction
-            for i in xrange(len(self)):
-                reconstructionPosition( float(p.getPickPosition().getX()/binning), 0, i, 0) 
-                reconstructionPosition( float(p.getPickPosition().getY()/binning), 1, i, 0)
-                reconstructionPosition( float(p.getPickPosition().getZ()/binning), 2, i, 0)   
-            
-            if verbose:
-                print(p.getPickPosition().getX()/binning,p.getPickPosition().getY()/binning, 
-	        p.getPickPosition().getZ()/binning)
-            
-            backProject(vol_img, vol_bp, vol_phi, vol_the, reconstructionPosition, vol_offsetProjections)
-            
-            if postScale > 1:
-                from pytom_volume import rescaleSpline
-                volumeRescaled = vol(cubeSize/postScale,cubeSize/postScale,cubeSize/postScale)
-                rescaleSpline(vol_bp,volumeRescaled)
-                volumeRescaled.write(p.getFilename())
-            else:
-                vol_bp.write(p.getFilename())
-            
-            if showProgressBar:
-                numberParticleVolumes = numberParticleVolumes + 1
-                progressBar.update(numberParticleVolumes)
-
-
-    def reconstructVolumesMultiThreaded(self, particles, cubeSize, binning=1, applyWeighting=False,
-                           showProgressBar=False, verbose=False, preScale=1, postScale=1,
-                           alignResultFile='', num_procs=5):
+                           alignResultFile='', num_procs=10, num_procs_read=10):
         """
         reconstructVolumes: reconstruct a subtomogram given a particle object.
 
@@ -550,6 +456,8 @@ class ProjectionList(PyTomClass):
         @param verbose: False by default
         @param preScale: Scale (bin) the projections BEFORE reconstruction
         @param postScale: Scale the tomogram AFTER reconstruction
+
+        @changes: Made it use multiple threads [Douwe, 2019]
         """
         from pytom_volume import vol, paste, backProject, complexRealMult
         from pytom.basic.files import readProxy as read
@@ -574,7 +482,7 @@ class ProjectionList(PyTomClass):
         if not alignResultFile:
             self.projectionstacks = self.toProjectionStack(
                 binning=binning, applyWeighting=applyWeighting, showProgressBar=False,
-                verbose=False, num_procs=num_procs)
+                verbose=False, num_procs=num_procs_read)
         else:
             from pytom.reconstruction.generateAlignedTiltImagesInMemory import \
                 toProjectionStackFromAlignmentResultsFile
@@ -590,7 +498,7 @@ class ProjectionList(PyTomClass):
 
         for pid in range(num_procs):
             args = (pid, num_procs, verbose, binning, postScale, cubeSize)
-            proc = Process(target=self._worker_to_projection_stack, args=args)
+            proc = Process(target=self._worker_reconstruct_volumes, args=args)
             procs.append(proc)
             proc.start()
 
@@ -609,7 +517,7 @@ class ProjectionList(PyTomClass):
         assert num_procs >= 1
         while True:
             pos = index*num_procs+pid
-            if pos > len(particles): break
+            if pos >= len(particles): break
             index += 1
             p = particles[pos]
             x = p.getPickPosition().getX()
@@ -847,11 +755,10 @@ class ProjectionList(PyTomClass):
         from pytom.basic.filter import circleFilter,rampFilter,fourierFilterShift
         
         # determine image dimensions according to first image in projection list
-        imgDim = read(self._list[0].getFilename(),0,0,0,0,0,0,0,0,0,binning,binning,1).sizeX()        
-        
-        stack = vol(imgDim, imgDim, len(self._list))
-        stack.setAll(0.0)
-        if num_procs > 1: self.projectionstack_stack = stack
+        imgDim = read(self._list[0].getFilename(),0,0,0,0,0,0,0,0,0,binning,binning,1).sizeX()
+
+        self.projectionstack_stack = vol(imgDim, imgDim, len(self._list))
+        self.projectionstack_stack.setAll(0.0)
         
         phiStack = vol(1, 1, len(self._list))
         phiStack.setAll(0.0)
@@ -889,7 +796,6 @@ class ProjectionList(PyTomClass):
                 time.sleep(0.4)
                 procs = [proc for proc in procs if proc.is_alive()]
 
-            stack = self.projectionstack_stack
             phiStack = self.projectionstack_phiStack
             thetaStack = self.projectionstack_thetaStack
             offsetStack = self.projectionstack_offsetStack
@@ -907,13 +813,13 @@ class ProjectionList(PyTomClass):
                 thetaStack(projection.getTiltAngle(), 0, 0, i)
                 offsetStack(projection.getOffsetX(),0,0,i)
                 offsetStack(projection.getOffsetY(),0,1,i)
-                paste(image, stack, 0, 0, i)
+                paste(image, self.projectionstack_stack, 0, 0, i)
 
                 if showProgressBar:
                     progressBar.update(i)
 
         print("Finished reconstruction")
-        return [stack,phiStack,thetaStack,offsetStack]
+        return [self.projectionstack_stack,phiStack,thetaStack,offsetStack]
 
     def _worker_to_projection_stack(self, pid, num_procs, binning, applyWeighting, verbose):
         from pytom_volume import vol, paste, complexRealMult
@@ -924,7 +830,7 @@ class ProjectionList(PyTomClass):
         assert num_procs >= 1
         while True:
             i = index * num_procs + pid # Each worker has its own group of tasks
-            if i > len(self._list): break
+            if i >= len(self._list): break
             index += 1
 
             projection = self._list[i]

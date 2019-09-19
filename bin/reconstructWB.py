@@ -38,6 +38,11 @@ if __name__ == '__main__':
                                 ScriptOption(['--projBinning'], 'Bin projections BEFORE reconstruction. 1 is no binning, 2 will merge two voxels to one, 3 -> 1, 4 ->1 ...', arg=True, optional=True),
                                 ScriptOption(['-a', '--alignResultFile'], 'Use an alignmentResultFile to generate the aligned files in memory.', arg=True, optional=True),
                                 ScriptOption(['-r', '--particlePolishFile'], 'Use an particlePolishFile to generate the polished cutouts.', arg=True, optional=True),
+                                ScriptOption(['-n', '--numProcesses'], 'The number of processes to use. Default: 10', arg=True, optional=True),
+                                ScriptOption(['--numReadProcesses'], 'The maximum number of reading processes. BEWARE!'
+                                              ' a single read thread easily consumes up to 4 Gb (for a 4k picture) so '
+                                              'keep that in mind to not overload the nodes. If not specified this will '
+                                              'be the same as numProcesses.', arg=True, Optional=True),
                                 ScriptOption(['--help'], 'Print this help.', arg=False, optional=True)])
     
     if len(sys.argv) == 1:
@@ -49,7 +54,8 @@ if __name__ == '__main__':
     aw = False
     
     try:
-        tomogram, particleListXMLPath, projectionList, projectionDirectory, aw, size, coordinateBinning, recOffset, projBinning, alignmentResultFile, particlePolishFile, help= parse_script_options(sys.argv[1:], helper)
+        tomogram, particleListXMLPath, projectionList, projectionDirectory, aw, size, coordinateBinning, recOffset, \
+        projBinning, alignmentResultFile, particlePolishFile, numProcesses, numReadProcesses, help= parse_script_options(sys.argv[1:], helper)
     
     except Exception as e:
         print e
@@ -61,7 +67,7 @@ if __name__ == '__main__':
         print helper
         sys.exit()
    
-    size = [int(i) for i in size.split(",")]
+    size = [int(i) for i in size.split(',')]
     if len(size) == 1:
         tmp = size[0]
         size.append(tmp)
@@ -71,7 +77,17 @@ if __name__ == '__main__':
         projBinning = int(projBinning)
     else:
         projBinning = 1
-        
+
+    if numProcesses is None:
+        numProcesses = 10
+    else:
+        numProcesses = int(numProcesses)
+
+    if numReadProcesses is None:
+        numReadProcesses = numProcesses
+    else:
+        numReadProcesses = int(numReadProcesses)
+
     if coordinateBinning:
         coordinateBinning = float(coordinateBinning)
     else:
@@ -80,7 +96,7 @@ if __name__ == '__main__':
         aw = False
 
     if recOffset:
-        recOffset = [int(i) for i in recOffset.split(",")]
+        recOffset = [int(i) for i in recOffset.split(',')]
     else:
         recOffset = [0.,0.,0.]
     
@@ -135,14 +151,15 @@ if __name__ == '__main__':
             if particlePolishFile and len(polishedCoordinates['AlignmentTransX']) == len(particleList) * len(projections):
                 x += polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
                 y += polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
-                particle.setFilename(particle.getFilename()[:-3]+"_polished.em")
+                particle.setFilename(particle.getFilename()[:-3]+'_polished.em')
             z = (pickPosition.getZ()*coordinateBinning+ recOffset[2])/projBinning
             particle.setPickPosition( PickPosition(x=x, y=y, z=z))
 
         projections.reconstructVolumes(particles=particleList, cubeSize=int(size[0]), \
-                                       binning=projBinning, applyWeighting = aw, \
-                                       showProgressBar = True,verbose=False, \
-                                       preScale=projBinning,postScale=1, alignResultFile=alignmentResultFile)
+                                       binning=projBinning, applyWeighting=aw, \
+                                       showProgressBar=True, verbose=False, \
+                                       preScale=projBinning, postScale=1, alignResultFile=alignmentResultFile,
+                                       num_procs=numProcesses, num_procs_read=numReadProcesses)
 
             
 
