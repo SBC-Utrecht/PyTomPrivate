@@ -116,6 +116,11 @@ if __name__ == '__main__':
 
     print("Parsed arguments")
 
+    from pytom.tompy.mpi import MPI
+
+    mpi = MPI()
+    mpi.begin()
+
     names = [("particleList_TM_tomogram_010_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_000/alignment/marker_0001_-60.0,60.0/"),
              ("particleList_TM_tomogram_011_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_001/alignment/marker_0001_-60.0,60.0/"),
              ("particleList_TM_tomogram_012_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_002/alignment/marker_0001_-60.0,60.0/"),
@@ -138,8 +143,9 @@ if __name__ == '__main__':
             proj.append(p.getFilename())
             tilt_angles.append(p.getTiltAngle())
 
-        local_alignment(proj, vol_size, binning, offset, tilt_angles, pl_filename, proj_dir, reconstruction_method,
+        local_alignment(proj, vol_size, binning, offset, tilt_angles, pl_filename, proj_dir, mpi, reconstruction_method,
                         infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles,
                         skip_alignment, n[0], 1 if n == 3 else 0)
         print("Finished "+n[0])
 
+    mpi.end()

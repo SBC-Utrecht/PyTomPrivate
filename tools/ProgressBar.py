@@ -93,6 +93,9 @@ class FixedProgBar:
         if new == self.prog.max:
             print '\n'
 
+    def increment_amount(self, add_amount=1):
+        self.prog.increment_amount(add_amount)
+
 def main():
     print
     limit = 1000000

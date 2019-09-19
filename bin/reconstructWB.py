@@ -27,9 +27,9 @@ if __name__ == '__main__':
                           http://www.pytom.org/doc/pytom/resonstructSubtomograms.html',
                       authors='Thomas Hrabe, FF',
 
-                      options= [ScriptOption(['-t','--tomogram'], 'Reconstruct a tomogram. Specify name of tomogam here. You do not need a particle list for that!', arg=True, optional=False),
+                      options= [ScriptOption(['-t','--tomogram'], 'Reconstruct a tomogram. Specify name of tomogam here. You do not need a particle list for that!', arg=True, optional=True),
                                 ScriptOption(['-p','--particleList'], 'XML particle list.', arg=True, optional=False),
-                                ScriptOption(['--projectionList'], 'XML projection list.', arg=True, optional=False),
+                                ScriptOption(['--projectionList'], 'XML projection list.', arg=True, optional=True),
                                 ScriptOption(['--projectionDirectory'], 'Directory containing the projections.', arg=True, optional=False),
                                 ScriptOption(['-w','--applyWeighting'], 'If projections are not weighted, apply weighting before. If omited, no weighting.', arg=False, optional=True),
                                 ScriptOption(['-s','--size'], 'Size of particle cube / tomogram.', arg=True, optional=False),
@@ -38,7 +38,7 @@ if __name__ == '__main__':
                                 ScriptOption(['--projBinning'], 'Bin projections BEFORE reconstruction. 1 is no binning, 2 will merge two voxels to one, 3 -> 1, 4 ->1 ...', arg=True, optional=True),
                                 ScriptOption(['-a', '--alignResultFile'], 'Use an alignmentResultFile to generate the aligned files in memory.', arg=True, optional=True),
                                 ScriptOption(['-r', '--particlePolishFile'], 'Use an particlePolishFile to generate the polished cutouts.', arg=True, optional=True),
-                                ScriptOption(['--help'], 'Print this help.', arg=False, optional=False)])
+                                ScriptOption(['--help'], 'Print this help.', arg=False, optional=True)])
     
     if len(sys.argv) == 1:
         print helper
@@ -54,7 +54,9 @@ if __name__ == '__main__':
     except Exception as e:
         print e
         sys.exit()
-   
+
+    print(projectionDirectory, projectionList)
+
     if help:
         print helper
         sys.exit()
@@ -130,13 +132,13 @@ if __name__ == '__main__':
             pickPosition = particle.getPickPosition()
             x = (pickPosition.getX()*coordinateBinning+ recOffset[0])/projBinning
             y = (pickPosition.getY()*coordinateBinning+ recOffset[1])/projBinning
-            if particlePolishFile and len(polishedCoordinates['AlignmentTransX']) == len(particleList):
-                x += polishedCoordinates['AlignmentTransX'][n] / projBinning
-                y += polishedCoordinates['AlignmentTransY'][n] / projBinning
+            if particlePolishFile and len(polishedCoordinates['AlignmentTransX']) == len(particleList) * len(projections):
+                x += polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
+                y += polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
                 particle.setFilename(particle.getFilename()[:-3]+"_polished.em")
             z = (pickPosition.getZ()*coordinateBinning+ recOffset[2])/projBinning
             particle.setPickPosition( PickPosition(x=x, y=y, z=z))
-         
+
         projections.reconstructVolumes(particles=particleList, cubeSize=int(size[0]), \
                                        binning=projBinning, applyWeighting = aw, \
                                        showProgressBar = True,verbose=False, \
