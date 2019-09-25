@@ -482,7 +482,7 @@ class ProjectionList(PyTomClass):
         if not alignResultFile:
             self.projectionstacks = self.toProjectionStack(
                 binning=binning, applyWeighting=applyWeighting, showProgressBar=False,
-                verbose=False, num_procs=num_procs_read)
+                verbose=False)
         else:
             from pytom.reconstruction.generateAlignedTiltImagesInMemory import \
                 toProjectionStackFromAlignmentResultsFile
@@ -492,6 +492,8 @@ class ProjectionList(PyTomClass):
         self.reconstruct_volume_particles = particles
 
         print('start subtomogram reconstructions!' )
+        from pytom_numpy import vol2npy
+        print(vol2npy(self.projectionstacks[0]))
         from multiprocessing import Process
         import time
         procs = []
@@ -731,9 +733,70 @@ class ProjectionList(PyTomClass):
             self.append(newProjection)
         
         self._list = sorted(self._list, key=lambda Projection: Projection._tiltAngle)
-            
+
+    def toProjectionStack(self, binning=1, applyWeighting=False, showProgressBar=False, verbose=False):
+        """
+        toProjectionStack:
+        @param binning: binning factor
+        @type binning: int
+        @param applyWeighting: applyWeighting
+        @type applyWeighting: bool
+        @param showProgressBar: show pretty bar
+        @type showProgressBar: bool
+        @param verbose: talkative
+        @type verbose: bool
+        @return: Will return a stack of projections - [Imagestack,phiStack,thetaStack,offsetStack]
+        """
+        from pytom_volume import vol, paste, complexRealMult
+        from pytom.basic.files import readProxy as read
+        from pytom.tools.ProgressBar import FixedProgBar
+        from pytom.basic.fourier import fft, ifft
+        from pytom.basic.filter import circleFilter, rampFilter, fourierFilterShift
+
+        # determine image dimensions according to first image in projection list
+        imgDim = read(self._list[0].getFilename(), 0, 0, 0, 0, 0, 0, 0, 0, 0, binning, binning, 1).sizeX()
+
+        stack = vol(imgDim, imgDim, len(self._list))
+        stack.setAll(0.0)
+
+        phiStack = vol(1, 1, len(self._list))
+        phiStack.setAll(0.0)
+
+        thetaStack = vol(1, 1, len(self._list))
+        thetaStack.setAll(0.0)
+
+        offsetStack = vol(1, 2, len(self._list))
+        offsetStack.setAll(0.0)
+
+        if applyWeighting:
+            weightSlice = fourierFilterShift(rampFilter(imgDim, imgDim))
+            circleFilterRadius = imgDim / 2
+            circleSlice = fourierFilterShift(circleFilter(imgDim, imgDim, circleFilterRadius))
+
+        if showProgressBar:
+            progressBar = FixedProgBar(0, len(self._particleList), 'Particle volumes generated ')
+            progressBar.update(0)
+
+        for (i, projection) in enumerate(self._list):
+            if verbose:
+                print projection
+
+            image = read(projection.getFilename(), 0, 0, 0, 0, 0, 0, 0, 0, 0, binning, binning, 1)
+
+            if applyWeighting:
+                image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice))
+
+            thetaStack(projection.getTiltAngle(), 0, 0, i)
+            offsetStack(projection.getOffsetX(), 0, 0, i)
+            offsetStack(projection.getOffsetY(), 0, 1, i)
+            paste(image, stack, 0, 0, i)
+
+            if showProgressBar:
+                progressBar.update(i)
+
+        return [stack, phiStack, thetaStack, offsetStack]
                
-    def toProjectionStack(self,binning=1,applyWeighting=False,showProgressBar=False,verbose=False, num_procs=1):
+    def toProjectionStackMT(self,binning=1,applyWeighting=False,showProgressBar=False,verbose=False, num_procs=1):
         """
         toProjectionStack:
 
@@ -796,10 +859,6 @@ class ProjectionList(PyTomClass):
                 time.sleep(0.4)
                 procs = [proc for proc in procs if proc.is_alive()]
 
-            phiStack = self.projectionstack_phiStack
-            thetaStack = self.projectionstack_thetaStack
-            offsetStack = self.projectionstack_offsetStack
-
         else:
             for (i, projection) in enumerate(self._list):
                 if verbose:
@@ -819,7 +878,7 @@ class ProjectionList(PyTomClass):
                     progressBar.update(i)
 
         print("Finished reconstruction")
-        return [self.projectionstack_stack,phiStack,thetaStack,offsetStack]
+        return [self.projectionstack_stack,self.projectionstack_phiStack,self.projectionstack_thetaStack,self.projectionstack_offsetStack]
 
     def _worker_to_projection_stack(self, pid, num_procs, binning, applyWeighting, verbose):
         from pytom_volume import vol, paste, complexRealMult
@@ -844,12 +903,19 @@ class ProjectionList(PyTomClass):
                 image = ifft(complexRealMult(complexRealMult(fft(image), self.projectionstack_weightSlice),
                                              self.projectionstack_circleSlice))
 
+            from pytom_numpy import vol2npy
+            print("Image")
+            print(vol2npy(image))
+
             self.projectionstack_thetaStack(projection.getTiltAngle(), 0, 0, i)
             self.projectionstack_offsetStack(projection.getOffsetX(), 0, 0, i)
             self.projectionstack_offsetStack(projection.getOffsetY(), 0, 1, i)
             paste(image, self.projectionstack_stack, 0, 0, i)
 
-            del image
+            print("Stack")
+            print(vol2npy(self.projectionstack_stack))
+
+            #del image
 
     def saveAsProjectionStack(self,filename,scale=1,applyWeighting=False,showProgressBar=False,verbose=False):
         """

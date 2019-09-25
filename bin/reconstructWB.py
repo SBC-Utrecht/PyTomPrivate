@@ -42,7 +42,7 @@ if __name__ == '__main__':
                                 ScriptOption(['--numReadProcesses'], 'The maximum number of reading processes. BEWARE!'
                                               ' a single read thread easily consumes up to 4 Gb (for a 4k picture) so '
                                               'keep that in mind to not overload the nodes. If not specified this will '
-                                              'be the same as numProcesses.', arg=True, Optional=True),
+                                              'be the same as numProcesses.', arg=True, optional=True),
                                 ScriptOption(['--help'], 'Print this help.', arg=False, optional=True)])
     
     if len(sys.argv) == 1:
@@ -151,7 +151,7 @@ if __name__ == '__main__':
             if particlePolishFile and len(polishedCoordinates['AlignmentTransX']) == len(particleList) * len(projections):
                 x += polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
                 y += polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
-                particle.setFilename(particle.getFilename()[:-3]+'_polished.em')
+                #particle.setFilename(particle.getFilename()[:-3]+'_polished.em')
             z = (pickPosition.getZ()*coordinateBinning+ recOffset[2])/projBinning
             particle.setPickPosition( PickPosition(x=x, y=y, z=z))
 
