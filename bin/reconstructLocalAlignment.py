@@ -48,6 +48,8 @@ if __name__ == '__main__':
                                    ScriptOption(['--skipAlignment'],
                                                 'Skips the alignment/particle polish phase, only does the '
                                                 'reconstruction and FRM alignment.', False, True),
+                                   ScriptOption(['-f','--FSCPath'], "The path to an FSC file (.dat) to use as a filter "
+                                                "for the cutouts.", True, True),
                                    ScriptOption(['-h', '--help'],
                                                 'Help.', False, True)])
     if len(sys.argv) == 1:
@@ -55,7 +57,7 @@ if __name__ == '__main__':
         sys.exit()
     try:
         pl_filename, proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
-         create_graphics, number_of_particles, skip_alignment, b_help = parse_script_options(sys.argv[1:], helper)
+         create_graphics, number_of_particles, skip_alignment, fsc_path, b_help = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
         sys.exit()
@@ -99,6 +101,9 @@ if __name__ == '__main__':
         reconstruction_method = "INFR"
     else:
         infr_iter = -1
+
+    if fsc_path is None:
+        fsc_path = ""
 
     # force the user to specify even-sized volume
     assert vol_size % 2 == 0
@@ -145,7 +150,7 @@ if __name__ == '__main__':
 
         local_alignment(proj, vol_size, binning, offset, tilt_angles, pl_filename, proj_dir, mpi, reconstruction_method,
                         infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles,
-                        skip_alignment, n[0], 1 if n == 3 else 0)
+                        skip_alignment, n[0], 1 if n == 3 else 0, fsc_path)
         print("Finished "+n[0])
 
     mpi.end()

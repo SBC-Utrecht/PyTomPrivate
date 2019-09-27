@@ -121,9 +121,10 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
             write("Subtomograms/{:s}/particle_{:d}.em".format(particlelist.getFilename(), m), v)
 
 
-def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory, mpi,
-                    projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
-                    averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False, particle_list_name="", start_glocal=True):
+def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
+                    mpi, projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
+                    averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False, particle_list_name="",
+                    start_glocal=True, fsc_path=""):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
@@ -233,7 +234,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
         # loop over tiltrange, take patch and cross correlate with reprojected subtomogram
         for img, ang in zip(projections, tilt_angles):
             input_to_processes.append([ang, subtomogram, offset, vol_size, particle.getPickPosition().toVector(), rot,
-                                       particle.getFilename(), particle_number, binning, img, create_graphics])
+                                       particle.getFilename(), particle_number, binning, img, create_graphics, fsc_path])
 
     print(len(input_to_processes))
     print("{:s}> Created the input array".format(gettime()))
@@ -264,11 +265,11 @@ def run_single_tilt_angle_unpack(inp):
     @returntype: list
     """
     return run_single_tilt_angle(
-        inp[0], inp[1], inp[2], inp[3], inp[4], inp[5], inp[6], inp[7], inp[8], inp[9], inp[10])
+        inp[0], inp[1], inp[2], inp[3], inp[4], inp[5], inp[6], inp[7], inp[8], inp[9], inp[10], inp[11])
 
 
 def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position, particle_rotation,  particle_filename,
-                          particle_number, binning, img, create_graphics=False):
+                          particle_number, binning, img, create_graphics=False, fsc_path=""):
     """
     To run a single tilt angle to allow for parallel computing
 
@@ -347,8 +348,19 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     patch = patch - np.mean(patch)
     patch = patch.squeeze()
 
+    # filter using FSC
+    fsc_mask = None
+    import os
+    if os.path.isfile(fsc_path):
+        f = open(fsc_path, "r")
+        fsc = map(lambda a: float(a), f.readlines())
+        f.close()
+        fsc_mask = create_fsc_mask(fsc, vol_size)
+    elif fsc_path != "":
+        print("Not an existing FSC file: " + fsc_path)
+
     # Cross correlate the template and patch, this should give the pixel shift it is after
-    ccf = normalised_cross_correlation_numpy(template, patch)
+    ccf = normalised_cross_correlation_numpy(template, patch, fsc_mask)
     points2d = find_sub_pixel_max_value_2d(ccf)
 
     x_diff = points2d[0] - vol_size / 2
@@ -487,7 +499,7 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
 #SBATCH --time        12:00:00
 #SBATCH -N 1
 #SBATCH --partition defq
-#SBATCH --ntasks-per-node 1
+#SBATCH --ntasks-per-node 20
 #SBATCH --job-name    polishedReconstruction                                                                     
 #SBATCH --error="../LogFiles/%j-polished_subtomograms.err"
 #SBATCH --output="../LogFiles/%j-polished_subtomograms.out"
@@ -504,7 +516,8 @@ reconstructWB.py --particleList {:s} \
 --applyWeighting \
 --projBinning 1 \
 --recOffset {:d},{:d},{:d} \
---particlePolishFile {:s}"""\
+--particlePolishFile {:s} \
+-n 20"""\
         .format(cwd, particle_list_filename, projection_directory, binning, vol_size, offset[0], offset[1], offset[2],
                 particle_polish_file)
 
@@ -520,13 +533,13 @@ reconstructWB.py --particleList {:s} \
         pid = out.split(" ")[3]
 
         mask_filename = "/data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/FRM_mask_200_70_4.mrc"
-        jobname = "test-combo-13-09-19"
-        iterations = 8
-        pixelsize = 2.64
+        jobname = "fsc-filter-27-09-2019"
+        iterations = 6
+        pixelsize = 2.62
         particleDiameter = 300
 
         glocal_batchfile = """#!/usr/bin/bash
-#SBATCH --time        48:00:00
+#SBATCH --time        36:00:00
 #SBATCH -N 4
 #SBATCH --partition defq
 #SBATCH --ntasks-per-node 20
@@ -552,6 +565,8 @@ mpiexec -n 80 pytom GLocalJob.py \
         f.write(glocal_batchfile)
         f.close()
 
+        if not os.path.isdir(cwd + "/Alignment/GLocal/" + jobname): os.mkdir(cwd + "/Alignment/GLocal/" + jobname)
+
         out = subprocess.check_output(['sbatch', 'glocal_align.sh'])
 
         if out.startswith("Submitted batch job "):
@@ -564,7 +579,7 @@ mpiexec -n 80 pytom GLocalJob.py \
         raise Exception("Could not start the reconstruction script: " + out)
 
 
-def normalised_cross_correlation_numpy(first, second):
+def normalised_cross_correlation_numpy(first, second, filter_mask=None):
     """
     Do a cross correlation based on numpy
 
@@ -572,22 +587,30 @@ def normalised_cross_correlation_numpy(first, second):
     @type first: numpy array 2D
     @param second: The second dataset (numpy 2D)
     @type second: numpy array 2D
+    @param filter_mask: a filter which is used to filter image 'first'
+    @type filter_mask: numpy array 2D
     @return: The cross correlation result
     @returntype: numpy array 2D
 
-    @requires: the shape of first to be equal to the shape of second
+    @requires: the shape of first to be equal to the shape of second, and equal t the shape of the filter (if used of course)
     """
-    # assert first.shape == second.shape
-    # assert len(first.shape) == 2
+    assert first.shape == second.shape
+    assert len(first.shape) == 2
+    if not(filter_mask is None): assert first.shape == filter_mask.shape
 
-    import numpy.fft as nf
+    from numpy.fft import fftshift, ifftn, fftn
     import numpy as np
 
     prod = 1
     for d in first.shape:
         prod *= d
 
-    return np.real(nf.fftshift(nf.ifftn(np.multiply(nf.fftn(second), np.conj(nf.fftn(first)))))) / prod
+    if filter_mask is None:
+        ffirst = fftn(first)
+    else:
+        ffirst = fftshift(fftshift(fftn(first)) * filter_mask)
+
+    return np.real(fftshift(ifftn(np.multiply(fftn(second), np.conj(ffirst))))) / prod
 
 
 def normalised_cross_correlation_cupy(first, second):
@@ -773,3 +796,22 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10,
 def gettime():
     from time import gmtime, strftime
     return strftime("%H:%M:%S", gmtime())
+
+
+def create_fsc_mask(fsc, size):
+    from numpy import meshgrid, arange, sqrt, zeros_like, float32
+
+    X, Y, Z = meshgrid(arange(size), arange(size), arange(size))
+
+    X -= size // 2
+    Y -= size // 2
+    Z -= size // 2
+
+    R = sqrt(X ** 2 + Y ** 2 + Z ** 2).astype(int)
+
+    out = zeros_like(R).astype(float32)
+
+    for n, val in enumerate(fsc):
+        out[R == n] = val
+
+    return out[size // 2, :, :]

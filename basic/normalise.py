@@ -60,7 +60,8 @@ def normaliseUnderMask(volume, mask, p=None):
         
     meanT = meanValueUnderMask(volume, mask, p)
     stdT = stdValueUnderMask(volume, mask, meanT, p)
-    res = (volume - meanT)/stdT
+    if stdT == 0: print("STDT is zero (should not happen I suppose) vol: " + volume + "\nmask: " + mask + "\np: " + "" if p is None else p)
+    res = (volume - meanT)/(1 if stdT == 0 else stdT)
     return (res,p)
 
 
