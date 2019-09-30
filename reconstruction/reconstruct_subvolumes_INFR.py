@@ -14,13 +14,13 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Reconstruct the subvolumes from projections using Fourier space method.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption('-p', 'Particle list.', True, False),
-                                   ScriptOption('-d', 'Unbinned projection directory. Note the projections should be aligned but not weighted!', True, False),
-                                   ScriptOption('-s', 'Output particle size (int).', True, False),
-                                   ScriptOption('-b', 'Binning factor of the particle list.', True, False),
-                                   ScriptOption('-o', 'Cutting offset of the particle list.', True, False),
-                                   ScriptOption('-i', 'Number of iterations to run.', True, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption('-p', 'Particle list.', 'has arguments', 'required'),
+                                   ScriptOption('-d', 'Unbinned projection directory. Note the projections should be aligned but not weighted!', 'has arguments', 'required'),
+                                   ScriptOption('-s', 'Output particle size (int).', 'has arguments', 'optional'),
+                                   ScriptOption('-b', 'Binning factor of the particle list.', 'has arguments', 'required'),
+                                   ScriptOption('-o', 'Cutting offset of the particle list.', 'has arguments', 'required'),
+                                   ScriptOption('-i', 'Number of iterations to run.', 'has arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     if len(sys.argv) == 1:
         print helper
         sys.exit()

@@ -730,9 +730,9 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
                           description='Subtomogram alignment by Fast Rotational Matching.',
                           authors='Yuxiang Chen',
-                          options= [ScriptOption(['-j'], 'Job xml file.', True, True),
-                                    ScriptOption(['-v'], 'Verbose mode.', False, False),
-                                    ScriptOption(['--help'], 'Help info.', False, False)])
+                          options= [ScriptOption(['-j'], 'Job xml file.', 'has arguments', 'optional'),
+                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'required'),
+                                    ScriptOption(['--help'], 'Help info.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

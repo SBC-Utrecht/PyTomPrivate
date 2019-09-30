@@ -22,7 +22,7 @@ if __name__ == '__main__':
                           description='Convert coordinate list to particle list.',
                           authors='Friedrich Foerster',
                           options=[ScriptOption(['-p','--particleList'], 
-			               'Particle List', True, False),
+			               'Particle List', 'has arguments', 'required'),
                                    ScriptOption(['-c','--coords'], 
 				       'Coordinate List (ascii file from EMAN2)', 
 				       True, False),
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 				       'missing wedge angle(s) [counter-clock, clock] or single angle', 
 				       True, True),
                                    ScriptOption(['-h', '--help'], 'Help.', 
-				       False, True)])
+				       'no arguments', 'optional')])
     if len(sys.argv) == 1:
         print helper
         sys.exit()

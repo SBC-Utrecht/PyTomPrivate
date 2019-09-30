@@ -14,10 +14,10 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Reconstruct the whole tomogram from projections using iterative NFFT method.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption('-d', 'Unbinned projection directory. Note the projections should be aligned but not weighted!', True, False),
-                                   ScriptOption('-o', 'Output filename.', True, False),
-                                   ScriptOption('-i', 'Number of iterations to run.', True, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption('-d', 'Unbinned projection directory. Note the projections should be aligned but not weighted!', 'has arguments', 'required'),
+                                   ScriptOption('-o', 'Output filename.', 'has arguments', 'required'),
+                                   ScriptOption('-i', 'Number of iterations to run.', 'has arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     if len(sys.argv) == 1:
         print helper
         sys.exit()

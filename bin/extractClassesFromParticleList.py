@@ -17,10 +17,10 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Extract certain classes from the particle list.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-p'], 'Particle name prefix', True, False),
-                                   ScriptOption(['-c'], 'Class labels to be extracted. If multiple, please separate with comma.', True, False),
-                                   ScriptOption(['-o'], 'Output particle list', True, False),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-p'], 'Particle name prefix', 'has arguments', 'required'),
+                                   ScriptOption(['-c'], 'Class labels to be extracted. If multiple, please separate with comma.', 'has arguments', 'required'),
+                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

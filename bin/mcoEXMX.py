@@ -11,9 +11,9 @@ if __name__ == '__main__':
                           description='Run a mcoEXMX job. Documentation is available at\n \
                           http://www.pytom.org/doc/pytom/classification.html',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-j','--job'], 'Job', arg=True, optional=False),
-                                   ScriptOption(['-v','--verbose'], 'Verbose', arg=True, optional=False),
-                                   ScriptOption(['-h', '--help'], 'Help.', arg=False, optional=True)])
+                          options=[ScriptOption(['-j','--job'], 'Job', 'has arguments', 'required'),
+                                   ScriptOption(['-v','--verbose'], 'Verbose', 'has arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
 
     if len(sys.argv) == 1:
         print helper

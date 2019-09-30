@@ -14,12 +14,12 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Do the Gaussian fitting on the found particle list.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-f','--file'], 'Particle list after extracting candidates.', True, False),
-                                   ScriptOption(['-n','--numberBins'], 'Number of bins of histogram. Default is 10.', True, True),
-                                   ScriptOption(['-p','--gaussianPeak'], 'The correspondent index of the gaussian peak.', True, False),
-                                   ScriptOption(['-c','--numberParticles'], 'Number of particles up to CCC value.', True, True),
-                                   ScriptOption(['-i','--imageFile'], 'Save plot to a image file.', True, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-f','--file'], 'Particle list after extracting candidates.', 'has arguments', 'required'),
+                                   ScriptOption(['-n','--numberBins'], 'Number of bins of histogram. Default is 10.', 'has arguments', 'optional'),
+                                   ScriptOption(['-p','--gaussianPeak'], 'The correspondent index of the gaussian peak.', 'has arguments', 'required'),
+                                   ScriptOption(['-c','--numberParticles'], 'Number of particles up to CCC value.', 'has arguments', 'optional'),
+                                   ScriptOption(['-i','--imageFile'], 'Save plot to a image file.', 'has arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     if len(sys.argv) == 1:
         print helper
         sys.exit()

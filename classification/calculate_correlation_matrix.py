@@ -204,12 +204,12 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
                           description='Calculate the correlation matrix, given the aligned particle list. The result will be written to the disk named correlation_matrix.csv.',
                           authors='Yuxiang Chen',
-                          options= [ScriptOption(['-p'], 'Aligned particle list file.', True, False),
-                                    ScriptOption(['-m'], 'Mask.', True, False),
-                                    ScriptOption(['-f'], 'Frequency (after binning).', True, False),
-                                    ScriptOption(['-b'], 'Binning factor.', True, True),
-                                    ScriptOption(['-v'], 'Verbose mode.', False, True),
-                                    ScriptOption(['--help'], 'Help info.', False, True)])
+                          options= [ScriptOption(['-p'], 'Aligned particle list file.', 'has arguments', 'required'),
+                                    ScriptOption(['-m'], 'Mask.', 'has arguments', 'required'),
+                                    ScriptOption(['-f'], 'Frequency (after binning).', 'has arguments', 'required'),
+                                    ScriptOption(['-b'], 'Binning factor.', 'has arguments', 'optional'),
+                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'optional'),
+                                    ScriptOption(['--help'], 'Help info.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

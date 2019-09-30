@@ -27,23 +27,23 @@ if __name__ == '__main__':
                           http://www.pytom.org/doc/pytom/resonstructSubtomograms.html',
                       authors='Thomas Hrabe, FF',
 
-                      options= [ScriptOption(['-t','--tomogram'], 'Reconstruct a tomogram. Specify name of tomogam here. You do not need a particle list for that!', arg=True, optional=True),
-                                ScriptOption(['-p','--particleList'], 'XML particle list.', arg=True, optional=False),
-                                ScriptOption(['--projectionList'], 'XML projection list.', arg=True, optional=True),
-                                ScriptOption(['--projectionDirectory'], 'Directory containing the projections.', arg=True, optional=False),
-                                ScriptOption(['-w','--applyWeighting'], 'If projections are not weighted, apply weighting before. If omited, no weighting.', arg=False, optional=True),
-                                ScriptOption(['-s','--size'], 'Size of particle cube / tomogram.', arg=True, optional=False),
+                      options= [ScriptOption(['-t','--tomogram'], 'Reconstruct a tomogram. Specify name of tomogam here. You do not need a particle list for that!', 'has arguments', 'optional'),
+                                ScriptOption(['-p','--particleList'], 'XML particle list.', 'has arguments', 'required'),
+                                ScriptOption(['--projectionList'], 'XML projection list.', 'has arguments', 'optional'),
+                                ScriptOption(['--projectionDirectory'], 'Directory containing the projections.', 'has arguments', 'required'),
+                                ScriptOption(['-w','--applyWeighting'], 'If projections are not weighted, apply weighting before. If omited, no weighting.', 'no arguments', 'optional'),
+                                ScriptOption(['-s','--size'], 'Size of particle cube / tomogram.', 'has arguments', 'required'),
                                 ScriptOption(['-b','--coordinateBinning'], 'Binning factor of coordinates. If particle coordinates are determined in binned volume (with respect to projections) this binning factor needs to be specified.', arg=True, optional=True),
-                                ScriptOption(['-o','--recOffset'], 'Cropping offset of the binned tomogram.', arg=True, optional=False),
-                                ScriptOption(['--projBinning'], 'Bin projections BEFORE reconstruction. 1 is no binning, 2 will merge two voxels to one, 3 -> 1, 4 ->1 ...', arg=True, optional=True),
-                                ScriptOption(['-a', '--alignResultFile'], 'Use an alignmentResultFile to generate the aligned files in memory.', arg=True, optional=True),
-                                ScriptOption(['-r', '--particlePolishFile'], 'Use an particlePolishFile to generate the polished cutouts.', arg=True, optional=True),
-                                ScriptOption(['-n', '--numProcesses'], 'The number of processes to use. Default: 10', arg=True, optional=True),
+                                ScriptOption(['-o','--recOffset'], 'Cropping offset of the binned tomogram.', 'has arguments', 'required'),
+                                ScriptOption(['--projBinning'], 'Bin projections BEFORE reconstruction. 1 is no binning, 2 will merge two voxels to one, 3 -> 1, 4 ->1 ...', 'has arguments', 'optional'),
+                                ScriptOption(['-a', '--alignResultFile'], 'Use an alignmentResultFile to generate the aligned files in memory.', 'has arguments', 'optional'),
+                                ScriptOption(['-r', '--particlePolishFile'], 'Use an particlePolishFile to generate the polished cutouts.', 'has arguments', 'optional'),
+                                ScriptOption(['-n', '--numProcesses'], 'The number of processes to use. Default: 10', 'has arguments', 'optional'),
                                 ScriptOption(['--numReadProcesses'], 'The maximum number of reading processes. BEWARE!'
                                               ' a single read thread easily consumes up to 4 Gb (for a 4k picture) so '
                                               'keep that in mind to not overload the nodes. If not specified this will '
-                                              'be the same as numProcesses.', arg=True, optional=True),
-                                ScriptOption(['--help'], 'Print this help.', arg=False, optional=True)])
+                                              'be the same as numProcesses.', 'has arguments', 'optional'),
+                                ScriptOption(['--help'], 'Print this help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

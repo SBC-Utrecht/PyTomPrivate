@@ -16,13 +16,13 @@ if __name__ == '__main__':
                           description='Compile a electron density from PDB file\n\
                           http://pytom.org/doc/pytom/files.html',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-m','--mmCIFFile'], 'A mmCIF file', arg=True, optional=False),
-                                   ScriptOption(['-c','--chain'], 'A Chain', arg=True, optional=True),
-                                   ScriptOption(['-s','--pixelSize'], 'Pixel size of output volume (in Angstrom)', arg=True, optional=True),
-                                   ScriptOption(['-v','--volumeSize'], 'Volume length (size) in all dimensions', arg=True, optional=True),
-                                   ScriptOption(['-o','--outputVolumePath'], 'Path to output volume ', arg=True, optional=False),
-                                   ScriptOption(['-i','--invertDensity'],'Set if density should be negative', arg=False, optional=False),
-                                   ScriptOption(['-h', '--help'], 'Help.', arg=False, optional=True)])
+                          options=[ScriptOption(['-m','--mmCIFFile'], 'A mmCIF file', 'has arguments', 'required'),
+                                   ScriptOption(['-c','--chain'], 'A Chain', 'has arguments', 'optional'),
+                                   ScriptOption(['-s','--pixelSize'], 'Pixel size of output volume (in Angstrom)', 'has arguments', 'optional'),
+                                   ScriptOption(['-v','--volumeSize'], 'Volume length (size) in all dimensions', 'has arguments', 'optional'),
+                                   ScriptOption(['-o','--outputVolumePath'], 'Path to output volume ', 'has arguments', 'required'),
+                                   ScriptOption(['-i','--invertDensity'],'Set if density should be negative', 'no arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
 
 
     if len(sys.argv) == 1:

@@ -39,10 +39,10 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Convert ccp4 file to em.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-f','--file'], 'Filename', arg=True, optional=False),
-                                   ScriptOption(['-d','--directory'], 'A directory of files.', arg=True, optional=True),
-                                   ScriptOption(['-t','--targetPath'], 'Path to new file.',arg=True, optional=False),
-                                   ScriptOption(['-h', '--help'], 'Help.', arg=True, optional=False)])
+                          options=[ScriptOption(['-f','--file'], 'Filename', 'has arguments', 'required'),
+                                   ScriptOption(['-d','--directory'], 'A directory of files.', 'has arguments', 'optional'),
+                                   ScriptOption(['-t','--targetPath'], 'Path to new file.','has arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'has arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

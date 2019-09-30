@@ -19,16 +19,16 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Determine resolution by FSC.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption('--v1', 'First volume path.', arg=True, optional=True),
-                                   ScriptOption('--v2', 'Second volume path.', arg=True, optional=True),
-                                   ScriptOption('--pl', 'A particleList if v1 and v2 are not available.', arg=True, optional=True),
-                                   ScriptOption('--fsc', 'The FSC criterion. Value between 0.0 and 1.0. Standard values are 0.5 or 0.3', arg=True, optional=False),
-                                   ScriptOption('--numberBands', 'Number of bands (optional). If not set, numberBands = cubesize/4.', arg=True, optional=True),
-                                   ScriptOption(['-m','--mask'], 'Mask (optional, but recomended).', arg=True, optional=True),
-                                   ScriptOption('--pixelsize', 'Pixelsize in Angstrom (optional). Will return resolution in Angstrom. ', arg=True, optional=False),
-                                   ScriptOption('--xml', 'Output in XML. (optional) ', arg=False, optional=True),
-                                   ScriptOption(['-v','--verbose'], 'Verbose data. (optional) ', arg=False, optional=True),
-                                   ScriptOption(['-h', '--help'], 'Help.', arg=False, optional=True)])
+                          options=[ScriptOption('--v1', 'First volume path.', 'has arguments', 'optional'),
+                                   ScriptOption('--v2', 'Second volume path.', 'has arguments', 'optional'),
+                                   ScriptOption('--pl', 'A particleList if v1 and v2 are not available.', 'has arguments', 'optional'),
+                                   ScriptOption('--fsc', 'The FSC criterion. Value between 0.0 and 1.0. Standard values are 0.5 or 0.3', 'has arguments', 'required'),
+                                   ScriptOption('--numberBands', 'Number of bands (optional). If not set, numberBands = cubesize/4.', 'has arguments', 'optional'),
+                                   ScriptOption(['-m','--mask'], 'Mask (optional, but recomended).', 'has arguments', 'optional'),
+                                   ScriptOption('--pixelsize', 'Pixelsize in Angstrom (optional). Will return resolution in Angstrom. ', 'has arguments', 'required'),
+                                   ScriptOption('--xml', 'Output in XML. (optional) ', 'no arguments', 'optional'),
+                                   ScriptOption(['-v','--verbose'], 'Verbose data. (optional) ', 'no arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
 
 
     if len(sys.argv) <=2:

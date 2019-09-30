@@ -18,11 +18,11 @@ if __name__ == '__main__':
                           description='Create a particle list from the EM files in a directory. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/genParticleList.html',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-d'], 'Directory', True, False),
-                                   ScriptOption(['-p'], 'Particle name prefix', True, True),
-                                   ScriptOption(['-w'], 'Wedge Angle (degree)', True, False),
-                                   ScriptOption(['-o'], 'Output particle list', True, False),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-d'], 'Directory', 'has arguments', 'required'),
+                                   ScriptOption(['-p'], 'Particle name prefix', 'has arguments', 'optional'),
+                                   ScriptOption(['-w'], 'Wedge Angle (degree)', 'has arguments', 'required'),
+                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

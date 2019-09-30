@@ -728,7 +728,7 @@ def find_sub_pixel_max_value(inp, k=4):
     return output
 
 
-def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10, border_size=10, ignore_border=20):
+def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10, border_size=2, ignore_border=75):
     """
     To find the highest point in a given numpy array based on 2d spline interpolation, returns the maximum with subpixel
     precision.
@@ -741,13 +741,35 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10,
     @type smoothing: int
     @param dim: The dimensions of the peak cutout, which is interpolated to find the subpixel maximum
     @type dim: int
-    @param border_size: The amount of pixels (after interpolation) to disregard in the peak cutout
+    @param border_size: The amount of pixels (initial pixels) to disregard in the peak cutout
     @type border_size: int
     @param ignore_border: The amount of pixels to disregard in the initial finding of the initial maximum, to force the
        found maximum to be more in the center
     @type ignore_border: int
     @return: The subpixel maximum (x, y, the interpolated peak (excluding the border area))
     @returntype: tuple
+
+     <-------- Vol_Size ------->
+    | ignore_border             |
+    | |   <------ a ------>     |
+    | -> |                 | <- |
+    |    | Here the max is |    |
+    |    | found           |    |
+    |    |    d> <c> <d    |    |
+    |    |   |.. max ..|   |    |
+    |    |   |... * ...|   |    |
+    |    |   |.........|   |    |
+    |    |    <-- b -->    |    |
+    |    -------------------    |
+    |___________________________|
+
+    a: vol_size - 2 * ignore_border     (original pixels)
+    b: dim * 2                          (original pixels)
+    c: b * interpolate_factor - 2 * d                        (interpolated pixels)
+    d: border_size                      (interpolated pixels)
+    ...: interpolated values
+    *: peak found
+
     """
     # assert len(inp.shape) == 2
     # assert isinstance(interpolate_factor, int) and interpolate_factor > 0
@@ -760,10 +782,12 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10,
     from scipy import interpolate
     import warnings
 
+    border_size = border_size * interpolate_factor
+
     # Get the position of the initial maximum
     inp_without_border = inp[ignore_border:-ignore_border, ignore_border:-ignore_border]
     initial_max = np.unravel_index(inp_without_border.argmax(), inp_without_border.shape)
-    # Reset the coordinates to include the border
+    # Reset the coordinates to be relative to the original inp(ut)
     initial_max = (initial_max[0] + ignore_border, initial_max[1] + ignore_border)
 
     # Get the starting points of the peak cutout

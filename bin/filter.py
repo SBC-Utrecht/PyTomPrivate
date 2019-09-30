@@ -20,12 +20,12 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Will filter (band/low/high pass) a file. Choose values between 0 and 1.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-f','--file'], 'Filename', True, True),
-                                   ScriptOption(['-t','--target'], 'Name of filtered file', True, True),
-                                   ScriptOption(['-l','--lowestFrequency'], 'The lowest frequency. 0 if not set (in pixels)', True, False),
-                                   ScriptOption(['-h','--highestFrequency'], 'The highest frequency. Volume size / 2 if not set (in pixels)', True, True),
-                                   ScriptOption(['-s','--smooth'], 'Smoothing of bandpass (in voxels). 0 if not set.', True, True),
-                                   ScriptOption(['--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-f','--file'], 'Filename', 'has arguments', 'optional'),
+                                   ScriptOption(['-t','--target'], 'Name of filtered file', 'has arguments', 'optional'),
+                                   ScriptOption(['-l','--lowestFrequency'], 'The lowest frequency. 0 if not set (in pixels)', 'has arguments', 'required'),
+                                   ScriptOption(['-h','--highestFrequency'], 'The highest frequency. Volume size / 2 if not set (in pixels)', 'has arguments', 'optional'),
+                                   ScriptOption(['-s','--smooth'], 'Smoothing of bandpass (in voxels). 0 if not set.', 'has arguments', 'optional'),
+                                   ScriptOption(['--help'], 'Help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

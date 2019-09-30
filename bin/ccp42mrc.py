@@ -39,10 +39,10 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Convert ccp4 file to mrc.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-f','--file'], 'Filename', True, True),
-                                   ScriptOption(['-d','--directory'], 'A directory of files.', True, True),
-                                   ScriptOption(['-t','--targetPath'], 'Path to new file.', True, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-f','--file'], 'Filename', 'has arguments', 'optional'),
+                                   ScriptOption(['-d','--directory'], 'A directory of files.', 'has arguments', 'optional'),
+                                   ScriptOption(['-t','--targetPath'], 'Path to new file.', 'has arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

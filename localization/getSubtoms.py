@@ -15,14 +15,14 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Cut out the subtomograms from another tomogram given the particle list and the binning factor.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-v'], 'Volume.', True, False),
-                                   ScriptOption(['-p'], 'Particle list.', True, False),
-                                   ScriptOption(['-b'], 'Binning factor.', True, False),
-                                   ScriptOption(['-s'], 'Size in each dimension (in radius).', True, False),
-                                   ScriptOption(['-w'], 'Wedge angle.', True, False),
-                                   ScriptOption(['-d'], 'Destination directory.', True, True),
-                                   ScriptOption(['-r'], 'Resulting particle list for alignment.', True, False),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-v'], 'Volume.', 'has arguments', 'required'),
+                                   ScriptOption(['-p'], 'Particle list.', 'has arguments', 'required'),
+                                   ScriptOption(['-b'], 'Binning factor.', 'has arguments', 'required'),
+                                   ScriptOption(['-s'], 'Size in each dimension (in radius).', 'has arguments', 'required'),
+                                   ScriptOption(['-w'], 'Wedge angle.', 'has arguments', 'required'),
+                                   ScriptOption(['-d'], 'Destination directory.', 'has arguments', 'optional'),
+                                   ScriptOption(['-r'], 'Resulting particle list for alignment.', 'has arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

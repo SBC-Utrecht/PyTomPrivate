@@ -14,11 +14,11 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Select the particle list for alignment according to the class list.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption('-p', 'Particle list.', True, False),
-                                   ScriptOption('-c', 'Class label file.', True, False),
-                                   ScriptOption('-o', 'Output particle list.', True, False),
-                                   ScriptOption('-t', 'True positive class.', True, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption('-p', 'Particle list.', 'has arguments', 'required'),
+                                   ScriptOption('-c', 'Class label file.', 'has arguments', 'required'),
+                                   ScriptOption('-o', 'Output particle list.', 'has arguments', 'required'),
+                                   ScriptOption('-t', 'True positive class.', 'has arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     if len(sys.argv) == 1:
         print helper
         sys.exit()

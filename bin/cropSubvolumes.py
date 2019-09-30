@@ -65,12 +65,12 @@ if __name__ == '__main__':
     from pytom.tools.script_helper import ScriptHelper, ScriptOption
     from pytom.tools.parse_script_options import parse_script_options
 
-    options=[ScriptOption(['--particleList'], 'Name of particle list', arg=True, optional=False),
-             ScriptOption(['--output'], 'Name of output particles (<output>_<index>.em)', arg=True, optional=False),
+    options=[ScriptOption(['--particleList'], 'Name of particle list', 'has arguments', 'required'),
+             ScriptOption(['--output'], 'Name of output particles (<output>_<index>.em)', 'has arguments', 'required'),
              ScriptOption(['--center'], 'Center of output particles in template orientation (3dim vec:x,y,z) starting at 0', 
-                          arg=True, optional=True),
-             ScriptOption(['--cubesize'], 'Size of output particles in pixel', arg=True, optional=False),
-             ScriptOption(['--outParticleList'], 'Name of output particle list', arg=True, optional=True)]
+                          'has arguments', 'optional'),
+             ScriptOption(['--cubesize'], 'Size of output particles in pixel', 'has arguments', 'required'),
+             ScriptOption(['--outParticleList'], 'Name of output particle list', 'has arguments', 'optional')]
 
 
     helper = ScriptHelper(sys.argv[0].split('/')[-1],

@@ -15,9 +15,9 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Plot angular distribution of a particle list',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-p'], 'Particle list', True, False),
-                                   ScriptOption(['-c'], 'Class label to plot', True, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-p'], 'Particle list', 'has arguments', 'required'),
+                                   ScriptOption(['-c'], 'Class label to plot', 'has arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper
