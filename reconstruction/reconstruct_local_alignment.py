@@ -252,8 +252,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
         print("{:s}> Ran the processes".format(gettime()))
 
-    if start_glocal:
-        run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal)
+    run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal)
 
 
 def run_single_tilt_angle_unpack(inp):
@@ -503,7 +502,6 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
 #SBATCH --job-name    polishedReconstruction                                                                     
 #SBATCH --error="../LogFiles/%j-polished_subtomograms.err"
 #SBATCH --output="../LogFiles/%j-polished_subtomograms.out"
-#SBATCH --oversubscribe
 
 module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
 
@@ -553,14 +551,14 @@ module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
 cd {:s}
 
 mpiexec -n 80 pytom GLocalJob.py \
-    -p {:s}
-    --mask {:s}
-    --sphericalMask
-    --destination Alignment/GLocal/{:s}/
-    --numberIterations {:d}
-    --pixelSize {:f}
-    --particleDiameter {:d}
-    --jobName /Alignment/Glocal/{:s}/job.xml""".format(pid, cwd, particle_list_filename, mask_filename, jobname, iterations, pixelsize, particleDiameter, jobname)
+    -p {:s} \
+    --mask {:s} \
+    --SphericalMask \
+    --destination Alignment/GLocal/{:s}/ \
+    --numberIterations {:d} \
+    --pixelSize {:f} \
+    --particleDiameter {:d} \
+    --jobName Alignment/GLocal/{:s}/job.xml""".format(pid, cwd, particle_list_filename, mask_filename, jobname, iterations, pixelsize, particleDiameter, jobname)
         f = open("glocal_align.sh", "w+")
         f.write(glocal_batchfile)
         f.close()
