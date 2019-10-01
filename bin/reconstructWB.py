@@ -33,7 +33,7 @@ if __name__ == '__main__':
                                 ScriptOption(['--projectionDirectory'], 'Directory containing the projections.', 'has arguments', 'required'),
                                 ScriptOption(['-w','--applyWeighting'], 'If projections are not weighted, apply weighting before. If omited, no weighting.', 'no arguments', 'optional'),
                                 ScriptOption(['-s','--size'], 'Size of particle cube / tomogram.', 'has arguments', 'required'),
-                                ScriptOption(['-b','--coordinateBinning'], 'Binning factor of coordinates. If particle coordinates are determined in binned volume (with respect to projections) this binning factor needs to be specified.', arg=True, optional=True),
+                                ScriptOption(['-b','--coordinateBinning'], 'Binning factor of coordinates. If particle coordinates are determined in binned volume (with respect to projections) this binning factor needs to be specified.', 'has arguments', 'optional'),
                                 ScriptOption(['-o','--recOffset'], 'Cropping offset of the binned tomogram.', 'has arguments', 'required'),
                                 ScriptOption(['--projBinning'], 'Bin projections BEFORE reconstruction. 1 is no binning, 2 will merge two voxels to one, 3 -> 1, 4 ->1 ...', 'has arguments', 'optional'),
                                 ScriptOption(['-a', '--alignResultFile'], 'Use an alignmentResultFile to generate the aligned files in memory.', 'has arguments', 'optional'),
