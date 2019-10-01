@@ -26,18 +26,18 @@ if __name__ == '__main__':
                           http://www.pytom.org/doc/pytom/classification.html',
                           authors='Friedrich Foerster',
                           options=[ScriptOption(['-p','--particleList'], 
-			               'ParticleList', True, True),
+			               'ParticleList', 'has arguments', 'optional'),
                                    ScriptOption(['-o','--outputParticleList'], 
-				       'classified Particle List.', True, True),
+				       'classified Particle List.', 'has arguments', 'optional'),
                                    ScriptOption(['-c','--ccc'], 
-				       'constrained correlation matrix.', True, True),
+				       'constrained correlation matrix.', 'has arguments', 'optional'),
                                    ScriptOption(['-e','--neig'], 
-				       'number of eigenvectors.', True, True),
+				       'number of eigenvectors.', 'has arguments', 'optional'),
                                    ScriptOption(['-n','--nclass'], 
-				       'number of classes.', True, True),
+				       'number of classes.', 'has arguments', 'optional'),
                                    ScriptOption(['-a','--average'], 
-				       'name for class averages.', True, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+				       'name for class averages.', 'has arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     if len(sys.argv) == 1:
         print helper
         sys.exit()

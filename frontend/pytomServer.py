@@ -216,11 +216,11 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Start PyTom User Interface.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-h','--hostname'], 'Hostname of server.(name of computer you are logged into)', True, True),
-                                   ScriptOption(['-p','--port'], 'Specify port of server (if you do not know what that means, use 8080)', True, True),
-                                   ScriptOption(['-b','--browser'], 'Name of browser to start.', True, True),
-                                   ScriptOption(['-d','--disableBrowser'], 'Disable browser at start.', False, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-h','--hostname'], 'Hostname of server.(name of computer you are logged into)', 'has arguments', 'optional'),
+                                   ScriptOption(['-p','--port'], 'Specify port of server (if you do not know what that means, use 8080)', 'has arguments', 'optional'),
+                                   ScriptOption(['-b','--browser'], 'Name of browser to start.', 'has arguments', 'optional'),
+                                   ScriptOption(['-d','--disableBrowser'], 'Disable browser at start.', 'no arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
  
     defaultHostname = None
     defaultPort = 8080

@@ -14,14 +14,14 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Reconstruct a volume from its projections using weighted back projection.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption('-p', 'Projection prefix.', True, False),
-                                   ScriptOption('-a', 'Projection suffix.', True, False),
-                                   ScriptOption('-w', 'Apply weighting to the projections or not', False, True),
-                                   ScriptOption('-f', 'Projection start index (int).', True, False),
-                                   ScriptOption('-t', 'Projection end index (int).', True, False),
-                                   ScriptOption('-s', 'Volume size.', True, False),
-                                   ScriptOption('-o', 'Output filename.', True, False),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption('-p', 'Projection prefix.', 'has arguments', 'required'),
+                                   ScriptOption('-a', 'Projection suffix.', 'has arguments', 'required'),
+                                   ScriptOption('-w', 'Apply weighting to the projections or not', 'no arguments', 'optional'),
+                                   ScriptOption('-f', 'Projection start index (int).', 'has arguments', 'required'),
+                                   ScriptOption('-t', 'Projection end index (int).', 'has arguments', 'required'),
+                                   ScriptOption('-s', 'Volume size.', 'has arguments', 'required'),
+                                   ScriptOption('-o', 'Output filename.', 'has arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     if len(sys.argv) == 1:
         print helper
         sys.exit()

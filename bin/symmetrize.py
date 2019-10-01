@@ -19,14 +19,14 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
                           description='Generate a symmetrized density.',
                           authors='Thomas Hrabe',
-                          options= [ScriptOption(['-p','--particleList'], 'Aligned XML particle list.', True, True),
-                                    ScriptOption(['-v','--volume'], 'Volume to be symmetrized.', True, True),
-                                    ScriptOption(['-r','--result'], 'Resulting symmetry filename.', True, False),
-                                    ScriptOption(['-s','--symmetries'], 'How many symmetries (integer)', True, False),
-                                    ScriptOption(['--z1Rotation'], 'First rotation around z axis', True, True),
-                                    ScriptOption(['--xRotation'], 'Rotation around x axis', True, True),
-                                    ScriptOption(['--z2Rotation'], 'Second rotation around z axis', True, True),
-                                    ScriptOption(['--help'], 'Print help.', False, False)])
+                          options= [ScriptOption(['-p','--particleList'], 'Aligned XML particle list.', 'has arguments', 'optional'),
+                                    ScriptOption(['-v','--volume'], 'Volume to be symmetrized.', 'has arguments', 'optional'),
+                                    ScriptOption(['-r','--result'], 'Resulting symmetry filename.', 'has arguments', 'required'),
+                                    ScriptOption(['-s','--symmetries'], 'How many symmetries (integer)', 'has arguments', 'required'),
+                                    ScriptOption(['--z1Rotation'], 'First rotation around z axis', 'has arguments', 'optional'),
+                                    ScriptOption(['--xRotation'], 'Rotation around x axis', 'has arguments', 'optional'),
+                                    ScriptOption(['--z2Rotation'], 'Second rotation around z axis', 'has arguments', 'optional'),
+                                    ScriptOption(['--help'], 'Print help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

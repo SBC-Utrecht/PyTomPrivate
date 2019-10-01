@@ -13,11 +13,11 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Plot angular distribution around a certain axis.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-p'], 'Particle list.', True, False),
-                                   ScriptOption(['-a'], 'Euler angle specifying the axis in ZXZ convention', True, False),
-                                   ScriptOption(['-c'], 'cut out range', True, True),
-                                   ScriptOption(['-o'], 'Output file', True, False),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-p'], 'Particle list.', 'has arguments', 'required'),
+                                   ScriptOption(['-a'], 'Euler angle specifying the axis in ZXZ convention', 'has arguments', 'required'),
+                                   ScriptOption(['-c'], 'cut out range', 'has arguments', 'optional'),
+                                   ScriptOption(['-o'], 'Output file', 'has arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

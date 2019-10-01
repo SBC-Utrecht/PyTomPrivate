@@ -14,9 +14,9 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Mirror the volume.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-v'], 'Input volume.', True, False),
-                                   ScriptOption(['-o'], 'Output volume.', True, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-v'], 'Input volume.', 'has arguments', 'required'),
+                                   ScriptOption(['-o'], 'Output volume.', 'has arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     if len(sys.argv) == 1:
         print helper
         sys.exit()

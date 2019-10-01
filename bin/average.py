@@ -20,17 +20,17 @@ if __name__ == '__main__':
                           description='Averge a particle. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/average.html',
                           authors='Thomas Hrabe',
-                          options= [ScriptOption(['-p','--particleList'], 'XML particle list to be averaged.', arg=True, optional=False),
-                                    ScriptOption(['-a','--average'], 'Resulting average filename.', arg=True, optional=False),
-                                    ScriptOption(['--startIndex'], 'Average a subset of particles: start particle index.', arg=True, optional=True),
-                                    ScriptOption(['--endIndex'], 'Average a subset of particles: last particle index.', arg=True, optional=True),
-                                    ScriptOption(['--minimumScore'], 'Average a subset of particles: minimum score of particle. Does not work when start & end index are specified!', arg=True, optional=True),
-                                    ScriptOption(['--maximumScore'], 'Average a subset of particles: maximum score of particle. Does not work when start & end index are specified!', arg=True, optional=True),
-                                    ScriptOption(['--infoVolumes'], 'Generate info volumes like wedge volume.', arg=False, optional=True),
-                                    ScriptOption(['--progressbarOff'], 'Display a progressbar. On by default', arg=False, optional=True),
-                                    ScriptOption(['--fromAlignmentList'], 'Average from alignment list XML instead from particleListXML. Optional, off by default.', arg=True, optional=True),
-                                    ScriptOption(['--subregion'], 'Average of particles whose coordinates are in [startX,startY,startZ,endX,endY,endZ].', arg=True, optional=True),
-                                    ScriptOption(['--help'], 'Print this help.', arg=False, optional=True)])
+                          options= [ScriptOption(['-p','--particleList'], 'XML particle list to be averaged.', 'has arguments', 'required'),
+                                    ScriptOption(['-a','--average'], 'Resulting average filename.', 'has arguments', 'required'),
+                                    ScriptOption(['--startIndex'], 'Average a subset of particles: start particle index.', 'has arguments', 'optional'),
+                                    ScriptOption(['--endIndex'], 'Average a subset of particles: last particle index.', 'has arguments', 'optional'),
+                                    ScriptOption(['--minimumScore'], 'Average a subset of particles: minimum score of particle. Does not work when start & end index are specified!', 'has arguments', 'optional'),
+                                    ScriptOption(['--maximumScore'], 'Average a subset of particles: maximum score of particle. Does not work when start & end index are specified!', 'has arguments', 'optional'),
+                                    ScriptOption(['--infoVolumes'], 'Generate info volumes like wedge volume.', 'no arguments', 'optional'),
+                                    ScriptOption(['--progressbarOff'], 'Display a progressbar. On by default', 'no arguments', 'optional'),
+                                    ScriptOption(['--fromAlignmentList'], 'Average from alignment list XML instead from particleListXML. Optional, off by default.', 'has arguments', 'optional'),
+                                    ScriptOption(['--subregion'], 'Average of particles whose coordinates are in [startX,startY,startZ,endX,endY,endZ].', 'has arguments', 'optional'),
+                                    ScriptOption(['--help'], 'Print this help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

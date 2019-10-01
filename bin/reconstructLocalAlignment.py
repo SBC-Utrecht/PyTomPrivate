@@ -17,41 +17,41 @@ if __name__ == '__main__':
                           description='Reconstruct a local alignment of particles based on a global alignment.',
                           authors='Douwe Schulte',
                           options=[ScriptOption(['-p', '--particleList'],
-                                                'Particle list (filename).', True, False),
+                                                'Particle list (filename).', 'has arguments', 'required'),
                                    ScriptOption(['-d', '--projectionDirectory'],
                                                 'Unbinned projection directory. Note the projections should be aligned '
-                                                'but not weighted! (path)', True, False),
+                                                'but not weighted! (path)', 'has arguments', 'required'),
                                    ScriptOption(['-s', '--particleSize'],
-                                                'Output particle size (int).', True, False),
+                                                'Output particle size (int).', 'has arguments', 'required'),
                                    ScriptOption(['-b', '--binning'],
-                                                'Binning factor of the particle list (int).', True, False),
+                                                'Binning factor of the particle list (int).', 'has arguments', 'required'),
                                    ScriptOption(['-o', '--cuttingOffset'],
                                                 'Cutting offset of the particle list (int x, int y, int z).',
-                                                True, False),
+                                                'has arguments', 'required'),
                                    ScriptOption(['-a', '--averagedSubtomogram'],
                                                 'The path to an averaged subtomogram, to use instead of many '
-                                                'subtomograms', True, True),
+                                                'subtomograms', 'has arguments', 'optional'),
                                    ScriptOption(['-i', '--INFRIterations'],
                                                 'Number of iterations to run, when running INFR, using this option '
-                                                'automatically sets the reconstruction method to INFR.', True, True),
+                                                'automatically sets the reconstruction method to INFR.', 'has arguments', 'optional'),
                                    ScriptOption(['-m', '--reconstructionMethod'],
                                                 'The reconstruction method for creating the initial subtomograms, has '
                                                 'to be INFR or WBP. If this is not specified no initial subtomograms '
                                                 'are created and subtomograms are expected to be made available in the '
-                                                'normal folder.', True, True),
+                                                'normal folder.', 'has arguments', 'optional'),
                                    ScriptOption(['-g', '--createGraphics'],
                                                 'Flag to turn on to create graphical reports of intermediate steps of '
-                                                'the particle polishing', False, True),
+                                                'the particle polishing', 'no arguments', 'optional'),
                                    ScriptOption(['-n', '--numberOfParticles'],
                                                 'To take a subset of the particlelist for debugging purposes (int)',
-                                                True, True),
+                                                'has arguments', 'optional'),
                                    ScriptOption(['--skipAlignment'],
                                                 'Skips the alignment/particle polish phase, only does the '
-                                                'reconstruction and FRM alignment.', False, True),
+                                                'reconstruction and FRM alignment.', 'no arguments', 'optional'),
                                    ScriptOption(['-f','--FSCPath'], "The path to an FSC file (.dat) to use as a filter "
-                                                "for the cutouts.", True, True),
+                                                "for the cutouts.", 'has arguments', 'optional'),
                                    ScriptOption(['-h', '--help'],
-                                                'Help.', False, True)])
+                                                'Help.', 'no arguments', 'optional')])
     if len(sys.argv) == 1:
         print helper
         sys.exit()
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
         local_alignment(proj, vol_size, binning, offset, tilt_angles, pl_filename, proj_dir, mpi, reconstruction_method,
                         infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles,
-                        skip_alignment, n[0], 1 if n == 3 else 0, fsc_path)
+                        skip_alignment, n[0], True if i == 3 else False, fsc_path)
         print("Finished "+n[0])
 
     mpi.end()

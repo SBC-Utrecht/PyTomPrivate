@@ -56,19 +56,19 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
                           description='Extract candidate molecules from localization result.',
                           authors='Yuxiang Chen',
-                          options= [ScriptOption(['-j','--jobFile'], 'Localization job XML file.', arg=True, optional=False),
-                                    ScriptOption(['-r','--result'], 'File with score coefficients (score.em).', arg=True, optional=False),
-                                    ScriptOption(['-o','--orientation'], 'File with orientation indices (angles.em).', arg=True, optional=False),
-                                    ScriptOption(['-n','--numberCandidates'], 'Number of candidates to extract.', arg=True, optional=False),
-                                    ScriptOption(['-s','--size'], 'Radius around potential candidate that will be ignored during further processing.', arg=True, optional=False),
-                                    ScriptOption(['-p','--particleList'], 'Name of particle list XML file.', arg=True, optional=False),
-                                    ScriptOption(['-t','--particlePath'], 'Path prepended to each particle.', arg=True, optional=True),
-                                    ScriptOption(['-v','--minimalScoreValue'], 'Minimal score value to which to extract.', arg=True, optional=True),
-                                    ScriptOption(['-m','--motlList'], 'Write a MOTL file with candidates. The name of the file will be an extension of the particle list with .em.', arg=True,optional=True),
-                                    ScriptOption(['-g','--margin'], 'Size of outer margin that will be ignored for potential candidates.', arg=True,optional=True),
-                                    ScriptOption(['-w','--sizeCubes'], 'If specified, it will cut out candidates from the original tomogram with the specified size.', arg=True,optional=True),
-                                    ScriptOption(['--scale'], 'Scale coordinates by a factor. Set > 1 to adjust to larger volumes. Use 2 if the localization tomo was 1x binned.', arg=True, optional=True),
-                                    ScriptOption(['--help'], 'Print this help.', arg=False,optional= True)])
+                          options= [ScriptOption(['-j','--jobFile'], 'Localization job XML file.', 'has arguments', 'required'),
+                                    ScriptOption(['-r','--result'], 'File with score coefficients (score.em).', 'has arguments', 'required'),
+                                    ScriptOption(['-o','--orientation'], 'File with orientation indices (angles.em).', 'has arguments', 'required'),
+                                    ScriptOption(['-n','--numberCandidates'], 'Number of candidates to extract.', 'has arguments', 'required'),
+                                    ScriptOption(['-s','--size'], 'Radius around potential candidate that will be ignored during further processing.', 'has arguments', 'required'),
+                                    ScriptOption(['-p','--particleList'], 'Name of particle list XML file.', 'has arguments', 'required'),
+                                    ScriptOption(['-t','--particlePath'], 'Path prepended to each particle.', 'has arguments', 'optional'),
+                                    ScriptOption(['-v','--minimalScoreValue'], 'Minimal score value to which to extract.', 'has arguments', 'optional'),
+                                    ScriptOption(['-m','--motlList'], 'Write a MOTL file with candidates. The name of the file will be an extension of the particle list with .em.', 'has arguments','optional'),
+                                    ScriptOption(['-g','--margin'], 'Size of outer margin that will be ignored for potential candidates.', 'has arguments','optional'),
+                                    ScriptOption(['-w','--sizeCubes'], 'If specified, it will cut out candidates from the original tomogram with the specified size.', 'has arguments','optional'),
+                                    ScriptOption(['--scale'], 'Scale coordinates by a factor. Set > 1 to adjust to larger volumes. Use 2 if the localization tomo was 1x binned.', 'has arguments', 'optional'),
+                                    ScriptOption(['--help'], 'Print this help.', 'no arguments', 'optional')])
     
     if len(sys.argv) ==1:
         print helper

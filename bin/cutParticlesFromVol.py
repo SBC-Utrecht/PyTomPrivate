@@ -21,10 +21,10 @@ if __name__ == '__main__':
                           description='Cut particles out from a volume, given the particle list. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/cutParticles.html',
                           authors='Yuxiang Chen',
-                          options= [ScriptOption(['-v','--volume'], 'Volume.', arg=True, optional=False),
-                                    ScriptOption(['-p','--particleFile'], 'Particle list.', arg=True, optional=False),
-                                    ScriptOption(['-c','--cubeSize'], 'Cube size along each dimension.', arg=True, optional=False),
-                                    ScriptOption(['--help'], 'Print this help.', arg=False,optional=True)])
+                          options= [ScriptOption(['-v','--volume'], 'Volume.', 'has arguments', 'required'),
+                                    ScriptOption(['-p','--particleFile'], 'Particle list.', 'has arguments', 'required'),
+                                    ScriptOption(['-c','--cubeSize'], 'Cube size along each dimension.', 'has arguments', 'required'),
+                                    ScriptOption(['--help'], 'Print this help.', 'no arguments','optional')])
 
     if len(sys.argv) == 1:
         print helper

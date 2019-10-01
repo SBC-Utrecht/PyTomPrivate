@@ -16,20 +16,32 @@ class ScriptOption:
     """
     ScriptOption: Determine whether script option requires an argument or is optional 
     """
-    def __init__(self, option_str, description="", arg=True, optional=False):
+    def __init__(self, option_str, description, arguments, required):
         """
-	@param arg: requires argument?
-	@type arg: bool
-	@param optional: optional feature?
-	@type optional: bool
+        @param arg: requires argument? choose between 'has arguments' and 'no arguments'
+        @type arg: str
+        @param required: optional feature? choose between 'required' and 'optional'
+        @type required: str
         """
         if option_str.__class__ == list: # make it list
             self.option_str = option_str
         else:
             self.option_str = [option_str]
         self.description = description
-        self.arg = arg
-        self.optional = optional
+
+        if arguments.lower() == 'no arguments':
+            self.arg = False
+        elif arguments.lower() == 'has arguments':
+            self.arg = True
+        else:
+            raise Exception("The value for 'arg' in ScriptOption should be one of the following: 'has arguments' or 'no arguments'")
+
+        if required.lower() == 'required':
+            self.required = True
+        elif required.lower() == 'optional':
+            self.required = False
+        else:
+            raise Exception("The value for 'required' in ScriptOption should be 'required' or 'optional'")
     
     def __str__(self):
         name = ''
@@ -37,7 +49,7 @@ class ScriptOption:
             name += str(n)+', '
         name = name[:-2]
 
-        return name + "    " + self.description + " (Is optional: " + ('Yes' if self.optional else 'No') + ";" + " Requires arguments: "+ ('Yes' if self.arg else 'No') + ")"
+        return name + "    " + self.description + " (Is optional: " + ('Yes' if self.required else 'No') + ";" + " Requires arguments: "+ ('Yes' if self.arg else 'No') + ")"
 
 class ScriptHelper:
     """

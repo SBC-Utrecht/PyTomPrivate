@@ -29,11 +29,11 @@ if __name__ == '__main__':
                           description='Run a localization job. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/localization.html',
                           authors='Yuxiang Chen, Thomas Hrabe',
-                          options=[ScriptOption(['-j','--jobName'], 'Specify job.xml filename', arg=True, optional=False),
-                                   ScriptOption(['-x','--splitX'], 'Parts you want to split the volume in X dimension', arg=True, optional=True),
-                                   ScriptOption(['-y','--splitY'], 'Parts you want to split the volume in Y dimension', arg=True, optional=True),
-                                   ScriptOption(['-z','--splitZ'], 'Parts you want to split the volume in Z dimension', arg=True, optional=True),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, True)])
+                          options=[ScriptOption(['-j','--jobName'], 'Specify job.xml filename', 'has arguments', 'required'),
+                                   ScriptOption(['-x','--splitX'], 'Parts you want to split the volume in X dimension', 'has arguments', 'optional'),
+                                   ScriptOption(['-y','--splitY'], 'Parts you want to split the volume in Y dimension', 'has arguments', 'optional'),
+                                   ScriptOption(['-z','--splitZ'], 'Parts you want to split the volume in Z dimension', 'has arguments', 'optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     
     if len(sys.argv) == 1:
         print helper

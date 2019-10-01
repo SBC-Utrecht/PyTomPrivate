@@ -17,9 +17,9 @@ if __name__ == '__main__':
                           description='Run an alignment job. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/alignment.html',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-j','--job'], 'Job', arg=True, optional=False),
-                                   ScriptOption(['-v','--verbose'], 'Verbose', arg=False,optional=True),
-                                   ScriptOption(['-h', '--help'], 'Help.', arg=False, optional=True)])
+                          options=[ScriptOption(['-j','--job'], 'Job', 'has arguments', 'required'),
+                                   ScriptOption(['-v','--verbose'], 'Verbose', 'no arguments','optional'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
 
     verbose = False
     if len(sys.argv) == 1:

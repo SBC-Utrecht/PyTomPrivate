@@ -12,9 +12,9 @@ if __name__ == '__main__':
                           description='Run a mcoAC job. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/classification.html',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-j','--job'], 'Job', True, True),
-                                   ScriptOption(['-v','--verbose'], 'Verbose', False, False),
-                                   ScriptOption(['-h', '--help'], 'Help.', False, False)])
+                          options=[ScriptOption(['-j','--job'], 'Job', 'has arguments', 'optional'),
+                                   ScriptOption(['-v','--verbose'], 'Verbose', 'no arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
 
     verbose = False
 

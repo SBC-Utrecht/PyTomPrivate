@@ -17,11 +17,11 @@ if __name__ == '__main__':
                           description='Create a localization job. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/localization.html',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-v','--volume'], 'Volume : the big volume', arg=True, optional=False),
-                                   ScriptOption(['-r','--reference'], 'Reference : the molecule searched', arg=True, optional=False),
-                                   ScriptOption(['-m','--mask'], 'Mask : a mask ', arg=True, optional=False),
-                                   ScriptOption(['--wedge1'], 'Wedge : first tilt angle. Must be 90-tilt!', arg=True, optional=False),
-                                   ScriptOption(['--wedge2'], 'Wedge : second tilt angle.  Must be 90-tilt!', arg=True, optional=False),
+                          options=[ScriptOption(['-v','--volume'], 'Volume : the big volume', 'has arguments', 'required'),
+                                   ScriptOption(['-r','--reference'], 'Reference : the molecule searched', 'has arguments', 'required'),
+                                   ScriptOption(['-m','--mask'], 'Mask : a mask ', 'has arguments', 'required'),
+                                   ScriptOption(['--wedge1'], 'Wedge : first tilt angle. Must be 90-tilt!', 'has arguments', 'required'),
+                                   ScriptOption(['--wedge2'], 'Wedge : second tilt angle.  Must be 90-tilt!', 'has arguments', 'required'),
                                    ScriptOption(['-a','--angles'], '''Angles : name of angle list. Either : 
                                     angles_50_100.em
                                     angles_38.53_256.em
@@ -33,14 +33,14 @@ if __name__ == '__main__':
                                     angles_11_15192.em    
                                     angles_07_45123.em
                                     angles_3_553680.em
-                                    ''', arg=True, optional=False),
-                                   ScriptOption(['-d','--destination'], 'Destination : destination directory', arg=True, optional=False),
-                                   ScriptOption(['-b','--band'], 'Lowpass filter : band - in pixels', arg=True, optional=False),
-                                   ScriptOption(['--splitX'], 'Into how many parts do you want to split volume (X dimension)', arg=True, optional=False),
-                                   ScriptOption(['--splitY'], 'Into how many parts do you want to split volume (Y dimension)', arg=True, optional=False),
-                                   ScriptOption(['--splitZ'], 'Into how many parts do you want to split volume (Z dimension)', arg=True, optional=False),
-                                   ScriptOption(['-j','--jobName'], 'Specify job.xml filename', arg=True, optional=False),
-                                   ScriptOption(['-h', '--help'], 'Help.', arg=False, optional=True)])
+                                    ''', 'has arguments', 'required'),
+                                   ScriptOption(['-d','--destination'], 'Destination : destination directory', 'has arguments', 'required'),
+                                   ScriptOption(['-b','--band'], 'Lowpass filter : band - in pixels', 'has arguments', 'required'),
+                                   ScriptOption(['--splitX'], 'Into how many parts do you want to split volume (X dimension)', 'has arguments', 'required'),
+                                   ScriptOption(['--splitY'], 'Into how many parts do you want to split volume (Y dimension)', 'has arguments', 'required'),
+                                   ScriptOption(['--splitZ'], 'Into how many parts do you want to split volume (Z dimension)', 'has arguments', 'required'),
+                                   ScriptOption(['-j','--jobName'], 'Specify job.xml filename', 'has arguments', 'required'),
+                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
     
     
     if len(sys.argv) <= 2:
