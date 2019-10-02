@@ -124,7 +124,7 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
 def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
                     mpi, projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
                     averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False, particle_list_name="",
-                    start_glocal=True, fsc_path=""):
+                    start_glocal=True, fsc_path="", glocal_jobname="glocaljob", glocal_nodes=5):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
@@ -252,7 +252,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
         print("{:s}> Ran the processes".format(gettime()))
 
-    run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal)
+    run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal, glocal_jobname, glocal_nodes)
 
 
 def run_single_tilt_angle_unpack(inp):
@@ -460,7 +460,7 @@ def axis_title(axis, title):
 
 
 def run_polished_subtomograms(particle_list_filename, projection_directory, particle_polish_file, binning, offset,
-                              vol_size, start_glocal):
+                              vol_size, start_glocal, glocal_jobname, glocal_nodes):
     """
     Reconstructs subtomograms based on a polished particlelist, writes these to the places as specified in particlelist
 
@@ -531,14 +531,13 @@ reconstructWB.py --particleList {:s} \
         pid = out.split(" ")[3]
 
         mask_filename = "/data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/FRM_mask_200_70_4.mrc"
-        jobname = "fsc-filter-27-09-2019"
         iterations = 6
         pixelsize = 2.62
         particleDiameter = 300
 
         glocal_batchfile = """#!/usr/bin/bash
 #SBATCH --time        36:00:00
-#SBATCH -N 4
+#SBATCH -N {:d}
 #SBATCH --partition defq
 #SBATCH --ntasks-per-node 20
 #SBATCH --job-name    pGLocalAlign                                                                       
@@ -550,7 +549,7 @@ module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
 
 cd {:s}
 
-mpiexec -n 80 pytom GLocalJob.py \
+mpiexec -n {:d} pytom GLocalJob.py \
     -p {:s} \
     --mask {:s} \
     --SphericalMask \
@@ -558,12 +557,12 @@ mpiexec -n 80 pytom GLocalJob.py \
     --numberIterations {:d} \
     --pixelSize {:f} \
     --particleDiameter {:d} \
-    --jobName Alignment/GLocal/{:s}/job.xml""".format(pid, cwd, particle_list_filename, mask_filename, jobname, iterations, pixelsize, particleDiameter, jobname)
+    --jobName Alignment/GLocal/{:s}/job.xml""".format(glocal_nodes, pid, cwd, glocal_nodes*20, particle_list_filename, mask_filename, glocal_jobname, iterations, pixelsize, particleDiameter, glocal_jobname)
         f = open("glocal_align.sh", "w+")
         f.write(glocal_batchfile)
         f.close()
 
-        if not os.path.isdir(cwd + "/Alignment/GLocal/" + jobname): os.mkdir(cwd + "/Alignment/GLocal/" + jobname)
+        if not os.path.isdir(cwd + "Alignment/GLocal/" + jobname): os.mkdir(cwd + "Alignment/GLocal/" + jobname)
 
         out = subprocess.check_output(['sbatch', 'glocal_align.sh'])
 
