@@ -42,12 +42,7 @@ if __name__ == '__main__':
                                 ScriptOption(['--numReadProcesses'], 'The maximum number of reading processes. BEWARE!'
                                               ' a single read thread easily consumes up to 4 Gb (for a 4k picture) so '
                                               'keep that in mind to not overload the nodes. If not specified this will '
-                                              'be the same as numProcesses.', 'has arguments', 'optional'),
-                                ScriptOption(['--help'], 'Print this help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                              'be the same as numProcesses.', 'has arguments', 'optional')])
         
     particleList = None
     projectionDirectory = None
@@ -55,17 +50,13 @@ if __name__ == '__main__':
     
     try:
         tomogram, particleListXMLPath, projectionList, projectionDirectory, aw, size, coordinateBinning, recOffset, \
-        projBinning, alignmentResultFile, particlePolishFile, numProcesses, numReadProcesses, help= parse_script_options(sys.argv[1:], helper)
+        projBinning, alignmentResultFile, particlePolishFile, numProcesses, numReadProcesses = parse_script_options(sys.argv[1:], helper)
     
     except Exception as e:
         print e
         sys.exit()
 
     print(projectionDirectory, projectionList)
-
-    if help:
-        print helper
-        sys.exit()
    
     size = [int(i) for i in size.split(',')]
     if len(size) == 1:

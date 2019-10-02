@@ -52,22 +52,14 @@ if __name__ == '__main__':
                                    ScriptOption(['-c', '--compound'], 'Use compound weighting in Fourier space',
                                                 'no arguments', 'optional'),
                                    ScriptOption(['-j','--jobName'], 'Specify job.xml output filename', 'has arguments',
-                                                'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) <= 2:
-        print helper
-        sys.exit()
+                                                'required')])
+
     try:
         particleList, reference, mask, isSphere, angShells, angleInc, symmetryN, symmetryAxisZ, symmetryAxisX,\
         destination, numberIterations, binning,\
-        pixelSize, diameter, weighting, compound, jobName, help = parse_script_options(sys.argv[1:], helper)
+        pixelSize, diameter, weighting, compound, jobName = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-        
-    if help is True:
-        print helper
         sys.exit()
 
     from pytom.alignment.GLocalSampling import GLocalSamplingJob, mainAlignmentLoop

@@ -16,18 +16,11 @@ if __name__ == '__main__':
                           description='Plot angular distribution of a particle list',
                           authors='Yuxiang Chen',
                           options=[ScriptOption(['-p'], 'Particle list', 'has arguments', 'required'),
-                                   ScriptOption(['-c'], 'Class label to plot', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-c'], 'Class label to plot', 'has arguments', 'optional')])
+
     try:
-        pl_filename, class_label, bHelp = parse_script_options(sys.argv[1:], helper)
+        pl_filename, class_label = parse_script_options(sys.argv[1:], helper)
     except:
-        sys.exit()
-    if bHelp is True:
-        print helper
         sys.exit()
 
     # load the particle list

@@ -61,8 +61,7 @@ if __name__ == '__main__':
                           'has arguments', 'optional'),
              ScriptOption(['--weightingType'], 'Type of weighting (-1 default r-weighting, 0 no weighting)', 'has arguments',
                           'optional'),
-             ScriptOption(['--verbose'], 'Enable verbose mode', 'no arguments', 'optional'),
-             ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')]
+             ScriptOption(['--verbose'], 'Enable verbose mode', 'no arguments', 'optional')]
     
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
                           description='Align and weight projections, save them and reconstruct tomogram (optional). \n\
@@ -70,9 +69,6 @@ if __name__ == '__main__':
                           authors='Friedrich Foerster',
                           options = options)
 
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
     try:
         tiltSeriesName, tiltSeriesFormat, firstProj, lastProj, \
         tltFile, prexgFile, preBin, referenceIndex, markerFileName, referenceMarkerIndex, handflip, \
@@ -80,15 +76,12 @@ if __name__ == '__main__':
         volumeName, filetype, \
         tomogramSizeX, tomogramSizeY, tomogramSizeZ, \
         reconstructionCenterX, reconstructionCenterY, reconstructionCenterZ, \
-        weightingType, verbose, help = parse_script_options(sys.argv[1:], helper)
+        weightingType, verbose = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print sys.version_info
         print e
         sys.exit()
-        
-    if help is True:
-        print helper
-        sys.exit()
+
     # input parameters
     #tiltSeriesName = tiltSeriesPath + tiltSeriesPrefix  # "../projections/tomo01_sorted" # ending is supposed to be tiltSeriesName_index.em (or mrc)
     if not tiltSeriesFormat:

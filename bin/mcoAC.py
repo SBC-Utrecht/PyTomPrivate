@@ -13,21 +13,14 @@ if __name__ == '__main__':
                           http://www.pytom.org/doc/pytom/classification.html',
                           authors='Thomas Hrabe',
                           options=[ScriptOption(['-j','--job'], 'Job', 'has arguments', 'optional'),
-                                   ScriptOption(['-v','--verbose'], 'Verbose', 'no arguments', 'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
+                                   ScriptOption(['-v','--verbose'], 'Verbose', 'no arguments', 'required')])
 
     verbose = False
 
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
     try:
-        jobFile, verbose ,helpme = parse_script_options(sys.argv[1:], helper)
+        jobFile, verbose = parse_script_options(sys.argv[1:], helper)
     except Exception:
         #print e
-        sys.exit()
-    if helpme is True:
-        print helper
         sys.exit()
 
     job = MCOACJob(0,0,0,0,0,0,0,0,0,0,0,0)

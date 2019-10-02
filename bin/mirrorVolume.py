@@ -15,18 +15,12 @@ if __name__ == '__main__':
                           description='Mirror the volume.',
                           authors='Yuxiang Chen',
                           options=[ScriptOption(['-v'], 'Input volume.', 'has arguments', 'required'),
-                                   ScriptOption(['-o'], 'Output volume.', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-o'], 'Output volume.', 'has arguments', 'optional')])
+
     try:
-        input_filename, output_filename, help = parse_script_options(sys.argv[1:], helper)
+        input_filename, output_filename = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if help is True:
-        print helper
         sys.exit()
     
     # process the arguments

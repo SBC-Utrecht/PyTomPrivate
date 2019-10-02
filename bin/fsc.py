@@ -27,22 +27,14 @@ if __name__ == '__main__':
                                    ScriptOption(['-m','--mask'], 'Mask (optional, but recomended).', 'has arguments', 'optional'),
                                    ScriptOption('--pixelsize', 'Pixelsize in Angstrom (optional). Will return resolution in Angstrom. ', 'has arguments', 'required'),
                                    ScriptOption('--xml', 'Output in XML. (optional) ', 'no arguments', 'optional'),
-                                   ScriptOption(['-v','--verbose'], 'Verbose data. (optional) ', 'no arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
+                                   ScriptOption(['-v','--verbose'], 'Verbose data. (optional) ', 'no arguments', 'optional')])
 
 
-    if len(sys.argv) <=2:
-        print helper
-        sys.exit()
     try:
-        v1Filename, v2Filename, particleList, fscCriterion, numberBands, mask, pixelSize, xml, verbose,help = parse_script_options(sys.argv[1:], helper)
+        v1Filename, v2Filename, particleList, fscCriterion, numberBands, mask, pixelSize, xml, verbose = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
         sys.exit()
-    if help is True:
-        print helper
-        sys.exit()
-
 
     try:
         fscCriterion = float(fscCriterion)

@@ -208,21 +208,12 @@ if __name__ == '__main__':
                                     ScriptOption(['-m'], 'Mask.', 'has arguments', 'required'),
                                     ScriptOption(['-f'], 'Frequency (after binning).', 'has arguments', 'required'),
                                     ScriptOption(['-b'], 'Binning factor.', 'has arguments', 'optional'),
-                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'optional'),
-                                    ScriptOption(['--help'], 'Help info.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'optional')])
     
     try:
-        pl_filename, mask_filename, freq, binning, verbose, bHelp = parse_script_options(sys.argv[1:], helper)     
-    except:
-        raise
-        sys.exit()
-    
-    if bHelp is True:
-        print helper
+        pl_filename, mask_filename, freq, binning, verbose = parse_script_options(sys.argv[1:], helper)
+    except Exception as e:
+        print(e)
         sys.exit()
     
     if verbose:

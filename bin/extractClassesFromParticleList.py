@@ -19,18 +19,11 @@ if __name__ == '__main__':
                           authors='Yuxiang Chen',
                           options=[ScriptOption(['-p'], 'Particle name prefix', 'has arguments', 'required'),
                                    ScriptOption(['-c'], 'Class labels to be extracted. If multiple, please separate with comma.', 'has arguments', 'required'),
-                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'required')])
+
     try:
-        pl_name, class_names, output, bHelp = parse_script_options(sys.argv[1:], helper)
+        pl_name, class_names, output = parse_script_options(sys.argv[1:], helper)
     except:
-        sys.exit()
-    if bHelp is True:
-        print helper
         sys.exit()
     
     from pytom.basic.structures import ParticleList

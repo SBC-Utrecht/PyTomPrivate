@@ -51,20 +51,13 @@ if __name__ == '__main__':
                                    ScriptOption(['-f','--FSCPath'], "The path to an FSC file (.dat) to use as a filter "
                                                 "for the cutouts.", 'has arguments', 'optional'),
                                    ScriptOption(['--GJobName'], 'The name of the GLocal job', 'has arguments', 'optional'),
-                                   ScriptOption(['--GNodes'], 'The amount of nodes GLocal can use', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'],
-                                                'Help.', 'no arguments', 'optional')])
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['--GNodes'], 'The amount of nodes GLocal can use', 'has arguments', 'optional')])
+
     try:
         pl_filename, proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
-         create_graphics, number_of_particles, skip_alignment, fsc_path, glocal_jobname, glocal_nodes, b_help = parse_script_options(sys.argv[1:], helper)
+         create_graphics, number_of_particles, skip_alignment, fsc_path, glocal_jobname, glocal_nodes = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if b_help is True:
-        print helper
         sys.exit()
 
     # parse the arguments

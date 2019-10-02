@@ -21,18 +21,12 @@ if __name__ == '__main__':
                           options=[ScriptOption(['-d'], 'Directory', 'has arguments', 'required'),
                                    ScriptOption(['-p'], 'Particle name prefix', 'has arguments', 'optional'),
                                    ScriptOption(['-w'], 'Wedge Angle (degree)', 'has arguments', 'required'),
-                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
+                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'required')])
     
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+
     try:
-        dir_name, name_prefix, wedge_angle, output, bHelp = parse_script_options(sys.argv[1:], helper)
+        dir_name, name_prefix, wedge_angle, output,  = parse_script_options(sys.argv[1:], helper)
     except:
-        sys.exit()
-    if bHelp is True:
-        print helper
         sys.exit()
     
     if name_prefix is None:

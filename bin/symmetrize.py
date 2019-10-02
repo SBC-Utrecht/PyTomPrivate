@@ -25,15 +25,10 @@ if __name__ == '__main__':
                                     ScriptOption(['-s','--symmetries'], 'How many symmetries (integer)', 'has arguments', 'required'),
                                     ScriptOption(['--z1Rotation'], 'First rotation around z axis', 'has arguments', 'optional'),
                                     ScriptOption(['--xRotation'], 'Rotation around x axis', 'has arguments', 'optional'),
-                                    ScriptOption(['--z2Rotation'], 'Second rotation around z axis', 'has arguments', 'optional'),
-                                    ScriptOption(['--help'], 'Print help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                    ScriptOption(['--z2Rotation'], 'Second rotation around z axis', 'has arguments', 'optional')])
     
     try:
-        particleListName, volumeName, result, numberSymmetries, z1 , x, z2, help = parse_script_options(sys.argv[1:], helper)        
+        particleListName, volumeName, result, numberSymmetries, z1 , x, z2 = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
         sys.exit()

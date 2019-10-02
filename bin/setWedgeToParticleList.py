@@ -17,18 +17,11 @@ if __name__ == '__main__':
                           authors='Yuxiang Chen',
                           options=[ScriptOption(['-p'], 'Particle list', 'has arguments', 'required'),
                                    ScriptOption(['-w'], 'Wedge Angle (degree)', 'has arguments', 'required'),
-                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'optional')])
+
     try:
-        pl_name, wedge_angle, output, bHelp = parse_script_options(sys.argv[1:], helper)
+        pl_name, wedge_angle, output = parse_script_options(sys.argv[1:], helper)
     except:
-        sys.exit()
-    if bHelp is True:
-        print helper
         sys.exit()
     
     pl = ParticleList()

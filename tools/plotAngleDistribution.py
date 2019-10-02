@@ -16,19 +16,12 @@ if __name__ == '__main__':
                           options=[ScriptOption(['-p'], 'Particle list.', 'has arguments', 'required'),
                                    ScriptOption(['-a'], 'Euler angle specifying the axis in ZXZ convention', 'has arguments', 'required'),
                                    ScriptOption(['-c'], 'cut out range', 'has arguments', 'optional'),
-                                   ScriptOption(['-o'], 'Output file', 'has arguments', 'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-o'], 'Output file', 'has arguments', 'required')])
+
     try:
-        pl_filename, axis_angles, cut_out_range, output, bHelp = parse_script_options(sys.argv[1:], helper)
+        pl_filename, axis_angles, cut_out_range, output = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if bHelp is True:
-        print helper
         sys.exit()
 
     if cut_out_range is not None:

@@ -21,19 +21,12 @@ if __name__ == '__main__':
                                    ScriptOption(['-s'], 'Size in each dimension (in radius).', 'has arguments', 'required'),
                                    ScriptOption(['-w'], 'Wedge angle.', 'has arguments', 'required'),
                                    ScriptOption(['-d'], 'Destination directory.', 'has arguments', 'optional'),
-                                   ScriptOption(['-r'], 'Resulting particle list for alignment.', 'has arguments', 'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-r'], 'Resulting particle list for alignment.', 'has arguments', 'required')])
+
     try:
-        vol_filename, pl_filename, binning, radius, w, dest_dir, res_name, help = parse_script_options(sys.argv[1:], helper)
+        vol_filename, pl_filename, binning, radius, w, dest_dir, res_name = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if help is True:
-        print helper
         sys.exit()
     
     binning = int(binning)

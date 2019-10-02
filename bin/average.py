@@ -29,22 +29,13 @@ if __name__ == '__main__':
                                     ScriptOption(['--infoVolumes'], 'Generate info volumes like wedge volume.', 'no arguments', 'optional'),
                                     ScriptOption(['--progressbarOff'], 'Display a progressbar. On by default', 'no arguments', 'optional'),
                                     ScriptOption(['--fromAlignmentList'], 'Average from alignment list XML instead from particleListXML. Optional, off by default.', 'has arguments', 'optional'),
-                                    ScriptOption(['--subregion'], 'Average of particles whose coordinates are in [startX,startY,startZ,endX,endY,endZ].', 'has arguments', 'optional'),
-                                    ScriptOption(['--help'], 'Print this help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
-    
+                                    ScriptOption(['--subregion'], 'Average of particles whose coordinates are in [startX,startY,startZ,endX,endY,endZ].', 'has arguments', 'optional')])
+
     try:
-        particleListName, averageName, startIndex, endIndex, minimum, maximum, infoVolumes, progressbarOff, alignmentFileName ,subRegion, help= parse_script_options(sys.argv[1:], helper)
+        particleListName, averageName, startIndex, endIndex, minimum, maximum, infoVolumes, progressbarOff, alignmentFileName ,subRegion = parse_script_options(sys.argv[1:], helper)
         
     except Exception as e:
         print e
-        sys.exit()
-        
-    if help is True:
-        print helper
         sys.exit()
         
     pl = None

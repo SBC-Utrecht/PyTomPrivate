@@ -32,22 +32,15 @@ if __name__ == '__main__':
                                    ScriptOption(['-b','--binning'], 'Perform binning (downscale) of subvolumes: 1: no binning, 2: 2 pixels -> 1, 3: 3 -> 1 ...', 'has arguments', 'required'),
                                    ScriptOption(['--pixelSize'], 'Pixelsize in Angstrom', 'has arguments', 'required'),
                                    ScriptOption(['--particleDiameter'], 'Particle diameter in Angstrom', 'has arguments', 'required'),
-                                   ScriptOption(['-j','--jobName'], 'Specify job.xml filename', 'has arguments', 'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
+                                   ScriptOption(['-j','--jobName'], 'Specify job.xml filename', 'has arguments', 'required')])
     
-    if len(sys.argv) <= 2:
-        print helper
-        sys.exit()
+
     try:
         particleList, reference, mask, angShells,angleInc,symmetryN,symmetryAxisZ,symmetryAxisX,\
         lowestFrequency,highestFrequency,destination,numberIterations,binning,\
-        pixelSize,diameter,jobName,help = parse_script_options(sys.argv[1:], helper)
+        pixelSize,diameter,jobName = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-        
-    if help is True:
-        print helper
         sys.exit()
         
     if not checkFileExists(particleList):

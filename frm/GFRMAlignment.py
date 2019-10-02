@@ -552,20 +552,11 @@ if __name__ == '__main__':
                           description='Subtomogram alignment by Fast Rotational Matching.',
                           authors='Yuxiang Chen',
                           options= [ScriptOption(['-j'], 'Job xml file.', 'has arguments', 'optional'),
-                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'required'),
-                                    ScriptOption(['--help'], 'Help info.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'required')])
     
     try:
-        job_filename, verbose, bHelp = parse_script_options(sys.argv[1:], helper)     
+        job_filename, verbose = parse_script_options(sys.argv[1:], helper)
     except:
-        sys.exit()
-        
-    if bHelp is True:
-        print helper
         sys.exit()
     
     # check the job

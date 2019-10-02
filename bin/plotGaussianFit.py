@@ -18,18 +18,12 @@ if __name__ == '__main__':
                                    ScriptOption(['-n','--numberBins'], 'Number of bins of histogram. Default is 10.', 'has arguments', 'optional'),
                                    ScriptOption(['-p','--gaussianPeak'], 'The correspondent index of the gaussian peak.', 'has arguments', 'required'),
                                    ScriptOption(['-c','--numberParticles'], 'Number of particles up to CCC value.', 'has arguments', 'optional'),
-                                   ScriptOption(['-i','--imageFile'], 'Save plot to a image file.', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-i','--imageFile'], 'Save plot to a image file.', 'has arguments', 'optional')])
+
     try:
-        pl_filename, num_steps, peak_index, ccc_value, imageFile, help = parse_script_options(sys.argv[1:], helper)
+        pl_filename, num_steps, peak_index, ccc_value, imageFile = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if help is True:
-        print helper
         sys.exit()
     
     # process the arguments

@@ -20,18 +20,12 @@ if __name__ == '__main__':
                                    ScriptOption('-f', 'Projection start index (int).', 'has arguments', 'required'),
                                    ScriptOption('-t', 'Projection end index (int).', 'has arguments', 'required'),
                                    ScriptOption('-s', 'Volume size.', 'has arguments', 'required'),
-                                   ScriptOption('-o', 'Output filename.', 'has arguments', 'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption('-o', 'Output filename.', 'has arguments', 'required')])
+
     try:
-        prefix, suffix, weighting, start_idx, end_idx, vol_size, output, b_help = parse_script_options(sys.argv[1:], helper)
+        prefix, suffix, weighting, start_idx, end_idx, vol_size, output = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if b_help is True:
-        print helper
         sys.exit()
     
     # parse the argument

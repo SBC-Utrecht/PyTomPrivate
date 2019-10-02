@@ -219,8 +219,7 @@ if __name__ == '__main__':
                           options=[ScriptOption(['-h','--hostname'], 'Hostname of server.(name of computer you are logged into)', 'has arguments', 'optional'),
                                    ScriptOption(['-p','--port'], 'Specify port of server (if you do not know what that means, use 8080)', 'has arguments', 'optional'),
                                    ScriptOption(['-b','--browser'], 'Name of browser to start.', 'has arguments', 'optional'),
-                                   ScriptOption(['-d','--disableBrowser'], 'Disable browser at start.', 'no arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
+                                   ScriptOption(['-d','--disableBrowser'], 'Disable browser at start.', 'no arguments', 'optional')])
  
     defaultHostname = None
     defaultPort = 8080
@@ -230,17 +229,11 @@ if __name__ == '__main__':
         defaultBrowser = '/Applications/Firefox.app/Contents/MacOS/firefox'
     
     defaultDisableBrowser = False
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+
     try:
-        hostname, port, browser, disableBrowser, help = parse_script_options(sys.argv[1:], helper)
+        hostname, port, browser, disableBrowser = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if help is True:
-        print helper
         sys.exit()
     
     if not hostname:

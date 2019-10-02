@@ -15,6 +15,8 @@ def parse_script_options(args, helper):
     @rtype: L{list}
     """
     import getopt
+
+    exception = "" # To buffer all exceptions to present them in one batch to the user so all errors can be resolved in one go
     
     res = [] # the result of parsing
     opt_str = ""
@@ -33,24 +35,44 @@ def parse_script_options(args, helper):
                 else:
                     opt_str += name[1]
             else:
-                raise Exception("Option format invalid: %s" % name)
+                exception += "Option format invalid: {:s}\n".format(name)
     
     try:
+        # getopt raises exceptions when an option is passed that needs an arguments but has none
         opts, args = getopt.getopt(args, opt_str, long_opt)
-    except getopt.GetoptError:
-        raise
-    
-    for o,a in opts:
-        for i in xrange(len(helper.options)):
-            if o in helper.options[i].option_str:
-                if helper.options[i].arg:
-                    res[i] = a
-                else:
+
+        if len(opts) == 0:
+            import sys
+            print helper
+            sys.exit()
+
+        for o, a in opts:
+
+            # Shortcut because otherwise the code will complain when no required options are passed
+            if o == "--help":
+                import sys
+                print helper
+                sys.exit()
+
+            for i in range(len(helper.options)):
+                if o in helper.options[i].option_str:
+                    if helper.options[i].arg:
+                        if a is None:
+                            exception += "This option ({:s}) needs an argument, none given\n".format(o)
+                        res[i] = a
+                    else:
                         res[i] = True
-                break
+                    break
 
-    for i,_ in enumerate(res):
-        if res[i] is None and helper.options[i].required:
-            raise Exception("Required argument not passed, use any of the following: " + " ".join(helper.options[i].option_str))
+        for i, _ in enumerate(res):
+            if res[i] is None and helper.options[i].required:
+                exception += "Required argument not passed, use any of the following: " + " ".join(
+                    helper.options[i].option_str) + "\n"
 
-    return res
+    except Exception as e:
+        exception += str(e) + "\n"
+
+    if exception != "":
+        raise Exception("Some exception(s) while parsing the command line arguments, see below for details:\n" + exception + "\nUse '--help' to get information on how this script can be called.")
+
+    return res[:-1] # Because the last option is by definition the help option

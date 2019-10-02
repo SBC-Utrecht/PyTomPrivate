@@ -16,18 +16,12 @@ if __name__ == '__main__':
                           authors='Yuxiang Chen',
                           options=[ScriptOption('-d', 'Unbinned projection directory. Note the projections should be aligned but not weighted!', 'has arguments', 'required'),
                                    ScriptOption('-o', 'Output filename.', 'has arguments', 'required'),
-                                   ScriptOption('-i', 'Number of iterations to run.', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption('-i', 'Number of iterations to run.', 'has arguments', 'optional')])
+
     try:
-        proj_dir, output_filename, iter, b_help = parse_script_options(sys.argv[1:], helper)
+        proj_dir, output_filename, iter = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if b_help is True:
-        print helper
         sys.exit()
     
     # parse the arguments

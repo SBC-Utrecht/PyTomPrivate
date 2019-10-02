@@ -32,19 +32,10 @@ if __name__ == '__main__':
                           options=[ScriptOption(['-j','--jobName'], 'Specify job.xml filename', 'has arguments', 'required'),
                                    ScriptOption(['-x','--splitX'], 'Parts you want to split the volume in X dimension', 'has arguments', 'optional'),
                                    ScriptOption(['-y','--splitY'], 'Parts you want to split the volume in Y dimension', 'has arguments', 'optional'),
-                                   ScriptOption(['-z','--splitZ'], 'Parts you want to split the volume in Z dimension', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-z','--splitZ'], 'Parts you want to split the volume in Z dimension', 'has arguments', 'optional')])
     
     try:
-        jobName, splitX, splitY, splitZ, b_help = parse_script_options(sys.argv[1:], helper)
-        
-        if b_help is True:
-            print helper
-            sys.exit()
+        jobName, splitX, splitY, splitZ = parse_script_options(sys.argv[1:], helper)
         
         if splitX is None:
             splitX = 0
@@ -63,10 +54,6 @@ if __name__ == '__main__':
             raise RuntimeError()
         
     except: # backward compatibility
-        if len(sys.argv) == 2 or len(sys.argv) == 5:
-            pass
-        else:
-            print helper
         
         jobName = sys.argv[1]
         

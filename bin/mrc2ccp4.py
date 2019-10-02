@@ -41,19 +41,12 @@ if __name__ == '__main__':
                           authors='Thomas Hrabe',
                           options=[ScriptOption(['-f','--file'], 'Filename', 'has arguments', 'optional'),
                                    ScriptOption(['-d','--directory'], 'A directory of files.', 'has arguments', 'optional'),
-                                   ScriptOption(['-t','--targetPath'], 'Path to new file.', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-t','--targetPath'], 'Path to new file.', 'has arguments', 'optional')])
+
     try:
-        filename, directory, target, help = parse_script_options(sys.argv[1:], helper)
+        filename, directory, target = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if help is True:
-        print helper
         sys.exit()
     
     if filename:

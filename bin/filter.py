@@ -24,19 +24,12 @@ if __name__ == '__main__':
                                    ScriptOption(['-t','--target'], 'Name of filtered file', 'has arguments', 'optional'),
                                    ScriptOption(['-l','--lowestFrequency'], 'The lowest frequency. 0 if not set (in pixels)', 'has arguments', 'required'),
                                    ScriptOption(['-h','--highestFrequency'], 'The highest frequency. Volume size / 2 if not set (in pixels)', 'has arguments', 'optional'),
-                                   ScriptOption(['-s','--smooth'], 'Smoothing of bandpass (in voxels). 0 if not set.', 'has arguments', 'optional'),
-                                   ScriptOption(['--help'], 'Help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-s','--smooth'], 'Smoothing of bandpass (in voxels). 0 if not set.', 'has arguments', 'optional')])
+
     try:
-        filename, target, lowestFrequency, highestFrequency, smooth, help = parse_script_options(sys.argv[1:], helper)
+        filename, target, lowestFrequency, highestFrequency, smooth = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if help is True:
-        print helper
         sys.exit()
     
     if not filename or not target:

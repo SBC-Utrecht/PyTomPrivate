@@ -21,22 +21,12 @@ if __name__ == '__main__':
                                    ScriptOption(['-s','--pixelSize'], 'Pixel size of output volume (in Angstrom)', 'has arguments', 'optional'),
                                    ScriptOption(['-v','--volumeSize'], 'Volume length (size) in all dimensions', 'has arguments', 'optional'),
                                    ScriptOption(['-o','--outputVolumePath'], 'Path to output volume ', 'has arguments', 'required'),
-                                   ScriptOption(['-i','--invertDensity'],'Set if density should be negative', 'no arguments', 'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
+                                   ScriptOption(['-i','--invertDensity'],'Set if density should be negative', 'no arguments', 'required')])
 
-
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
     try:
-        mmCIF, chain, pixelSize, cubeSize, volumePath ,densityNegative , helpme = parse_script_options(sys.argv[1:], helper)
+        mmCIF, chain, pixelSize, cubeSize, volumePath ,densityNegative = parse_script_options(sys.argv[1:], helper)
     except:
         sys.exit()
-        
-    if helpme is True:
-        print helper
-        sys.exit()
-        pass
     
     volume = mmCIF2em(mmCIF, float(pixelSize), int(cubeSize), chain = chain,densityNegative = densityNegative)
     

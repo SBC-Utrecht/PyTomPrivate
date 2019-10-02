@@ -67,20 +67,11 @@ if __name__ == '__main__':
                                     ScriptOption(['-m','--motlList'], 'Write a MOTL file with candidates. The name of the file will be an extension of the particle list with .em.', 'has arguments','optional'),
                                     ScriptOption(['-g','--margin'], 'Size of outer margin that will be ignored for potential candidates.', 'has arguments','optional'),
                                     ScriptOption(['-w','--sizeCubes'], 'If specified, it will cut out candidates from the original tomogram with the specified size.', 'has arguments','optional'),
-                                    ScriptOption(['--scale'], 'Scale coordinates by a factor. Set > 1 to adjust to larger volumes. Use 2 if the localization tomo was 1x binned.', 'has arguments', 'optional'),
-                                    ScriptOption(['--help'], 'Print this help.', 'no arguments', 'optional')])
-    
-    if len(sys.argv) ==1:
-        print helper
-        sys.exit()
-    
-    
+                                    ScriptOption(['--scale'], 'Scale coordinates by a factor. Set > 1 to adjust to larger volumes. Use 2 if the localization tomo was 1x binned.', 'has arguments', 'optional')])
+
     try:
-        jobFilename, resultFilename, orientFilename, maxNumParticle, sizeParticle, plFilename, particlePath, minScore, motlFilename, margin, write2disk, scale, help = parse_script_options(sys.argv[1:], helper)
+        jobFilename, resultFilename, orientFilename, maxNumParticle, sizeParticle, plFilename, particlePath, minScore, motlFilename, margin, write2disk, scale = parse_script_options(sys.argv[1:], helper)
     except:
-        sys.exit()
-    if help is True:
-        print helper
         sys.exit()
         
     if minScore == None:

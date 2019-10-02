@@ -39,21 +39,12 @@ if __name__ == '__main__':
                                    ScriptOption(['--splitX'], 'Into how many parts do you want to split volume (X dimension)', 'has arguments', 'required'),
                                    ScriptOption(['--splitY'], 'Into how many parts do you want to split volume (Y dimension)', 'has arguments', 'required'),
                                    ScriptOption(['--splitZ'], 'Into how many parts do you want to split volume (Z dimension)', 'has arguments', 'required'),
-                                   ScriptOption(['-j','--jobName'], 'Specify job.xml filename', 'has arguments', 'required'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    
-    
-    if len(sys.argv) <= 2:
-        print helper
-        sys.exit()
+                                   ScriptOption(['-j','--jobName'], 'Specify job.xml filename', 'has arguments', 'required')])
+
     try:
-        volume, reference, mask, wedge1,wedge2,angles,destination,band,sx,sy,sz,jobName,help = parse_script_options(sys.argv[1:], helper)
+        volume, reference, mask, wedge1,wedge2,angles,destination,band,sx,sy,sz,jobName = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-        
-    if help is True:
-        print helper
         sys.exit()
     
     if not checkFileExists(volume):

@@ -27,6 +27,7 @@ class ScriptOption:
             self.option_str = option_str
         else:
             self.option_str = [option_str]
+
         self.description = description
 
         if arguments.lower() == 'no arguments':
@@ -53,7 +54,8 @@ class ScriptOption:
 
 class ScriptHelper:
     """
-    ScriptHelper: 
+    ScriptHelper: A constructor to help in parsing command line arguments
+    No help option has to be provided as this is generated automatically
     """
     def __init__(self, name, **kwargs):
         self.name = name
@@ -68,6 +70,7 @@ class ScriptHelper:
             self.options = options
         else:
             self.options = [options]
+        self.options.append(ScriptOption(['--help'], 'Print this help.', 'no arguments', 'optional'))
         self.examples = kwargs.get('examples', None)
         self.see_also = kwargs.get('see_also', None)
         self.version = kwargs.get('version', None)

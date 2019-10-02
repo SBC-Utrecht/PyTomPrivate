@@ -23,18 +23,11 @@ if __name__ == '__main__':
                           authors='Yuxiang Chen',
                           options= [ScriptOption(['-v','--volume'], 'Volume.', 'has arguments', 'required'),
                                     ScriptOption(['-p','--particleFile'], 'Particle list.', 'has arguments', 'required'),
-                                    ScriptOption(['-c','--cubeSize'], 'Cube size along each dimension.', 'has arguments', 'required'),
-                                    ScriptOption(['--help'], 'Print this help.', 'no arguments','optional')])
+                                    ScriptOption(['-c','--cubeSize'], 'Cube size along each dimension.', 'has arguments', 'required')])
 
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
     try:
-        volFilename, plFilename, cubeSize, help = parse_script_options(sys.argv[1:], helper)
+        volFilename, plFilename, cubeSize = parse_script_options(sys.argv[1:], helper)
     except:
-        sys.exit()
-    if help is True:
-        print helper
         sys.exit()
 
     cubeSize = int(cubeSize)

@@ -25,26 +25,20 @@ if __name__ == '__main__':
 			               'Particle List', 'has arguments', 'required'),
                                    ScriptOption(['-c','--coords'], 
 				       'Coordinate List (ascii file from EMAN2)', 
-				       True, False),
+				       'has arguments', 'required'),
                                    ScriptOption(['-s','--subtomoPrefix'], 
 				       'path and filename for subtomogram files (e.g., MyPath/particle_)', 
-				       True, True),
+				       'has arguments', 'optional'),
                                    ScriptOption(['-w','--wedgeAngles'], 
 				       'missing wedge angle(s) [counter-clock, clock] or single angle', 
-				       True, True),
-                                   ScriptOption(['-h', '--help'], 'Help.', 
-				       'no arguments', 'optional')])
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+				       'has arguments', 'optional')])
+
     try:
         plName, coordName, subtomoPrefix, w, help = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
         sys.exit()
-    if help is True:
-        print helper
-        sys.exit()
+
     if w:
         if len(w.split(',')) > 1:
             wedgeAngle = []

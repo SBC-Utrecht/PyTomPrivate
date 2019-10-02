@@ -18,19 +18,13 @@ if __name__ == '__main__':
                           http://www.pytom.org/doc/pytom/alignment.html',
                           authors='Thomas Hrabe',
                           options=[ScriptOption(['-j','--job'], 'Job', 'has arguments', 'required'),
-                                   ScriptOption(['-v','--verbose'], 'Verbose', 'no arguments','optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
+                                   ScriptOption(['-v','--verbose'], 'Verbose', 'no arguments','optional')])
 
     verbose = False
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+
     try:
-        jobFile, verbose, helpme = parse_script_options(sys.argv[1:], helper)
+        jobFile, verbose = parse_script_options(sys.argv[1:], helper)
     except:
-        sys.exit()
-    if helpme is True:
-        print helper
         sys.exit()
     
     # fix the verbose bug

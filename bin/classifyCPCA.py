@@ -36,18 +36,13 @@ if __name__ == '__main__':
                                    ScriptOption(['-n','--nclass'], 
 				       'number of classes.', 'has arguments', 'optional'),
                                    ScriptOption(['-a','--average'], 
-				       'name for class averages.', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+				       'name for class averages.', 'has arguments', 'optional')])
+
     try:
-        pl, cpl, ccc, neig, nclass, cName, help = parse_script_options(sys.argv[1:], helper)
+        pl, cpl, ccc, neig, nclass, cName = parse_script_options(sys.argv[1:], helper)
     except Exception:
         sys.exit()
-    if help is True:
-        print helper
-        sys.exit()
+
     neig = int(neig)
     nclass = int(nclass)
     if not cName:

@@ -17,18 +17,12 @@ if __name__ == '__main__':
                           options=[ScriptOption('-p', 'Particle list.', 'has arguments', 'required'),
                                    ScriptOption('-c', 'Class label file.', 'has arguments', 'required'),
                                    ScriptOption('-o', 'Output particle list.', 'has arguments', 'required'),
-                                   ScriptOption('-t', 'True positive class.', 'has arguments', 'optional'),
-                                   ScriptOption(['-h', '--help'], 'Help.', 'no arguments', 'optional')])
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
+                                   ScriptOption('-t', 'True positive class.', 'has arguments', 'optional')])
+
     try:
-        pl_filename, class_label_filename, output, tp_label , help = parse_script_options(sys.argv[1:], helper)
+        pl_filename, class_label_filename, output, tp_label = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
-        sys.exit()
-    if help is True:
-        print helper
         sys.exit()
     
     if tp_label is None:
