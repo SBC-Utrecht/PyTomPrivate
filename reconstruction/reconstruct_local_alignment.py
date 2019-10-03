@@ -495,7 +495,7 @@ def run_polished_subtomograms(particle_list_filename, projection_directory, part
     cwd = os.getcwd()
 
     first_batchfile = """#!/usr/bin/bash
-#SBATCH --time        12:00:00
+#SBATCH --time        1:00:00
 #SBATCH -N 1
 #SBATCH --partition defq
 #SBATCH --ntasks-per-node 20
@@ -527,16 +527,17 @@ reconstructWB.py --particleList {:s} \
     out = subprocess.check_output(['sbatch', 'polished_subtomograms.sh'])
     print("Started reconstruction")
 
-    if start_glocal and out.startswith("Submitted batch job "):
-        pid = out.split(" ")[3]
+    if start_glocal:
+        if out.startswith("Submitted batch job "):
+            pid = out.split(" ")[3]
 
-        mask_filename = "/data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/FRM_mask_200_70_4.mrc"
-        iterations = 6
-        pixelsize = 2.62
-        particleDiameter = 300
+            mask_filename = "/data2/dschulte/BachelorThesis/Data/VPP2/05_Subtomogram_Analysis/Alignment/FRM/test-11-09-19/FRM_mask_200_70_4.mrc"
+            iterations = 6
+            pixelsize = 2.62
+            particleDiameter = 300
 
-        glocal_batchfile = """#!/usr/bin/bash
-#SBATCH --time        36:00:00
+            glocal_batchfile = """#!/usr/bin/bash
+#SBATCH --time        20:00:00
 #SBATCH -N {:d}
 #SBATCH --partition defq
 #SBATCH --ntasks-per-node 20
@@ -558,22 +559,27 @@ mpiexec -n {:d} pytom GLocalJob.py \
     --pixelSize {:f} \
     --particleDiameter {:d} \
     --jobName Alignment/GLocal/{:s}/job.xml""".format(glocal_nodes, pid, cwd, glocal_nodes*20, particle_list_filename, mask_filename, glocal_jobname, iterations, pixelsize, particleDiameter, glocal_jobname)
-        f = open("glocal_align.sh", "w+")
-        f.write(glocal_batchfile)
-        f.close()
+            f = open("glocal_align.sh", "w+")
+            f.write(glocal_batchfile)
+            f.close()
 
-        if not os.path.isdir(cwd + "Alignment/GLocal/" + jobname): os.mkdir(cwd + "Alignment/GLocal/" + jobname)
+            if not os.path.isdir(cwd + "Alignment/GLocal/" + glocal_jobname): os.mkdir(cwd + "Alignment/GLocal/" + glocal_jobname)
 
-        out = subprocess.check_output(['sbatch', 'glocal_align.sh'])
+            out = subprocess.check_output(['sbatch', 'glocal_align.sh'])
 
-        if out.startswith("Submitted batch job "):
-            print("Reconstruction and Glocal alignment scheduled")
+            if out.startswith("Submitted batch job "):
+                print("Reconstruction and Glocal alignment scheduled")
+            else:
+                print("Could not start the Glocal alignment script:\n" + out)
+                raise Exception("Could not start the Glocal alignment script: " + out)
         else:
-            print("Could not start the Glocal alignment script:\n" + out)
-            raise Exception("Could not start the Glocal alignment script: " + out)
-    elif not start_glocal:
-        print("Could not start the reconstruction script:\n" + out)
-        raise Exception("Could not start the reconstruction script: " + out)
+            print("Could not start the reconstruction script:\n" + out)
+            raise Exception("Could not start the reconstruction script: " + out)
+    else:
+        if out.startswith("Submitted batch job "):
+            print("Job scheduled succesfully")
+        else:
+            print("There seems to be a problem with scheduling the job, output: " + out)
 
 
 def normalised_cross_correlation_numpy(first, second, filter_mask=None):
