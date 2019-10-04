@@ -100,10 +100,11 @@ if __name__ == '__main__':
     if fsc_path is None:
         fsc_path = ""
 
-    if glocal_jobname is None:
-        from datetime import now
-        ct = now()
-        glocal_jobname = "glocaljob-{:d}-{:d}-{:d}".format(ct.day, ct.month, ct.year)
+    #TODO BUG
+    #if glocal_jobname is None:
+    #    from datetime import now
+    #    ct = now()
+    #    glocal_jobname = "glocaljob-{:d}-{:d}-{:d}".format(ct.day, ct.month, ct.year)
 
     if glocal_nodes is None:
         glocal_nodes = 5
