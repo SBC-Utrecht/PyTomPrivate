@@ -134,12 +134,17 @@ if __name__ == '__main__':
             print 'Error reading particleList XML file! Abort'
             sys.exit()
 
+        if not len(polishedCoordinates['AlignmentTransX']) == len(particleList) * len(projections):
+            raise Exception("The length of the polished alignment list does not correspond to the theoretical length, "
+                            "are you sure every parameter is correct? polished list len {:d}, particle  list len {:d}"
+                            " and projection len {:d}".format(len(polishedCoordinates['AlignmentTransX']), len(particleList), len(projections)))
+
         from pytom.basic.structures import PickPosition
         for n, particle in enumerate(particleList):
             pickPosition = particle.getPickPosition()
             x = (pickPosition.getX()*coordinateBinning+ recOffset[0])/projBinning
             y = (pickPosition.getY()*coordinateBinning+ recOffset[1])/projBinning
-            if particlePolishFile and len(polishedCoordinates['AlignmentTransX']) == len(particleList) * len(projections):
+            if particlePolishFile:
                 x += polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
                 y += polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
                 #particle.setFilename(particle.getFilename()[:-3]+'_polished.em')

@@ -123,8 +123,8 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
 
 def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
                     mpi, projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
-                    averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False, particle_list_name="",
-                    start_glocal=True, fsc_path="", glocal_jobname="glocaljob", glocal_nodes=5):
+                    averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False,
+                    start_glocal=True, fsc_path='', glocal_jobname='glocaljob', glocal_nodes=5):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
@@ -185,18 +185,14 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
     import numpy as np
     import glob
+    import os
 
     # load particle list
     from pytom.basic.structures import ParticleList
 
-    particlelist1 = ParticleList()
-    particlelist1.fromXMLFile(particle_list_filename)
-
     particlelist = ParticleList()
-
-    for p in particlelist1:
-        if particle_list_name in p.getFilename():
-            particlelist.append(p)
+    particlelist.fromXMLFile(particle_list_filename)
+    particle_list_name = os.path.basename(particle_list_filename).split('.')[0]
 
     if number_of_particles != -1:
         particlelist = particlelist[:number_of_particles]
@@ -550,7 +546,7 @@ module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
 
 cd {:s}
 
-mpiexec -n {:d} pytom GLocalJob.py \
+mpiexec -n {:d} pytom /data2/dschulte/pytom-develop/pytom/bin/GLocalJob.py \
     -p {:s} \
     --mask {:s} \
     --SphericalMask \
@@ -563,7 +559,7 @@ mpiexec -n {:d} pytom GLocalJob.py \
             f.write(glocal_batchfile)
             f.close()
 
-            if not os.path.isdir(cwd + "Alignment/GLocal/" + glocal_jobname): os.mkdir(cwd + "Alignment/GLocal/" + glocal_jobname)
+            if not os.path.isdir(cwd + "/Alignment/GLocal/" + glocal_jobname): os.mkdir(cwd + "/Alignment/GLocal/" + glocal_jobname)
 
             out = subprocess.check_output(['sbatch', 'glocal_align.sh'])
 

@@ -16,11 +16,11 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1],  # script name
                           description='Reconstruct a local alignment of particles based on a global alignment.',
                           authors='Douwe Schulte',
-                          options=[ScriptOption(['-p', '--particleList'],
-                                                'Particle list (filename).', 'has arguments', 'required'),
-                                   ScriptOption(['-d', '--projectionDirectory'],
-                                                'Unbinned projection directory. Note the projections should be aligned '
-                                                'but not weighted! (path)', 'has arguments', 'required'),
+                          options=[ScriptOption(['-d', '--data'],
+                                                'A list (delimited by semicolons) which '
+                                                'consists of a path to a particlelist followed by the path to the '
+                                                'projection directory. Ex path/to/tomo_000.xml;path/to/projection;path/'
+                                                'to/tomo_001.xml;path/to/projection', 'has arguments', 'required'),
                                    ScriptOption(['-s', '--particleSize'],
                                                 'Output particle size (int).', 'has arguments', 'required'),
                                    ScriptOption(['-b', '--binning'],
@@ -33,7 +33,8 @@ if __name__ == '__main__':
                                                 'subtomograms', 'has arguments', 'optional'),
                                    ScriptOption(['-i', '--INFRIterations'],
                                                 'Number of iterations to run, when running INFR, using this option '
-                                                'automatically sets the reconstruction method to INFR.', 'has arguments', 'optional'),
+                                                'automatically sets the reconstruction method to INFR.',
+                                                'has arguments', 'optional'),
                                    ScriptOption(['-m', '--reconstructionMethod'],
                                                 'The reconstruction method for creating the initial subtomograms, has '
                                                 'to be INFR or WBP. If this is not specified no initial subtomograms '
@@ -48,19 +49,20 @@ if __name__ == '__main__':
                                    ScriptOption(['--skipAlignment'],
                                                 'Skips the alignment/particle polish phase, only does the '
                                                 'reconstruction and FRM alignment.', 'no arguments', 'optional'),
-                                   ScriptOption(['-f','--FSCPath'], "The path to an FSC file (.dat) to use as a filter "
-                                                "for the cutouts.", 'has arguments', 'optional'),
+                                   ScriptOption(['-f', '--FSCPath'], "The path to an FSC file (.dat) to use as a filter"
+                                                " for the cutouts.", 'has arguments', 'optional'),
                                    ScriptOption(['--GJobName'], 'The name of the GLocal job', 'has arguments', 'optional'),
                                    ScriptOption(['--GNodes'], 'The amount of nodes GLocal can use', 'has arguments', 'optional')])
 
     try:
-        pl_filename, proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
+        proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
          create_graphics, number_of_particles, skip_alignment, fsc_path, glocal_jobname, glocal_nodes = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
         sys.exit()
 
     # parse the arguments
+
     vol_size = int(vol_size)
     binning = int(binning)
 
@@ -100,11 +102,9 @@ if __name__ == '__main__':
     if fsc_path is None:
         fsc_path = ""
 
-    #TODO BUG
-    #if glocal_jobname is None:
-    #    from datetime import now
-    #    ct = now()
-    #    glocal_jobname = "glocaljob-{:d}-{:d}-{:d}".format(ct.day, ct.month, ct.year)
+    if glocal_jobname is None:
+        from time import gmtime, strftime
+        glocal_jobname = strftime("glocaljob-%D-%m-%Y", gmtime())
 
     if glocal_nodes is None:
         glocal_nodes = 5
@@ -122,6 +122,16 @@ if __name__ == '__main__':
     else:
         number_of_particles = -1
 
+    names = []
+    if ':' in proj_dir:
+        temp = proj_dir.split(':')
+        if len(temp) % 2 == 1:
+            raise Exception("The data given is not valid (invalid number of items, should be even)")
+        for i in range(len(temp) / 2):
+            names.append((temp[i*2], temp[i*2+1]))
+    else:
+        raise Exception("The data given is not valid (invalid numebr of items, should be at least two0")
+
     # Split particlelist based on filename
     # Map filename to right projection directory
 
@@ -132,10 +142,6 @@ if __name__ == '__main__':
     mpi = MPI()
     mpi.begin()
 
-    names = [("particleList_TM_tomogram_010_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_000/alignment/marker_0001_-60.0,60.0/"),
-             ("particleList_TM_tomogram_011_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_001/alignment/marker_0001_-60.0,60.0/"),
-             ("particleList_TM_tomogram_012_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_002/alignment/marker_0001_-60.0,60.0/"),
-             ("particleList_TM_tomogram_013_WBP", "/data2/dschulte/BachelorThesis/Data/VPP2/03_Tomographic_Reconstruction/tomogram_003/alignment/marker_0001_-60.0,60.0/")]
     for i, n in enumerate(names):
         print("Running "+n[0])
         proj_dir = n[1]
@@ -154,9 +160,9 @@ if __name__ == '__main__':
             proj.append(p.getFilename())
             tilt_angles.append(p.getTiltAngle())
 
-        local_alignment(proj, vol_size, binning, offset, tilt_angles, pl_filename, proj_dir, mpi, reconstruction_method,
+        local_alignment(proj, vol_size, binning, offset, tilt_angles, n[0], proj_dir, mpi, reconstruction_method,
                         infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles,
-                        skip_alignment, n[0], True if i == 3 else False, fsc_path, glocal_jobname, glocal_nodes)
+                        skip_alignment, True if i == 3 else False, fsc_path, glocal_jobname, glocal_nodes)
         print("Finished "+n[0])
 
     mpi.end()
