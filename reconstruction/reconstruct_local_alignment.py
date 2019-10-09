@@ -546,7 +546,7 @@ module load openmpi/2.1.1 python/2.7 lib64/append pytom/dev/dschulte
 
 cd {:s}
 
-mpiexec -n {:d} pytom /data2/dschulte/pytom-develop/pytom/bin/GLocalJob.py \
+sleep 5 & mpiexec -n {:d} pytom /data2/dschulte/pytom-develop/pytom/bin/GLocalJob.py \
     -p {:s} \
     --mask {:s} \
     --SphericalMask \

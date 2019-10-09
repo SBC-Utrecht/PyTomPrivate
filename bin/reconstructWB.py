@@ -145,8 +145,8 @@ if __name__ == '__main__':
             x = (pickPosition.getX()*coordinateBinning+ recOffset[0])/projBinning
             y = (pickPosition.getY()*coordinateBinning+ recOffset[1])/projBinning
             if particlePolishFile:
-                x += polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
-                y += polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
+                x -= polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
+                y -= polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
                 #particle.setFilename(particle.getFilename()[:-3]+'_polished.em')
             z = (pickPosition.getZ()*coordinateBinning+ recOffset[2])/projBinning
             particle.setPickPosition( PickPosition(x=x, y=y, z=z))
