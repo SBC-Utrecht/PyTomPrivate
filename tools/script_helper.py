@@ -50,7 +50,7 @@ class ScriptOption:
             name += str(n)+', '
         name = name[:-2]
 
-        return name + "    " + self.description + " (Is optional: " + ('Yes' if self.required else 'No') + ";" + " Requires arguments: "+ ('Yes' if self.arg else 'No') + ")"
+        return name + "    " + self.description + " (Is " + ('required' if self.required else 'optional') + " and " + ('requires arguments' if self.arg else 'has no arguments') + " )"
 
 class ScriptHelper:
     """
