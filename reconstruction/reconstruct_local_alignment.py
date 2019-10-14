@@ -124,7 +124,7 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
 def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
                     mpi, projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
                     averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False,
-                    start_glocal=True, fsc_path='', glocal_jobname='glocaljob', glocal_nodes=5):
+                    start_glocal=True, fsc_path='', glocal_jobname='glocaljob', glocal_nodes=5, glocal_particlelist=None):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
@@ -248,7 +248,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
         print("{:s}> Ran the processes".format(gettime()))
 
-    run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal, glocal_jobname, glocal_nodes)
+    run_polished_subtomograms(particle_list_filename if glocal_particlelist is None else glocal_particlelist, projection_directory, results_file, binning, offset, vol_size, start_glocal, glocal_jobname, glocal_nodes)
 
 
 def run_single_tilt_angle_unpack(inp):

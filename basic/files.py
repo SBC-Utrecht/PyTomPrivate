@@ -46,16 +46,17 @@ def read(file,subregion=[0,0,0,0,0,0],sampling=[0,0,0],binning=[0,0,0]):
     
     if not checkFileExists(file):
         raise IOError('File not found or path is wrong: ' + file)
-    
+
+    print(subregion)
 
     try:                                                                                                     
         f = read(file,subregion[0],subregion[1],subregion[2],subregion[3], 
                  subregion[4],subregion[5],sampling[0],sampling[1],sampling[2], 
                  binning[0],binning[1],binning[2])
         return f
-    except RuntimeError, (errorNumber, errorString):
+    except RuntimeError as e:
         #redundant to code above, but just in case it goes through
-        if "Wrong file format or file doesn't exist!" in errorString:
+        if "Wrong file format or file doesn't exist!" in e.message:
             raise IOError('File not found or path is wrong: ' + file)
         else:
             raise
@@ -754,3 +755,18 @@ def write_em_header(filename, header):
         f.close()
 
 
+def read_size(filename):
+    emfile = filename.endswith('.em')*1
+    f = open(filename, 'r')
+    try:
+        dt_header = np.dtype('int32')
+        header = np.fromfile(f, dt_header, 4)
+        x = header[0+emfile]
+        y = header[1+emfile]
+        z = header[2+emfile]
+    except:
+        raise Exception("reading of MRC file failed")
+
+    f.close()
+
+    return [x,y,z]

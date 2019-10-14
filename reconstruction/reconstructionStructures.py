@@ -443,7 +443,7 @@ class ProjectionList(PyTomClass):
 
     def reconstructVolumes(self, particles, cubeSize, binning=1, applyWeighting=False,
                            showProgressBar=False, verbose=False, preScale=1, postScale=1,
-                           alignResultFile='', num_procs=10, num_procs_read=10):
+                           alignResultFile='', num_procs=10, num_procs_read=10, particle_polish_file=None):
         """
         reconstructVolumes: reconstruct a subtomogram given a particle object.
 
@@ -479,28 +479,32 @@ class ProjectionList(PyTomClass):
             progressBar = FixedProgBar(0, len(particles), 'Particle volumes generated ')
             progressBar.update(0)
 
-        if not alignResultFile:
+        if not alignResultFile and particle_polish_file is None:
             self.projectionstacks = self.toProjectionStack(
                 binning=binning, applyWeighting=applyWeighting, showProgressBar=False,
                 verbose=False)
-        else:
+        elif particle_polish_file is None:
             from pytom.reconstruction.generateAlignedTiltImagesInMemory import \
                 toProjectionStackFromAlignmentResultsFile
             self.projectionstacks = toProjectionStackFromAlignmentResultsFile(
-                alignResultFile, binning=binning, weighting=applyWeighting, showProgressBar=False, verbose=False)
+                alignResultFile, binning=binning, weighting=applyWeighting, verbose=False)
 
         self.reconstruct_volume_particles = particles
+        self.particle_polish_file = particle_polish_file
 
         print('start subtomogram reconstructions!' )
         from pytom_numpy import vol2npy
-        print(vol2npy(self.projectionstacks[0]))
+        #print(vol2npy(self.projectionstacks[0]))
         from multiprocessing import Process
         import time
         procs = []
 
         for pid in range(num_procs):
             args = (pid, num_procs, verbose, binning, postScale, cubeSize)
-            proc = Process(target=self._worker_reconstruct_volumes, args=args)
+            if particle_polish_file is None:
+                proc = Process(target=self._worker_reconstruct_volumes, args=args)
+            else:
+                proc = Process(target=self._worker_reconstruct_volumes_polished, args=args)
             procs.append(proc)
             proc.start()
 
@@ -543,6 +547,137 @@ class ProjectionList(PyTomClass):
                 print(x / binning, y / binning, z / binning)
 
             backProject(vol_img, vol_bp, vol_phi, vol_the, reconstructionPosition, vol_offsetProjections)
+
+            if postScale > 1:
+                volumeRescaled = vol(cubeSize / postScale, cubeSize / postScale, cubeSize / postScale)
+                rescaleSpline(vol_bp, volumeRescaled)
+                volumeRescaled.write(filename)
+            else:
+                vol_bp.write(filename)
+
+            del vol_bp
+
+    def _worker_reconstruct_volumes_polished(self, pid, num_procs, verbose, binning, postScale, cubeSize):
+        from pytom_volume import vol, backProject, rescaleSpline, pasteCenter, paste, complexRealMult
+        from pytom.basic.files import read, read_size
+        from pytom.basic.transformations import general_transform
+        from math import cos, sin, pi, floor
+        import os
+        from pytom.basic.fourier import fft, ifft
+        from pytom.basic.filter import circleFilter, rampFilter, fourierFilterShift_ReducedComplex
+
+        particles = self.reconstruct_volume_particles
+        print("polishfile:", self.particle_polish_file)
+
+        dimx, dimy, _ = read_size(self._list[0].getFilename())
+        print(dimx, dimy)
+        print(self._list)
+
+        weightSlice = fourierFilterShift_ReducedComplex(rampFilter(cubeSize, cubeSize))
+        circleFilterRadius = cubeSize / 2
+        circleSlice = fourierFilterShift_ReducedComplex(circleFilter(cubeSize, cubeSize, circleFilterRadius))
+
+        index = 0
+        assert num_procs >= 1
+        while True:
+            pos = index * num_procs + pid
+            if pos >= len(particles): break
+            index += 1
+            p = particles[pos]
+            x = p.getPickPosition().getX()
+            y = p.getPickPosition().getY()
+            z = p.getPickPosition().getZ()
+
+            stack = vol(cubeSize, cubeSize, len(self._list))
+            stack.setAll(0.0)
+
+            phiStack = vol(1, 1, len(self._list))
+            phiStack.setAll(0.0)
+
+            thetaStack = vol(1, 1, len(self._list))
+            thetaStack.setAll(0.0)
+
+            offsetStack = vol(1, 2, len(self._list))
+            offsetStack.setAll(0.0)
+
+            reconstructionPosition = vol(3, len(self), 1)
+            reconstructionPosition.setAll(0.0)
+
+            start_index = pos * len(self._list)
+            raw_size = int(cubeSize + 20)
+            print(raw_size)
+
+            for n, proj in enumerate(self._list):
+                tiltangle = float(self.particle_polish_file['TiltAngle'][start_index + n])
+                # filename = str(self.particle_polish_file['FileName'][start_index + n])
+                folder = os.path.dirname(proj.getFilename())
+                filename = '{}/sorted_aligned_{}.em'.format(folder, n + 1)
+                # tiltangle = proj.getTiltAngle()
+                offsetX = float(self.particle_polish_file['AlignmentTransX'][start_index + n - 1])
+                offsetY = float(self.particle_polish_file['AlignmentTransY'][start_index + n - 1])
+                yy = y + dimy / 2
+                xx = cos(tiltangle * pi / 180) * x - sin(tiltangle * pi / 180) * z + dimx / 2
+
+                # print(offsetX, offsetY, xx, yy, filename, n)
+
+                # offsetX = offsetX_2d * cos(tiltangle * pi/180)
+                # offsetZ = offsetX_2d * sin(tiltangle * pi/180)
+                # Edge handling: some particles are very close to the border, think about how to solve this
+                # Maybe detect if it is close to the border and then fill up the resulting empty spaces with zeros
+                x_top = int(xx - raw_size / 2 - floor(offsetX))
+                y_top = int(yy - raw_size / 2 - floor(offsetY))
+                x_bot = dimx - x_top - raw_size
+                y_bot = dimy - y_top - raw_size
+
+
+                # print(x_top, y_top, x_bot, y_bot, min(0, x_top), min(0, y_top), max(0, x_bot - dimx), max(0, y_bot - dimy))
+
+                img = read(filename, [max(0, x_top), max(0, y_top), 0, max(0, raw_size + x_bot) if x_bot < 0 else raw_size, max(0, raw_size + y_bot) if y_bot < 0 else raw_size, 1], [0, 0, 0], [binning, binning, 1])
+                interpolatedT = general_transform(img, shift=[-offsetX + floor(offsetX) - min(0, x_top) / 2 + ((raw_size - max(0, raw_size + x_bot)) if x_bot < 0 else 0) / 2, -offsetY + floor(offsetY) - min(0, y_top) / 2 + ((raw_size - max(0, raw_size + y_bot)) if y_bot < 0 else 0) / 2, 0])
+                interpolated = vol(cubeSize, cubeSize, 1)
+                interpolated.setAll(0)
+                pasteCenter(interpolatedT, interpolated)
+                interpolated = ifft(complexRealMult(complexRealMult(fft(interpolated), weightSlice), circleSlice))
+
+                thetaStack(tiltangle, 0, 0, n)
+                paste(interpolated, stack, 0, 0, n)
+
+                reconstructionPosition(0, 0, n, 0)
+                reconstructionPosition(0, 1, n, 0)
+                reconstructionPosition(0, 2, n, 0)
+
+                from pytom_numpy import vol2npy
+                # print(vol2npy(img).mean(), vol2npy(interpolated).mean(), tiltangle)
+
+                # import pylab as pl
+                # from pytom_numpy import vol2npy
+                # f, ax = pl.subplots(1, 2)
+                # ax[0].imshow(vol2npy(img))
+                # ax[1].imshow(vol2npy(interpolated))
+                # pl.show()
+
+            vol_bp = vol(cubeSize, cubeSize, cubeSize)
+            vol_bp.setAll(0.0)
+            filename = str(self.particle_polish_file['FileName'][start_index])
+
+            # print(vol2npy(thetaStack).mean(), vol2npy(stack).mean(), 0xff)
+            # import pylab as pl
+
+            # f, ax = pl.subplots(5, 5)
+
+            # for i in range(len(self._list)):
+            #     ax[i//5][i%5].imshow(vol2npy(stack)[:, :, i])
+            # pl.show()
+
+            if verbose:
+                print(x / binning, y / binning, z / binning)
+
+            # Create custom projectionstack per particle to have all the aligned images as given by the particle polish
+            # file, and the position is the center and the offsets are 0
+            # use general_transform (basic.transformations) to interpolate the remainder of the shift after getting it
+            # to integer position with the help of read (basic.files)
+
+            backProject(stack, vol_bp, phiStack, thetaStack, reconstructionPosition, offsetStack)
 
             if postScale > 1:
                 volumeRescaled = vol(cubeSize / postScale, cubeSize / postScale, cubeSize / postScale)
@@ -751,7 +886,7 @@ class ProjectionList(PyTomClass):
         from pytom.basic.files import readProxy as read
         from pytom.tools.ProgressBar import FixedProgBar
         from pytom.basic.fourier import fft, ifft
-        from pytom.basic.filter import circleFilter, rampFilter, fourierFilterShift
+        from pytom.basic.filter import circleFilter, rampFilter, fourierFilterShift_ReducedComplex
 
         # determine image dimensions according to first image in projection list
         imgDim = read(self._list[0].getFilename(), 0, 0, 0, 0, 0, 0, 0, 0, 0, binning, binning, 1).sizeX()
@@ -769,9 +904,9 @@ class ProjectionList(PyTomClass):
         offsetStack.setAll(0.0)
 
         if applyWeighting:
-            weightSlice = fourierFilterShift(rampFilter(imgDim, imgDim))
+            weightSlice = fourierFilterShift_ReducedComplex(rampFilter(imgDim, imgDim))
             circleFilterRadius = imgDim / 2
-            circleSlice = fourierFilterShift(circleFilter(imgDim, imgDim, circleFilterRadius))
+            circleSlice = fourierFilterShift_ReducedComplex(circleFilter(imgDim, imgDim, circleFilterRadius))
 
         if showProgressBar:
             progressBar = FixedProgBar(0, len(self._particleList), 'Particle volumes generated ')
@@ -782,6 +917,7 @@ class ProjectionList(PyTomClass):
                 print projection
 
             image = read(projection.getFilename(), 0, 0, 0, 0, 0, 0, 0, 0, 0, binning, binning, 1)
+            # Shift the projection based on the particle polish file
 
             if applyWeighting:
                 image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice))
