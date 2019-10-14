@@ -58,9 +58,21 @@ class ProgressBar:
             percent_done = 100.
         else:
             percent_done = int(round((diff / float(self.span)) * 100.0))
- 
+
+        # Make the bar maximal width of the terminal or the given width if it is not in a terminal
+        # by catching exceptions and warnings and sending stderr to stdout this code does not give any output if it does
+        # not work, so when running in sbatch (or similiar) it works just as without the automatic resize
+        try:
+            import warnings
+            with warnings.catch_warnings():
+                import subprocess
+                out = subprocess.check_output(['stty', 'size'], stderr=subprocess.STDOUT).split()[1]
+                max_width = int(out)
+        except:
+            max_width = self.width
+
         # figure the proper number of 'character' make up the bar
-        all_full = self.width - 2
+        all_full = max_width - len(self.name) - 10
         num_hashes = int(round((percent_done * all_full) / 100))
  
         if self.mode == 'dynamic':
@@ -72,8 +84,8 @@ class ProgressBar:
             # fixed bar (the percent string doesn't move)
             self.bar = self.char * num_hashes + ' ' * (all_full-num_hashes)
  
-        percent_str = str(percent_done) + "%"
-        self.bar = self.name + ' [ ' + self.bar + ' ] ' + percent_str
+        percent_str = '{:3d}%'.format(percent_done)
+        self.bar = self.name + ' [ ' + self.bar + ' ]' + percent_str
  
  
     def __str__(self):
