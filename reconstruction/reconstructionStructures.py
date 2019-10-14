@@ -604,56 +604,69 @@ class ProjectionList(PyTomClass):
             reconstructionPosition.setAll(0.0)
 
             start_index = pos * len(self._list)
-            raw_size = int(cubeSize + 20)
+            raw_size = int(cubeSize*1.5)
             print(raw_size)
 
             for n, proj in enumerate(self._list):
-                tiltangle = float(self.particle_polish_file['TiltAngle'][start_index + n])
-                # filename = str(self.particle_polish_file['FileName'][start_index + n])
+                tiltangle = int(self.particle_polish_file['TiltAngle'][start_index + n]) # Int because that seems to give better results, it is still unclear why (Douwe and Gijs)
+
+                # print(tiltangle, start_index, n)
+
+                # Retrieve the right file based on the tiltangle, assumes the same ordering in the particlepolishfile
+                # and numbering of the projections, and assumes a naming scheme for the projections
                 folder = os.path.dirname(proj.getFilename())
                 filename = '{}/sorted_aligned_{}.em'.format(folder, n + 1)
-                # tiltangle = proj.getTiltAngle()
-                offsetX = float(self.particle_polish_file['AlignmentTransX'][start_index + n - 1])
-                offsetY = float(self.particle_polish_file['AlignmentTransY'][start_index + n - 1])
+
+                offsetX = float(self.particle_polish_file['AlignmentTransX'][start_index + n])
+                offsetY = float(self.particle_polish_file['AlignmentTransY'][start_index + n])
+
+                # Set the coordinates to absolute (top left) and to 2D on this projection
                 yy = y + dimy / 2
                 xx = cos(tiltangle * pi / 180) * x - sin(tiltangle * pi / 180) * z + dimx / 2
 
-                # print(offsetX, offsetY, xx, yy, filename, n)
-
-                # offsetX = offsetX_2d * cos(tiltangle * pi/180)
-                # offsetZ = offsetX_2d * sin(tiltangle * pi/180)
-                # Edge handling: some particles are very close to the border, think about how to solve this
-                # Maybe detect if it is close to the border and then fill up the resulting empty spaces with zeros
-                x_top = int(xx - raw_size / 2 - floor(offsetX))
-                y_top = int(yy - raw_size / 2 - floor(offsetY))
+                x_top = int(floor(xx) - raw_size / 2 - floor(offsetX))
+                y_top = int(floor(yy) - raw_size / 2 - floor(offsetY))
                 x_bot = dimx - x_top - raw_size
                 y_bot = dimy - y_top - raw_size
 
+                # The difference between raw_size and the resulting size of the image because of edges
+                x_diff = min(0, x_top) + min(0, x_bot)
+                y_diff = min(0, y_top) + min(0, y_bot)
 
-                # print(x_top, y_top, x_bot, y_bot, min(0, x_top), min(0, y_top), max(0, x_bot - dimx), max(0, y_bot - dimy))
+                img = read(filename, [max(0, x_top), max(0, y_top), 0, max(0, raw_size + x_diff),
+                                      max(0, raw_size + y_diff), 1], [0, 0, 0], [binning, binning, 1])
 
-                img = read(filename, [max(0, x_top), max(0, y_top), 0, max(0, raw_size + x_bot) if x_bot < 0 else raw_size, max(0, raw_size + y_bot) if y_bot < 0 else raw_size, 1], [0, 0, 0], [binning, binning, 1])
-                interpolatedT = general_transform(img, shift=[-offsetX + floor(offsetX) - min(0, x_top) / 2 + ((raw_size - max(0, raw_size + x_bot)) if x_bot < 0 else 0) / 2, -offsetY + floor(offsetY) - min(0, y_top) / 2 + ((raw_size - max(0, raw_size + y_bot)) if y_bot < 0 else 0) / 2, 0])
+                interpolated_temp = general_transform(img, shift=[
+                    xx - floor(xx) - offsetX + floor(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.,
+                    yy - floor(yy) - offsetY + floor(offsetY) + (-min(0, y_top) + min(0, y_bot)) / 2., 0])
+
+                # interpolated_temp = general_transform(img, shift=[
+                #     xx - floor(xx) - offsetX + floor(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.,
+                #     yy - floor(yy) - offsetY + floor(offsetY) + (-min(0, y_top) + min(0, y_bot)) / 2., 0])
+
                 interpolated = vol(cubeSize, cubeSize, 1)
-                interpolated.setAll(0)
-                pasteCenter(interpolatedT, interpolated)
-                interpolated = ifft(complexRealMult(complexRealMult(fft(interpolated), weightSlice), circleSlice))
+                interpolated.setAll(0.0)
+                pasteCenter(interpolated_temp, interpolated)
+
+                # Apply weighting
+                interpolated = ifft(complexRealMult(complexRealMult(fft(interpolated), weightSlice), circleSlice)) / interpolated.numelem()
 
                 thetaStack(tiltangle, 0, 0, n)
                 paste(interpolated, stack, 0, 0, n)
-
-                reconstructionPosition(0, 0, n, 0)
-                reconstructionPosition(0, 1, n, 0)
-                reconstructionPosition(0, 2, n, 0)
+                #reconstructionPosition(cubeSize / 2, 0, n, 0)
+                #reconstructionPosition(cubeSize / 2, 1, n, 0)
+                #reconstructionPosition(cubeSize / 2, 2, n, 0)
 
                 from pytom_numpy import vol2npy
-                # print(vol2npy(img).mean(), vol2npy(interpolated).mean(), tiltangle)
+                print(vol2npy(img).mean(), vol2npy(interpolated).mean(), tiltangle)
 
                 # import pylab as pl
                 # from pytom_numpy import vol2npy
                 # f, ax = pl.subplots(1, 2)
-                # ax[0].imshow(vol2npy(img))
-                # ax[1].imshow(vol2npy(interpolated))
+                # im0 = ax[0].imshow(vol2npy(img))
+                # f.colorbar(im0)
+                # im1 = ax[1].imshow(vol2npy(interpolated))
+                # f.colorbar(im1)
                 # pl.show()
 
             vol_bp = vol(cubeSize, cubeSize, cubeSize)
@@ -920,7 +933,7 @@ class ProjectionList(PyTomClass):
             # Shift the projection based on the particle polish file
 
             if applyWeighting:
-                image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice))
+                image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice)) / image.numelem()
 
             thetaStack(projection.getTiltAngle(), 0, 0, i)
             offsetStack(projection.getOffsetX(), 0, 0, i)

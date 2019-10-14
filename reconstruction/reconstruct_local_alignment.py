@@ -554,7 +554,8 @@ sleep 5 & mpiexec -n {:d} pytom /data2/dschulte/pytom-develop/pytom/bin/GLocalJo
     --numberIterations {:d} \
     --pixelSize {:f} \
     --particleDiameter {:d} \
-    --jobName Alignment/GLocal/{:s}/job.xml""".format(glocal_nodes, pid, cwd, glocal_nodes*20, particle_list_filename, mask_filename, glocal_jobname, iterations, pixelsize, particleDiameter, glocal_jobname)
+    --jobName Alignment/GLocal/{:s}/job.xml \
+    --noShift""".format(glocal_nodes, pid, cwd, glocal_nodes*20, particle_list_filename, mask_filename, glocal_jobname, iterations, pixelsize, particleDiameter, glocal_jobname)
             f = open("glocal_align.sh", "w+")
             f.write(glocal_batchfile)
             f.close()
