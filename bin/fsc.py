@@ -27,11 +27,12 @@ if __name__ == '__main__':
                                    ScriptOption(['-m','--mask'], 'Mask (optional, but recomended).', 'has arguments', 'optional'),
                                    ScriptOption('--pixelsize', 'Pixelsize in Angstrom (optional). Will return resolution in Angstrom. ', 'has arguments', 'required'),
                                    ScriptOption('--xml', 'Output in XML. (optional) ', 'no arguments', 'optional'),
-                                   ScriptOption(['-v','--verbose'], 'Verbose data. (optional) ', 'no arguments', 'optional')])
+                                   ScriptOption(['-v','--verbose'], 'Verbose data. (optional) ', 'no arguments', 'optional'),
+                                   ScriptOption(['--noShift'], 'Removes the shift from the particlelist.', 'no arguments', 'optional')])
 
 
     try:
-        v1Filename, v2Filename, particleList, fscCriterion, numberBands, mask, pixelSize, xml, verbose = parse_script_options(sys.argv[1:], helper)
+        v1Filename, v2Filename, particleList, fscCriterion, numberBands, mask, pixelSize, xml, verbose, noshift = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
         sys.exit()
@@ -75,6 +76,10 @@ if __name__ == '__main__':
         
         pl = ParticleList('.')
         pl.fromXMLFile(particleList)
+        # Remove all shifts, useful for particle polishing
+        if noshift:
+            for particle in pl:
+                particle.getShift().scale(0)
         
         if len(pl) <= 1:
             raise RuntimeError('There is only 1 or less particles in the particle list. Need at least two! Abort!')

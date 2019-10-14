@@ -52,12 +52,13 @@ if __name__ == '__main__':
                                    ScriptOption(['-c', '--compound'], 'Use compound weighting in Fourier space',
                                                 'no arguments', 'optional'),
                                    ScriptOption(['-j','--jobName'], 'Specify job.xml output filename', 'has arguments',
-                                                'required')])
+                                                'required'),
+                                   ScriptOption(['--noShift'], 'Remove all shifts from the particlelist, useful for particle polishing', 'no arguments', 'optional')])
 
     try:
         particleList, reference, mask, isSphere, angShells, angleInc, symmetryN, symmetryAxisZ, symmetryAxisX,\
         destination, numberIterations, binning,\
-        pixelSize, diameter, weighting, compound, jobName = parse_script_options(sys.argv[1:], helper)
+        pixelSize, diameter, weighting, compound, jobName, noshift = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print e
         sys.exit()
@@ -74,6 +75,11 @@ if __name__ == '__main__':
         raise RuntimeError('ParticleList file ' + particleList + ' does not exist!')
     pl = ParticleList()
     pl.fromXMLFile(particleList)
+
+    # Remove all shifts, useful for particle polishing
+    if noshift:
+        for particle in pl:
+            particle.getShift().scale(0)
 
     if reference:
         if not checkFileExists(reference):
