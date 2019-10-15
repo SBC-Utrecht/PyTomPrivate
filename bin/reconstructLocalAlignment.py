@@ -12,6 +12,7 @@ if __name__ == '__main__':
     from pytom.tools.script_helper import ScriptHelper, ScriptOption
     from pytom.tools.parse_script_options import parse_script_options
     from pytom.tompy.mpi import MPI
+    from time import gmtime, strftime
 
     helper = ScriptHelper(sys.argv[0].split('/')[-1],  # script name
                           description='Reconstruct a local alignment of particles based on a global alignment.',
@@ -22,15 +23,15 @@ if __name__ == '__main__':
                                                 'projection directory. Ex path/to/tomo_000.xml;path/to/projection;path/'
                                                 'to/tomo_001.xml;path/to/projection', 'has arguments', 'required'),
                                    ScriptOption(['-s', '--particleSize'],
-                                                'Output particle size (int).', 'has arguments', 'required'),
+                                                'Output particle size.', 'int', 'required'),
                                    ScriptOption(['-b', '--binning'],
-                                                'Binning factor of the particle list (int).', 'has arguments', 'required'),
+                                                'Binning factor of the particle list.', 'int', 'required'),
                                    ScriptOption(['-o', '--cuttingOffset'],
                                                 'Cutting offset of the particle list (int x, int y, int z).',
-                                                'has arguments', 'required'),
+                                                'int,int,int', 'required'),
                                    ScriptOption(['-a', '--averagedSubtomogram'],
                                                 'The path to an averaged subtomogram, to use instead of many '
-                                                'subtomograms', 'has arguments', 'optional'),
+                                                'subtomograms', 'has arguments', 'optional', False),
                                    ScriptOption(['-i', '--INFRIterations'],
                                                 'Number of iterations to run, when running INFR, using this option '
                                                 'automatically sets the reconstruction method to INFR.',
@@ -42,35 +43,23 @@ if __name__ == '__main__':
                                                 'normal folder.', 'has arguments', 'optional'),
                                    ScriptOption(['-g', '--createGraphics'],
                                                 'Flag to turn on to create graphical reports of intermediate steps of '
-                                                'the particle polishing', 'no arguments', 'optional'),
+                                                'the particle polishing', 'no arguments', 'optional', False),
                                    ScriptOption(['-n', '--numberOfParticles'],
-                                                'To take a subset of the particlelist for debugging purposes (int)',
-                                                'has arguments', 'optional'),
+                                                'To take a subset of the particlelist for debugging purposes',
+                                                'int', 'optional', -1),
                                    ScriptOption(['--skipAlignment'],
                                                 'Skips the alignment/particle polish phase, only does the '
-                                                'reconstruction and FRM alignment.', 'no arguments', 'optional'),
+                                                'reconstruction and FRM alignment.', 'no arguments', 'optional', False),
                                    ScriptOption(['-f', '--FSCPath'], "The path to an FSC file (.dat) to use as a filter"
-                                                " for the cutouts.", 'has arguments', 'optional'),
-                                   ScriptOption(['--GJobName'], 'The name of the GLocal job', 'has arguments', 'optional'),
-                                   ScriptOption(['--GNodes'], 'The amount of nodes GLocal can use', 'has arguments', 'optional'),
+                                                " for the cutouts.", 'has arguments', 'optional', ''),
+                                   ScriptOption(['--GJobName'], 'The name of the GLocal job', 'has arguments',
+                                                'optional', strftime("glocaljob-%D-%m-%Y", gmtime())),
+                                   ScriptOption(['--GNodes'], 'The amount of nodes GLocal can use', 'int', 'optional', 5),
                                    ScriptOption(['--Gparticlelist'], 'The particlelist to be used by GLocal', 'has arguments', 'optional')])
 
-    try:
-        proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
-         create_graphics, number_of_particles, skip_alignment, fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
+    proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
+     create_graphics, number_of_particles, skip_alignment, fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist = parse_script_options(sys.argv[1:], helper)
 
-    # parse the arguments
-
-    vol_size = int(vol_size)
-    binning = int(binning)
-
-    offset = [int(i) for i in offset.split(',')]
-    if len(offset) != 3:
-        raise Exception("The offset should be defined with three values. Structure: x,y,z. "
-                        "In which x, y and z are integers.")
 
     if reconstruction_method == "WBP" or reconstruction_method == "INFR":
         # fine go on
@@ -81,47 +70,17 @@ if __name__ == '__main__':
         raise Exception((reconstruction_method if reconstruction_method else "[nothing]") +
                         " is not a known reconstruction method, use WBP or INFR")
 
-    if not averaged_subtomogram:
-        averaged_subtomogram = False
-
-    if create_graphics:
-        create_graphics = True
-    else:
-        create_graphics = False
-
-    if skip_alignment:
-        skip_alignment = True
-    else:
-        skip_alignment = False
-
     if infr_iter:
         infr_iter = int(infr_iter)
         reconstruction_method = "INFR"
     else:
         infr_iter = -1
 
-    if fsc_path is None:
-        fsc_path = ""
-
-    if glocal_jobname is None:
-        from time import gmtime, strftime
-        glocal_jobname = strftime("glocaljob-%D-%m-%Y", gmtime())
-
-    if glocal_nodes is None:
-        glocal_nodes = 5
-    else:
-        glocal_nodes = int(glocal_nodes)
-
     # force the user to specify even-sized volume
     assert vol_size % 2 == 0
 
     # pass everything to the function in reconstruction/reconstruct_local_alignment.py
     from pytom.reconstruction.reconstruct_local_alignment import local_alignment
-
-    if number_of_particles:
-        number_of_particles = int(number_of_particles)
-    else:
-        number_of_particles = -1
 
     names = []
     if ':' in proj_dir:

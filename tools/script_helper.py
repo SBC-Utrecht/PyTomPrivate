@@ -2,6 +2,8 @@
 Created on Jun 29, 2011
 
 @author: yuxiangchen
+
+Changed extensively in october 2019 by Douwe Schulte to give more functionality and clean up the handling of parsing and exeptions
 '''
 
 class ScriptArg:
@@ -16,12 +18,18 @@ class ScriptOption:
     """
     ScriptOption: Determine whether script option requires an argument or is optional 
     """
-    def __init__(self, option_str, description, arguments, required):
+    def __init__(self, option_str, description, arguments, required, default_value=None):
         """
-        @param arg: requires argument? choose between 'has arguments' and 'no arguments'
-        @type arg: str
+        @param option_str: a list of names for the option ex. ['--particleList', '-pl']
+        @type option_str: list(str)
+        @param description: a description for the option, will be shown when the user types --help, some details will
+            automatically be added (required or not and arguments or not and the format of the arguments)
+        @param arguments: requires argument? choose between 'has arguments' and 'no arguments'
+        @type arguments: str
         @param required: optional feature? choose between 'required' and 'optional'
         @type required: str
+        @param default_value: the default value for the option, to be used if it is not provided by the user
+        @type default_value: any
         """
         if option_str.__class__ == list: # make it list
             self.option_str = option_str
@@ -35,22 +43,36 @@ class ScriptOption:
         elif arguments.lower() == 'has arguments':
             self.arg = True
         else:
-            raise Exception("The value for 'arg' in ScriptOption should be one of the following: 'has arguments' or 'no arguments'")
+            # Handle invalid strings, whitespace is invalid because of the algorithm used in parse_script_options
+            import re
+            match = re.match(r"\s", arguments)
+            if match:
+                raise Exception("Argument strings should not contain spaces (or other whitespace) or it should be \"no arguments\" or \"has arguments\". For option {:s} with argument string \"{:s}\"".format(self.option_str[0], arguments))
+            self.arg = True
+
+        self.arg_str = arguments.lower()
 
         if required.lower() == 'required':
             self.required = True
         elif required.lower() == 'optional':
             self.required = False
         else:
-            raise Exception("The value for 'required' in ScriptOption should be 'required' or 'optional'")
+            raise Exception("The value for 'required' in ScriptOption should be \"required\" or \"optional\"")
+
+        self.default = default_value
     
     def __str__(self):
+        """Create a string for display in the help menu"""
         name = ''
         for n in self.option_str:
             name += str(n)+', '
         name = name[:-2]
 
-        return name + "    " + self.description + " (Is " + ('required' if self.required else 'optional') + " and " + ('requires arguments' if self.arg else 'has no arguments') + " )"
+        arguments_details = ('requires arguments' + ((' in the format: ' + self.arg_str) if self.arg_str != 'has arguments' else '')) if self.arg else 'has no arguments'
+        default_value_details = '' if self.default is None else ' with default value: \"' + str(self.default) + '\"'
+        details = "(Is " + ('required' if self.required else 'optional') + " and " + arguments_details + default_value_details + ")"
+
+        return name + "\n    " + self.description + "\n    " + details
 
 class ScriptHelper:
     """
@@ -89,7 +111,7 @@ class ScriptHelper:
         if len(self.options) > 0:
             help_str += "OPTIONS\n"
             for opt in self.options:
-                help_str += "    " + str(opt) + "\n"
+                help_str += str(opt) + "\n"
         if self.examples is not None:
             help_str += "EXAMPLES\n    %s\n" % self.examples
         if self.see_also is not None:
