@@ -20,40 +20,40 @@ if __name__ == '__main__':
                           authors='Friedrich Foerster',
                           options=[ScriptOption(['-p','--particleList'],
                                                 'Particle list : xml file storing information to all subvolumes',
-                                                'has arguments', 'required'),
+                                                'string', 'required'),
                                    ScriptOption(['-r','--reference'],
                                                 'Reference : the initial reference - if none provided average of particle list',
-                                                'has arguments', 'optional'),
-                                   ScriptOption(['-m','--mask'], 'Mask : a mask ', 'has arguments', 'required'),
+                                                'string', 'optional'),
+                                   ScriptOption(['-m','--mask'], 'Mask : a path to a mask ', 'string', 'required'),
                                    ScriptOption(['--SphericalMask'], 'Mask is spherical / speed up!', 'no arguments',
-                                                'optional'),
-                                   ScriptOption(['--angleShells'], '# angle shells used for angular refinement. Default= 3',
-                                                'has arguments', 'optional'),
-                                   ScriptOption(['--angleIncrement'], 'Angular increment for refinement. Default = 3',
-                                                'has arguments', 'optional'),
+                                                'optional', False),
+                                   ScriptOption(['--angleShells'], '# angle shells used for angular refinement.',
+                                                'uint', 'optional', 3),
+                                   ScriptOption(['--angleIncrement'], 'Angular increment for refinement.',
+                                                'uint', 'optional', 3),
                                    ScriptOption(['--symmetry'], 'PointSymmetry : specify n-fold symmetry (n)',
-                                                'has arguments', 'optional'),
+                                                'int', 'optional'),
                                    ScriptOption(['--symmetryAngleZ'], 'PointSymmetry axis tilt around Z axis',
-                                                'has arguments', 'optional'),
+                                                'float', 'optional'),
                                    ScriptOption(['--symmetryAngleX'], 'PointSymmetry axis tilt around X axis',
-                                                'has arguments', 'optional'),
-                                   ScriptOption(['-d','--destination'], 'Destination : destination directory',
+                                                'float', 'optional'),
+                                   ScriptOption(['-d', '--destination'], 'Destination : destination directory',
                                                 'has arguments', 'required'),
-                                   ScriptOption(['-n','--numberIterations'], 'Number of iterations',
+                                   ScriptOption(['-n', '--numberIterations'], 'Number of iterations',
                                                 'has arguments', 'required'),
                                    ScriptOption(['-b','--binning'],
-                                                'Perform binning (downscale) of subvolumes by factor. Default=1.',
-                                                'has arguments', 'optional'),
-                                   ScriptOption(['--pixelSize'], 'Pixelsize in Angstrom', 'has arguments', 'required'),
-                                   ScriptOption(['--particleDiameter'], 'Particle diameter in Angstrom', 'has arguments',
-                                                'required'),
+                                                'Perform binning (downscale) of subvolumes by factor.',
+                                                'uint', 'optional', 1),
+                                   ScriptOption(['--pixelSize'], 'Pixelsize in Angstrom', 'float', 'required'),
+                                   ScriptOption(['--particleDiameter'], 'Particle diameter in Angstrom', 'float',
+                                                'required', -1),
                                    ScriptOption(['-w', '--weighting'], 'Weight particles by exp of CC', 'no arguments',
-                                                'optional'),
+                                                'optional', False),
                                    ScriptOption(['-c', '--compound'], 'Use compound weighting in Fourier space',
-                                                'no arguments', 'optional'),
+                                                'no arguments', 'optional', False),
                                    ScriptOption(['-j','--jobName'], 'Specify job.xml output filename', 'has arguments',
                                                 'required'),
-                                   ScriptOption(['--noShift'], 'Remove all shifts from the particlelist, useful for particle polishing', 'no arguments', 'optional')])
+                                   ScriptOption(['--noShift'], 'Remove all shifts from the particlelist, useful for particle polishing', 'no arguments', 'optional', False)])
 
     try:
         particleList, reference, mask, isSphere, angShells, angleInc, symmetryN, symmetryAxisZ, symmetryAxisX,\
@@ -90,44 +90,20 @@ if __name__ == '__main__':
     
     if not checkFileExists(mask):
         raise RuntimeError('Mask file ' + mask + ' does not exist!')
-    if isSphere:
-        isSphere = True
-    else:
-        isSphere = False
+
     m = Mask(filename=mask, isSphere=isSphere)
     
     if not checkDirExists(destination):
         raise RuntimeError('Destination directory ' + destination + ' does not exist!')
 
-    if not angShells:
-        angShells = 3
-    if not angleInc:
-        angleInc = 3.
     rot = LocalSampling(angShells,angleInc)
 
-    if not pixelSize:
-        pixelSize = 1.
-    if not diameter:
-        diameter = -1
-    sampleI = SampleInformation(pixelSize=float(pixelSize), particleDiameter=float(diameter))
+    sampleI = SampleInformation(pixelSize=pixelSize, particleDiameter=diameter)
 
     if symmetryN is None or symmetryAxisZ is None or symmetryAxisX is None:
         sym = None
     else:
-        sym = PointSymmetry(nfold=int(symmetryN),z2=float(symmetryAxisZ),x=float(symmetryAxisX))
-
-    if not binning:
-        binning = 1
-
-    if weighting:
-        weighting = True
-    else:
-        weighting = False
-
-    if compound:
-        compound = True
-    else:
-        compound = False
+        sym = PointSymmetry(nfold=symmetryN,z2=symmetryAxisZ,x=symmetryAxisX)
 
     ################# fixed parameters #################
     score   = FLCFScore()

@@ -27,34 +27,27 @@ if __name__ == '__main__':
                           http://www.pytom.org/doc/pytom/resonstructSubtomograms.html',
                       authors='Thomas Hrabe, FF',
 
-                      options= [ScriptOption(['-t','--tomogram'], 'Reconstruct a tomogram. Specify name of tomogam here. You do not need a particle list for that!', 'has arguments', 'optional'),
-                                ScriptOption(['-p','--particleList'], 'XML particle list.', 'has arguments', 'required'),
-                                ScriptOption(['--projectionList'], 'XML projection list.', 'has arguments', 'optional'),
-                                ScriptOption(['--projectionDirectory'], 'Directory containing the projections.', 'has arguments', 'required'),
-                                ScriptOption(['-w','--applyWeighting'], 'If projections are not weighted, apply weighting before. If omited, no weighting.', 'no arguments', 'optional'),
+                      options= [ScriptOption(['-t','--tomogram'], 'Reconstruct a tomogram. Specify name of tomogam here. You do not need a particle list for that!', 'string', 'optional'),
+                                ScriptOption(['-p','--particleList'], 'XML particle list.', 'string', 'required'),
+                                ScriptOption(['--projectionList'], 'XML projection list.', 'string', 'optional'),
+                                ScriptOption(['--projectionDirectory'], 'Directory containing the projections.', 'string', 'required'),
+                                ScriptOption(['-w','--applyWeighting'], 'If projections are not weighted, apply weighting before. If omited, no weighting.', 'no arguments', 'optional', False),
                                 ScriptOption(['-s','--size'], 'Size of particle cube / tomogram.', 'has arguments', 'required'),
-                                ScriptOption(['-b','--coordinateBinning'], 'Binning factor of coordinates. If particle coordinates are determined in binned volume (with respect to projections) this binning factor needs to be specified.', 'has arguments', 'optional'),
-                                ScriptOption(['-o','--recOffset'], 'Cropping offset of the binned tomogram.', 'has arguments', 'required'),
-                                ScriptOption(['--projBinning'], 'Bin projections BEFORE reconstruction. 1 is no binning, 2 will merge two voxels to one, 3 -> 1, 4 ->1 ...', 'has arguments', 'optional'),
-                                ScriptOption(['-a', '--alignResultFile'], 'Use an alignmentResultFile to generate the aligned files in memory.', 'has arguments', 'optional'),
-                                ScriptOption(['-r', '--particlePolishFile'], 'Use an particlePolishFile to generate the polished cutouts.', 'has arguments', 'optional'),
-                                ScriptOption(['-n', '--numProcesses'], 'The number of processes to use. Default: 10', 'has arguments', 'optional'),
+                                ScriptOption(['-b','--coordinateBinning'], 'Binning factor of coordinates. If particle coordinates are determined in binned volume (with respect to projections) this binning factor needs to be specified.', 'float', 'optional', 1),
+                                ScriptOption(['-o','--recOffset'], 'Cropping offset of the binned tomogram.', 'int,int,int', 'required'),
+                                ScriptOption(['--projBinning'], 'Bin projections BEFORE reconstruction. 1 is no binning, 2 will merge two voxels to one, 3 -> 1, 4 ->1 ...', 'uint', 'optional', 1),
+                                ScriptOption(['-a', '--alignResultFile'], 'Use an alignmentResultFile to generate the aligned files in memory.', 'string', 'optional'),
+                                ScriptOption(['-r', '--particlePolishFile'], 'Use an particlePolishFile to generate the polished cutouts.', 'string', 'optional'),
+                                ScriptOption(['-n', '--numProcesses'], 'The number of processes to use.', 'uint', 'optional', 10),
                                 ScriptOption(['--numReadProcesses'], 'The maximum number of reading processes. BEWARE!'
                                               ' a single read thread easily consumes up to 4 Gb (for a 4k picture) so '
                                               'keep that in mind to not overload the nodes. If not specified this will '
-                                              'be the same as numProcesses.', 'has arguments', 'optional')])
+                                              'be the same as numProcesses.', 'uint', 'optional')])
         
     particleList = None
-    projectionDirectory = None
-    aw = False
-    
-    try:
-        tomogram, particleListXMLPath, projectionList, projectionDirectory, aw, size, coordinateBinning, recOffset, \
-        projBinning, alignmentResultFile, particlePolishFile, numProcesses, numReadProcesses = parse_script_options(sys.argv[1:], helper)
-    
-    except Exception as e:
-        print e
-        sys.exit()
+
+    tomogram, particleListXMLPath, projectionList, projectionDirectory, aw, size, coordinateBinning, recOffset, \
+    projBinning, alignmentResultFile, particlePolishFile, numProcesses, numReadProcesses = parse_script_options(sys.argv[1:], helper)
 
     print(projectionDirectory, projectionList)
    
@@ -64,33 +57,10 @@ if __name__ == '__main__':
         size.append(tmp)
         size.append(tmp)
 
-    if projBinning:
-        projBinning = int(projBinning)
-    else:
-        projBinning = 1
-
-    if numProcesses is None:
-        numProcesses = 10
-    else:
-        numProcesses = int(numProcesses)
-
     if numReadProcesses is None:
         numReadProcesses = numProcesses
     else:
-        numReadProcesses = int(numReadProcesses)
-
-    if coordinateBinning:
-        coordinateBinning = float(coordinateBinning)
-    else:
-        coordinateBinning = 1
-    if not aw:
-        aw = False
-
-    if recOffset:
-        recOffset = [int(i) for i in recOffset.split(',')]
-    else:
-        recOffset = [0.,0.,0.]
-    
+        numReadProcesses = numReadProcesses
         
     projections = ProjectionList()
     if checkFileExists(projectionList):
@@ -100,13 +70,11 @@ if __name__ == '__main__':
     else:
         raise RuntimeError('Neither projectionList existed nor the projectionDirectory you specified! Abort')
 
-
     if checkFileExists(particlePolishFile):
         from pytom.basic.datatypes import LOCAL_ALIGNMENT_RESULTS
         import numpy
 
-        polishedCoordinates = numpy.loadtxt(particlePolishFile,dtype=LOCAL_ALIGNMENT_RESULTS)
-
+        polishedCoordinates = numpy.loadtxt(particlePolishFile, dtype=LOCAL_ALIGNMENT_RESULTS)
 
     if alignmentResultFile and not checkFileExists(alignmentResultFile):
         raise Exception('alignmentResultFile does not exists. Please provide an existing file or omit this flag.')
@@ -160,8 +128,3 @@ if __name__ == '__main__':
                                        showProgressBar=True, verbose=False,
                                        preScale=projBinning, postScale=1, alignResultFile=alignmentResultFile,
                                        num_procs=numProcesses, num_procs_read=numReadProcesses, particle_polish_file=polishedCoordinates)
-
-            
-
-
-

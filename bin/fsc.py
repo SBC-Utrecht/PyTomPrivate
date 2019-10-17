@@ -7,7 +7,6 @@ Created on Jul 21, 2011
 '''
 
 
-
 if __name__ == '__main__':
     # parse command line arguments
     import sys
@@ -19,50 +18,28 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Determine resolution by FSC.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption('--v1', 'First volume path.', 'has arguments', 'optional'),
-                                   ScriptOption('--v2', 'Second volume path.', 'has arguments', 'optional'),
-                                   ScriptOption('--pl', 'A particleList if v1 and v2 are not available.', 'has arguments', 'optional'),
-                                   ScriptOption('--fsc', 'The FSC criterion. Value between 0.0 and 1.0. Standard values are 0.5 or 0.3', 'has arguments', 'required'),
-                                   ScriptOption('--numberBands', 'Number of bands (optional). If not set, numberBands = cubesize/4.', 'has arguments', 'optional'),
-                                   ScriptOption(['-m','--mask'], 'Mask (optional, but recomended).', 'has arguments', 'optional'),
-                                   ScriptOption('--pixelsize', 'Pixelsize in Angstrom (optional). Will return resolution in Angstrom. ', 'has arguments', 'required'),
+                          options=[ScriptOption('--v1', 'First volume path.', 'string', 'optional'),
+                                   ScriptOption('--v2', 'Second volume path.', 'string', 'optional'),
+                                   ScriptOption('--pl', 'A particleList if v1 and v2 are not available.', 'string', 'optional'),
+                                   ScriptOption('--fsc', 'The FSC criterion. Value between 0.0 and 1.0. Standard values are 0.5 or 0.3', 'float', 'optional', 0.5),
+                                   ScriptOption('--numberBands', 'Number of bands (optional). If not set, numberBands = cubesize/4.', 'int', 'optional'),
+                                   ScriptOption(['-m','--mask'], 'Mask (optional, but recomended).', 'string', 'optional'),
+                                   ScriptOption('--pixelsize', 'Pixelsize in Angstrom (optional). Will return resolution in Angstrom.', 'float', 'required'),
                                    ScriptOption('--xml', 'Output in XML. (optional) ', 'no arguments', 'optional'),
                                    ScriptOption(['-v','--verbose'], 'Verbose data. (optional) ', 'no arguments', 'optional'),
                                    ScriptOption(['--noShift'], 'Removes the shift from the particlelist.', 'no arguments', 'optional')])
 
 
-    try:
-        v1Filename, v2Filename, particleList, fscCriterion, numberBands, mask, pixelSize, xml, verbose, noshift = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
-
-    try:
-        fscCriterion = float(fscCriterion)
-    except TypeError:
-        fscCriterion = 0.5
-    
-    try:
-        if pixelSize:
-            pixelSize = float(pixelSize)
-    except ValueError:
-        raise ValueError('The value for pixelsize must be a float!')
+    v1Filename, v2Filename, particleList, fscCriterion, numberBands, mask, pixelSize, xml, verbose, noshift = parse_script_options(sys.argv[1:], helper)
     
     try:
         mask= read(mask) 
     except:
         mask = None
-    
-    try:
-        if numberBands:
-            numberBands = int(numberBands)
-    except ValueError:
-        raise ValueError('The value for numberBands must be a integer!')
-    
         
     if v1Filename and v2Filename:    
-        v1  = read(v1Filename)
-        v2  = read(v2Filename)
+        v1 = read(v1Filename)
+        v2 = read(v2Filename)
         
         if not numberBands:
             numberBands = int(v1.sizeX()/2)
@@ -116,9 +93,3 @@ if __name__ == '__main__':
     
     else:
         print 'XML'
-    
-        
-    
-    
-    
-    

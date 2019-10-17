@@ -6,9 +6,9 @@ setenv LD_LIBRARY_PATH '/cm/shared/apps/openmpi/2.1.1/lib:/usr/lib64:/usr/lib64:
 endif
 
 if ($?PATH>0) then
-setenv PATH '/cm/shared/apps/openmpi/2.1.1:/cm/shared/apps/openmpi/2.1.1/bin:/cm/shared/apps/python/2.7/bin:/data2/dschulte/BachelorThesis/Scripts/:/cm/local/apps/cuda/libs/current/bin:/cm/shared/apps/cuda80/sdk/8.0.61/bin/x86_64/linux/release:/cm/shared/apps/cuda80/toolkit/8.0.61/bin:/cm/shared/apps/utilities/bin:/cm/shared/apps/slurm/17.02.2/sbin:/cm/shared/apps/slurm/17.02.2/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/sbin:/cm/local/apps/environment-modules/3.2.10/bin:/home/dschulte/.local/bin:/home/dschulte/bin':$PATH
+setenv PATH '/cm/shared/apps/openmpi/2.1.1/bin:/cm/shared/apps/python/2.7/bin:/data2/dschulte/BachelorThesis/Scripts/:/cm/local/apps/cuda/libs/current/bin:/cm/shared/apps/cuda80/sdk/8.0.61/bin/x86_64/linux/release:/cm/shared/apps/cuda80/toolkit/8.0.61/bin:/cm/shared/apps/utilities/bin:/cm/shared/apps/slurm/17.02.2/sbin:/cm/shared/apps/slurm/17.02.2/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/sbin:/cm/local/apps/environment-modules/3.2.10/bin:/home/dschulte/.local/bin:/home/dschulte/bin':$PATH
 else
-setenv PATH '/cm/shared/apps/openmpi/2.1.1:/cm/shared/apps/openmpi/2.1.1/bin:/cm/shared/apps/python/2.7/bin:/data2/dschulte/BachelorThesis/Scripts/:/cm/local/apps/cuda/libs/current/bin:/cm/shared/apps/cuda80/sdk/8.0.61/bin/x86_64/linux/release:/cm/shared/apps/cuda80/toolkit/8.0.61/bin:/cm/shared/apps/utilities/bin:/cm/shared/apps/slurm/17.02.2/sbin:/cm/shared/apps/slurm/17.02.2/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/sbin:/cm/local/apps/environment-modules/3.2.10/bin:/home/dschulte/.local/bin:/home/dschulte/bin'
+setenv PATH '/cm/shared/apps/openmpi/2.1.1/bin:/cm/shared/apps/python/2.7/bin:/data2/dschulte/BachelorThesis/Scripts/:/cm/local/apps/cuda/libs/current/bin:/cm/shared/apps/cuda80/sdk/8.0.61/bin/x86_64/linux/release:/cm/shared/apps/cuda80/toolkit/8.0.61/bin:/cm/shared/apps/utilities/bin:/cm/shared/apps/slurm/17.02.2/sbin:/cm/shared/apps/slurm/17.02.2/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/sbin:/cm/local/apps/environment-modules/3.2.10/bin:/home/dschulte/.local/bin:/home/dschulte/bin'
 endif
 
 if ($?PYTHONPATH>0) then

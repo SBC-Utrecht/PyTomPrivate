@@ -24,7 +24,11 @@ class ScriptOption:
         @type option_str: list(str)
         @param description: a description for the option, will be shown when the user types --help, some details will
             automatically be added (required or not and arguments or not and the format of the arguments)
-        @param arguments: requires argument? choose between 'has arguments' and 'no arguments'
+        @param arguments: requires argument? choose between 'has arguments' and 'no arguments' or give the format of the
+            arguments, consisting of possibly splitting characters and one or more of the following: 'uint', 'int',
+            'float' and 'string'. Uint will only accept positive integers, int positive and negatice integers, float
+            will accept any valid float (including exponent) and string will match anything that is not whitespace (so
+            be careful). No whitespace is permitted in these format strings.
         @type arguments: str
         @param required: optional feature? choose between 'required' and 'optional'
         @type required: str
@@ -68,7 +72,7 @@ class ScriptOption:
             name += str(n)+', '
         name = name[:-2]
 
-        arguments_details = ('requires arguments' + ((' in the format: ' + self.arg_str) if self.arg_str != 'has arguments' else '')) if self.arg else 'has no arguments'
+        arguments_details = ('requires arguments' + ((' in the format: \"' + self.arg_str + '\"') if self.arg_str != 'has arguments' else '')) if self.arg else 'has no arguments'
         default_value_details = '' if self.default is None else ' with default value: \"' + str(self.default) + '\"'
         details = "(Is " + ('required' if self.required else 'optional') + " and " + arguments_details + default_value_details + ")"
 
