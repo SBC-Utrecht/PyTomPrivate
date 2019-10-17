@@ -248,7 +248,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
         print("{:s}> Ran the processes".format(gettime()))
 
-    run_polished_subtomograms(particle_list_filename if glocal_particlelist is None else glocal_particlelist, projection_directory, results_file, binning, offset, vol_size, start_glocal, glocal_jobname, glocal_nodes)
+    run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal, glocal_jobname, glocal_nodes, particle_list_filename if glocal_particlelist is None else glocal_particlelist)
 
 
 def run_single_tilt_angle_unpack(inp):
@@ -339,9 +339,9 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     xx = (cos(ang * pi / 180) * (x - dim_x / 2) - sin(ang * pi / 180) * (z - dim_z / 2)) + dim_x / 2
 
     # cut the small patch out
-    patch = cut_from_projection(img, [xx, yy], [vol_size, vol_size])
-    patch = patch - np.mean(patch)
-    patch = patch.squeeze()
+    v = vol_size / 2
+    patch = cut_from_projection(img.sum(axis=2), [xx, yy], [vol_size, vol_size])  # img.sum(axis=2)[int(xx-v):int(xx+v), int(yy-v):int(yy+v)]
+    patch = patch - patch.mean()
 
     # filter using FSC
     fsc_mask = None
@@ -371,7 +371,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
         nx += x_diff
         ny += y_diff
 
-        npatch = cut_from_projection(img, [xx + x_diff, yy + y_diff], [vol_size, vol_size])
+        npatch = cut_from_projection(img.sum(axis=2), [xx + x_diff, yy + y_diff], [vol_size, vol_size])  # img.sum(axis=2)[int(xx+x_diff-v):int(xx+x_diff+v), int(yy+y_diff-v):int(yy+y_diff+v)]  #
         npatch = npatch - np.mean(npatch)
 
         nccf = normalised_cross_correlation_numpy(template, npatch.squeeze())
@@ -417,7 +417,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
 
         axis_title(ax_1_0, u"Cross correlation\ncutout × template")
         ax_1_0.imshow(ccf)
-        ax_1_0.plot([p[1] for p in points], [p[0] for p in points], fillstyle='none', **m_style)
+        ax_1_0.plot([p[0] for p in points], [p[1] for p in points], fillstyle='none', **m_style)
         ax_1_0.plot([points2d[0]], [points2d[1]], fillstyle='none', **m_style_alt)
         ax_1_0.plot([vol_size / 2], [vol_size / 2], ",k")
 
@@ -429,7 +429,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
 
         axis_title(ax_1_2, u"Cross correlation\nshifted cutout × template")
         ax_1_2.imshow(nccf)
-        ax_1_2.plot([p[1] for p in npoints], [p[0] for p in npoints], fillstyle='none', **m_style)
+        ax_1_2.plot([p[0] for p in npoints], [p[1] for p in npoints], fillstyle='none', **m_style)
         ax_1_2.plot([npoints2d[0]], [npoints2d[1]], fillstyle='none', **m_style_alt)
         ax_1_2.plot([vol_size / 2], [vol_size / 2], ",k")
 
@@ -456,7 +456,7 @@ def axis_title(axis, title):
 
 
 def run_polished_subtomograms(particle_list_filename, projection_directory, particle_polish_file, binning, offset,
-                              vol_size, start_glocal, glocal_jobname, glocal_nodes):
+                              vol_size, start_glocal, glocal_jobname, glocal_nodes, glocal_particle_list):
     """
     Reconstructs subtomograms based on a polished particlelist, writes these to the places as specified in particlelist
 
@@ -555,7 +555,7 @@ sleep 5 & mpiexec -n {:d} pytom /data2/dschulte/pytom-develop/pytom/bin/GLocalJo
     --pixelSize {:f} \
     --particleDiameter {:d} \
     --jobName Alignment/GLocal/{:s}/job.xml \
-    --noShift""".format(glocal_nodes, pid, cwd, glocal_nodes*20, particle_list_filename, mask_filename, glocal_jobname, iterations, pixelsize, particleDiameter, glocal_jobname)
+    --noShift""".format(glocal_nodes, pid, cwd, glocal_nodes*20, glocal_particle_list, mask_filename, glocal_jobname, iterations, pixelsize, particleDiameter, glocal_jobname)
             f = open("glocal_align.sh", "w+")
             f.write(glocal_batchfile)
             f.close()
@@ -728,7 +728,7 @@ def find_sub_pixel_max_value(inp, k=4):
     return output
 
 
-def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10, border_size=2, ignore_border=75):
+def find_sub_pixel_max_value_2d(inp, interpolate_factor=100, smoothing=2, dim=10, border_size=2, ignore_border=75):
     """
     To find the highest point in a given numpy array based on 2d spline interpolation, returns the maximum with subpixel
     precision.
@@ -765,8 +765,8 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10,
 
     a: vol_size - 2 * ignore_border     (original pixels)
     b: dim * 2                          (original pixels)
-    c: b * interpolate_factor - 2 * d                        (interpolated pixels)
-    d: border_size                      (interpolated pixels)
+    c: b * interpolate_factor - 2 * d   (interpolated pixels)
+    d: border_size * interpolate_factor (interpolated pixels)
     ...: interpolated values
     *: peak found
 
@@ -799,7 +799,7 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10,
     y_end = min([y_dim, initial_max[1] + dim])
 
     # Create a grid to save the original points and one to save the interpolated points
-    x, y, = np.mgrid[x_start:x_end:complex(x_end - x_start), y_start:y_end:complex(y_end - y_start)]
+    x, y, = np.mgrid[x_start:x_end, y_start:y_end]
     xnew, ynew = np.mgrid[x_start:x_end:complex((x_end - x_start) * interpolate_factor),
                           y_start:y_end:complex((y_end - y_start) * interpolate_factor)]
 
@@ -812,7 +812,8 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=10, smoothing=2, dim=10,
         result = np.unravel_index(cropped_inter_grid.argmax(), cropped_inter_grid.shape)
 
         # Reset the coordinates to point to a place in the original data array
-        result = (float(result[1])/interpolate_factor + y_start, float(result[0])/interpolate_factor + x_start)
+        result = ((float(result[0]) + border_size) / interpolate_factor + x_start,
+                  (float(result[1]) + border_size) / interpolate_factor + y_start)
 
         return result[0], result[1], cropped_inter_grid
 

@@ -560,11 +560,14 @@ class ProjectionList(PyTomClass):
     def _worker_reconstruct_volumes_polished(self, pid, num_procs, verbose, binning, postScale, cubeSize):
         from pytom_volume import vol, backProject, rescaleSpline, pasteCenter, paste, complexRealMult
         from pytom.basic.files import read, read_size
-        from pytom.basic.transformations import general_transform
+        from pytom.basic.transformations import general_transform2d
         from math import cos, sin, pi, floor
         import os
         from pytom.basic.fourier import fft, ifft
         from pytom.basic.filter import circleFilter, rampFilter, fourierFilterShift_ReducedComplex
+
+        # For proper results from WBP to avoid interpolation effects at the edges, the final result will be the original cubeSize
+        cubeSize *= 2
 
         particles = self.reconstruct_volume_particles
         print("polishfile:", self.particle_polish_file)
@@ -624,8 +627,8 @@ class ProjectionList(PyTomClass):
                 yy = y + dimy / 2
                 xx = cos(tiltangle * pi / 180) * x - sin(tiltangle * pi / 180) * z + dimx / 2
 
-                x_top = int(floor(xx) - raw_size / 2 - floor(offsetX))
-                y_top = int(floor(yy) - raw_size / 2 - floor(offsetY))
+                x_top = int(floor(xx) - raw_size / 2 + floor(offsetX))
+                y_top = int(floor(yy) - raw_size / 2 + floor(offsetY))
                 x_bot = dimx - x_top - raw_size
                 y_bot = dimy - y_top - raw_size
 
@@ -636,9 +639,9 @@ class ProjectionList(PyTomClass):
                 img = read(filename, [max(0, x_top), max(0, y_top), 0, max(0, raw_size + x_diff),
                                       max(0, raw_size + y_diff), 1], [0, 0, 0], [binning, binning, 1])
 
-                interpolated_temp = general_transform(img, shift=[
-                    xx - floor(xx) - offsetX + floor(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.,
-                    yy - floor(yy) - offsetY + floor(offsetY) + (-min(0, y_top) + min(0, y_bot)) / 2., 0])
+                interpolated_temp = general_transform2d(v=img, shift=[
+                    xx - floor(xx) + offsetX - floor(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.,
+                    yy - floor(yy) + offsetY - floor(offsetY) + (-min(0, y_top) + min(0, y_bot)) / 2.], rot=0, scale=1, order=[2,1,0], crop=True)
 
                 # interpolated_temp = general_transform(img, shift=[
                 #     xx - floor(xx) - offsetX + floor(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.,
@@ -669,7 +672,7 @@ class ProjectionList(PyTomClass):
                 # f.colorbar(im1)
                 # pl.show()
 
-            vol_bp = vol(cubeSize, cubeSize, cubeSize)
+            vol_bp = vol(cubeSize/2, cubeSize/2, cubeSize/2)
             vol_bp.setAll(0.0)
             filename = str(self.particle_polish_file['FileName'][start_index])
 
