@@ -13,6 +13,12 @@ if __name__ == '__main__':
     from pytom.tools.script_helper import ScriptHelper, ScriptOption
     from pytom.tools.parse_script_options import parse_script_options
     from pytom.tools.files import checkFileExists,checkDirExists
+    from pytom.alignment.GLocalSampling import GLocalSamplingJob, mainAlignmentLoop
+    from pytom.basic.structures import ParticleList, Reference, Mask, SampleInformation, PointSymmetry
+    from pytom.score.score import FLCFScore
+    # from pytom.frontend.serverpages.createAlignmentJob import createRunscripts
+    from pytom.angles.localSampling import LocalSampling
+    from pytom.alignment.preprocessing import Preprocessing
     
     helper = ScriptHelper(sys.argv[0].split('/')[-1], 
                           description='Create an GLocalSampling job. Documentation is available at\n\
@@ -38,9 +44,9 @@ if __name__ == '__main__':
                                    ScriptOption(['--symmetryAngleX'], 'PointSymmetry axis tilt around X axis',
                                                 'float', 'optional'),
                                    ScriptOption(['-d', '--destination'], 'Destination : destination directory',
-                                                'has arguments', 'required'),
+                                                'string', 'required'),
                                    ScriptOption(['-n', '--numberIterations'], 'Number of iterations',
-                                                'has arguments', 'required'),
+                                                'string', 'required'),
                                    ScriptOption(['-b','--binning'],
                                                 'Perform binning (downscale) of subvolumes by factor.',
                                                 'uint', 'optional', 1),
@@ -51,24 +57,13 @@ if __name__ == '__main__':
                                                 'optional', False),
                                    ScriptOption(['-c', '--compound'], 'Use compound weighting in Fourier space',
                                                 'no arguments', 'optional', False),
-                                   ScriptOption(['-j','--jobName'], 'Specify job.xml output filename', 'has arguments',
+                                   ScriptOption(['-j','--jobName'], 'Specify job.xml output filename', 'string',
                                                 'required'),
                                    ScriptOption(['--noShift'], 'Remove all shifts from the particlelist, useful for particle polishing', 'no arguments', 'optional', False)])
 
-    try:
-        particleList, reference, mask, isSphere, angShells, angleInc, symmetryN, symmetryAxisZ, symmetryAxisX,\
-        destination, numberIterations, binning,\
-        pixelSize, diameter, weighting, compound, jobName, noshift = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
-
-    from pytom.alignment.GLocalSampling import GLocalSamplingJob, mainAlignmentLoop
-    from pytom.basic.structures import ParticleList, Reference, Mask, SampleInformation, PointSymmetry
-    from pytom.score.score import FLCFScore
-    #from pytom.frontend.serverpages.createAlignmentJob import createRunscripts
-    from pytom.angles.localSampling import LocalSampling
-    from pytom.alignment.preprocessing import Preprocessing
+    particleList, reference, mask, isSphere, angShells, angleInc, symmetryN, symmetryAxisZ, symmetryAxisX,\
+    destination, numberIterations, binning,\
+    pixelSize, diameter, weighting, compound, jobName, noshift = parse_script_options(sys.argv[1:], helper)
 
     #particleList
     if not checkFileExists(particleList):

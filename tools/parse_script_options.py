@@ -132,7 +132,12 @@ def parse_argument(inp, arg_str, option):
             substrings = re.findall("int|float|str", arg_str)
             for n in range(len(substrings)):
                 sub = match.group(n+1)  # 0 is the full length match
-                if substrings[n] == "int":
+                if substrings[n] == "uint":
+                    try:
+                        res.append(int(sub))
+                    except:
+                        return None, "The argument is not in the right format, there should be an uint at this position but it is not valid, for option {:s} and argument string \"{:s}\" with input {:s}".format(option, arg_str, inp)
+                elif substrings[n] == "int":
                     try:
                         res.append(int(sub))
                     except:

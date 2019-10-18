@@ -56,6 +56,7 @@ if __name__ == '__main__':
         tmp = size[0]
         size.append(tmp)
         size.append(tmp)
+    elif len(size) == 2 or len(size) > 3: raise RuntimeError("You should specify 1 or 3 sizes for the 3 dimensional cube.")
 
     if numReadProcesses is None:
         numReadProcesses = numProcesses
