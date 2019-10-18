@@ -18,19 +18,12 @@ if __name__ == '__main__':
                           http://www.pytom.org/doc/pytom/alignment.html',
                           authors='Thomas Hrabe',
                           options=[ScriptOption(['-j','--job'], 'Job', 'has arguments', 'required'),
-                                   ScriptOption(['-v','--verbose'], 'Verbose', 'no arguments','optional')])
+                                   ScriptOption(['-v','--verbose'], 'Verbose', 'no arguments','optional', False)])
 
     verbose = False
 
-    try:
-        jobFile, verbose = parse_script_options(sys.argv[1:], helper)
-    except:
-        sys.exit()
-    
-    # fix the verbose bug
-    if verbose is None:
-        verbose = False
-    
+    jobFile, verbose = parse_script_options(sys.argv[1:], helper)
+
     #from pytom.tools.timing import Timing
     #t = Timing()
     #t.start()
@@ -38,7 +31,6 @@ if __name__ == '__main__':
     exj = ExMaxJob()
     exj.fromXMLFile(jobFile)
 
-    
     parallelStart(exj,verbose = verbose)
     
     #print 'Overall execution time: %f s.' % t.end()
