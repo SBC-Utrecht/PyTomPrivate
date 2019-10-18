@@ -627,8 +627,8 @@ class ProjectionList(PyTomClass):
                 yy = y + dimy / 2
                 xx = cos(tiltangle * pi / 180) * x - sin(tiltangle * pi / 180) * z + dimx / 2
 
-                x_top = int(floor(xx) - raw_size / 2 + floor(offsetX))
-                y_top = int(floor(yy) - raw_size / 2 + floor(offsetY))
+                x_top = int(round(xx) - raw_size / 2 + round(offsetX))
+                y_top = int(round(yy) - raw_size / 2 + round(offsetY))
                 x_bot = dimx - x_top - raw_size
                 y_bot = dimy - y_top - raw_size
 
@@ -639,9 +639,12 @@ class ProjectionList(PyTomClass):
                 img = read(filename, [max(0, x_top), max(0, y_top), 0, max(0, raw_size + x_diff),
                                       max(0, raw_size + y_diff), 1], [0, 0, 0], [binning, binning, 1])
 
-                interpolated_temp = general_transform2d(v=img, shift=[
-                    xx - floor(xx) + offsetX - floor(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.,
-                    yy - floor(yy) + offsetY - floor(offsetY) + (-min(0, y_top) + min(0, y_bot)) / 2.], rot=0, scale=1, order=[2,1,0], crop=True)
+                x_shift = xx - round(xx) + offsetX - round(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.
+                y_shift = yy - round(yy) + offsetY - round(offsetY) + (-min(0, y_top) + min(0, y_bot)) / 2.
+
+                print(x_shift, y_shift, offsetX - round(offsetX), offsetY - round(offsetY))
+
+                interpolated_temp = general_transform2d(v=img, shift=[x_shift, y_shift], rot=0, scale=1, order=[2,1,0], crop=True)
 
                 # interpolated_temp = general_transform(img, shift=[
                 #     xx - floor(xx) - offsetX + floor(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.,
@@ -692,6 +695,11 @@ class ProjectionList(PyTomClass):
             # file, and the position is the center and the offsets are 0
             # use general_transform (basic.transformations) to interpolate the remainder of the shift after getting it
             # to integer position with the help of read (basic.files)
+
+            from pytom.basic.files import write_em
+            write_em("stack.em", stack)
+
+            print(os.getcwd())
 
             backProject(stack, vol_bp, phiStack, thetaStack, reconstructionPosition, offsetStack)
 
