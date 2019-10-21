@@ -20,17 +20,13 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Will filter (band/low/high pass) a file. Choose values between 0 and 1.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-f','--file'], 'Filename', 'has arguments', 'optional'),
-                                   ScriptOption(['-t','--target'], 'Name of filtered file', 'has arguments', 'optional'),
-                                   ScriptOption(['-l','--lowestFrequency'], 'The lowest frequency. 0 if not set (in pixels)', 'has arguments', 'required'),
-                                   ScriptOption(['-h','--highestFrequency'], 'The highest frequency. Volume size / 2 if not set (in pixels)', 'has arguments', 'optional'),
-                                   ScriptOption(['-s','--smooth'], 'Smoothing of bandpass (in voxels). 0 if not set.', 'has arguments', 'optional')])
+                          options=[ScriptOption(['-f', '--file'], 'Filename', 'string', 'required'),
+                                   ScriptOption(['-t', '--target'], 'Name of filtered file', 'string', 'required'),
+                                   ScriptOption(['-l', '--lowestFrequency'], 'The lowest frequency. 0 if not set (in pixels)', 'uint', 'optional', 0),
+                                   ScriptOption(['-h', '--highestFrequency'], 'The highest frequency. Volume size / 2 if not set (in pixels)', 'uint', 'optional'),
+                                   ScriptOption(['-s', '--smooth'], 'Smoothing of bandpass (in voxels).', 'uint', 'optional', 0)])
 
-    try:
-        filename, target, lowestFrequency, highestFrequency, smooth = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
+    filename, target, lowestFrequency, highestFrequency, smooth = parse_script_options(sys.argv[1:], helper)
     
     if not filename or not target:
         print helper
@@ -38,24 +34,11 @@ if __name__ == '__main__':
 
     v = read(filename)
     
-    if lowestFrequency:
-        lowestFrequency = int(lowestFrequency)
-    else:
-        lowestFrequency = 0
-    
     if highestFrequency:
         highestFrequency = int(highestFrequency)
     else:
         highestFrequency = v.sizeX()/2
-    
-    if smooth:
-        smooth = int(smooth)
-    else:
-        smooth = 0 
-        
-    
+
     r = bandpassFilter(v, str(lowestFrequency) + ':' + str(highestFrequency)+';', None, smooth)
     
     r[0].write(target)
-    
-    

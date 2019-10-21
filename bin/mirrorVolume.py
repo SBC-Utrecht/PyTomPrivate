@@ -15,13 +15,9 @@ if __name__ == '__main__':
                           description='Mirror the volume.',
                           authors='Yuxiang Chen',
                           options=[ScriptOption(['-v'], 'Input volume.', 'has arguments', 'required'),
-                                   ScriptOption(['-o'], 'Output volume.', 'has arguments', 'optional')])
+                                   ScriptOption(['-o'], 'Output volume, defaults to the input name appended with "_mirror.em".', 'has arguments', 'optional')])
 
-    try:
-        input_filename, output_filename = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
+    input_filename, output_filename = parse_script_options(sys.argv[1:], helper)
     
     # process the arguments
     if output_filename is None:

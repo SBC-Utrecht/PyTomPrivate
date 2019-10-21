@@ -29,31 +29,18 @@ if __name__ == '__main__':
                           description='Run a localization job. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/localization.html',
                           authors='Yuxiang Chen, Thomas Hrabe',
-                          options=[ScriptOption(['-j','--jobName'], 'Specify job.xml filename', 'has arguments', 'required'),
-                                   ScriptOption(['-x','--splitX'], 'Parts you want to split the volume in X dimension', 'has arguments', 'optional'),
-                                   ScriptOption(['-y','--splitY'], 'Parts you want to split the volume in Y dimension', 'has arguments', 'optional'),
-                                   ScriptOption(['-z','--splitZ'], 'Parts you want to split the volume in Z dimension', 'has arguments', 'optional')])
+                          options=[ScriptOption(['-j', '--jobName'], 'Specify job.xml filename', 'string', 'required'),
+                                   ScriptOption(['-x', '--splitX'], 'Parts you want to split the volume in X dimension', 'int', 'optional', 0),
+                                   ScriptOption(['-y', '--splitY'], 'Parts you want to split the volume in Y dimension', 'int', 'optional', 0),
+                                   ScriptOption(['-z', '--splitZ'], 'Parts you want to split the volume in Z dimension', 'int', 'optional', 0)])
     
     try:
         jobName, splitX, splitY, splitZ = parse_script_options(sys.argv[1:], helper)
         
-        if splitX is None:
-            splitX = 0
-        else:
-            splitX = int(splitX)
-        if splitY is None:
-            splitY = 0
-        else:
-            splitY = int(splitY)
-        if splitZ is None:
-            splitZ = 0
-        else:
-            splitZ = int(splitZ)
-        
         if jobName is None:
             raise RuntimeError()
         
-    except: # backward compatibility
+    except:  # backward compatibility, does not work anymore because of the new scripthelper (2019)
         
         jobName = sys.argv[1]
         
@@ -69,5 +56,3 @@ if __name__ == '__main__':
     startLocalizationJob(jobName, splitX, splitY, splitZ, doSplitAngles=False)
     
     time = t.end(); print 'The overall execution time: %f' % time
-    
-    

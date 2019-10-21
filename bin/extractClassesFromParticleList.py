@@ -17,14 +17,11 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Extract certain classes from the particle list.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-p'], 'Particle name prefix', 'has arguments', 'required'),
+                          options=[ScriptOption(['-p'], 'Particle name prefix', 'string', 'required'),
                                    ScriptOption(['-c'], 'Class labels to be extracted. If multiple, please separate with comma.', 'has arguments', 'required'),
-                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'required')])
+                                   ScriptOption(['-o'], 'Output particle list', 'string', 'required')])
 
-    try:
-        pl_name, class_names, output = parse_script_options(sys.argv[1:], helper)
-    except:
-        sys.exit()
+    pl_name, class_names, output = parse_script_options(sys.argv[1:], helper)
     
     from pytom.basic.structures import ParticleList
     pl = ParticleList()
@@ -39,4 +36,3 @@ if __name__ == '__main__':
             res += pp
     
     res.toXMLFile(output)
-    

@@ -16,18 +16,15 @@ if __name__ == '__main__':
                           description='Compile a electron density from PDB file\n\
                           http://pytom.org/doc/pytom/files.html',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-m','--mmCIFFile'], 'A mmCIF file', 'has arguments', 'required'),
-                                   ScriptOption(['-c','--chain'], 'A Chain', 'has arguments', 'optional'),
-                                   ScriptOption(['-s','--pixelSize'], 'Pixel size of output volume (in Angstrom)', 'has arguments', 'optional'),
-                                   ScriptOption(['-v','--volumeSize'], 'Volume length (size) in all dimensions', 'has arguments', 'optional'),
-                                   ScriptOption(['-o','--outputVolumePath'], 'Path to output volume ', 'has arguments', 'required'),
-                                   ScriptOption(['-i','--invertDensity'],'Set if density should be negative', 'no arguments', 'required')])
+                          options=[ScriptOption(['-m', '--mmCIFFile'], 'A mmCIF file', 'string', 'required'),
+                                   ScriptOption(['-c', '--chain'], 'A Chain', 'has arguments', 'optional'),
+                                   ScriptOption(['-s', '--pixelSize'], 'Pixel size of output volume (in Angstrom)', 'float', 'required'),
+                                   ScriptOption(['-v', '--volumeSize'], 'Volume length (size) in all dimensions', 'uint', 'required'),
+                                   ScriptOption(['-o', '--outputVolumePath'], 'Path to output volume ', 'string', 'required'),
+                                   ScriptOption(['-i', '--invertDensity'],'Set if density should be negative', 'no arguments', 'optional', False)])
 
-    try:
-        mmCIF, chain, pixelSize, cubeSize, volumePath ,densityNegative = parse_script_options(sys.argv[1:], helper)
-    except:
-        sys.exit()
+    mmCIF, chain, pixelSize, cubeSize, volumePath ,densityNegative = parse_script_options(sys.argv[1:], helper)
     
-    volume = mmCIF2em(mmCIF, float(pixelSize), int(cubeSize), chain = chain,densityNegative = densityNegative)
+    volume = mmCIF2em(mmCIF, pixelSize, cubeSize, chain = chain,densityNegative = densityNegative)
     
     volume.write(volumePath)

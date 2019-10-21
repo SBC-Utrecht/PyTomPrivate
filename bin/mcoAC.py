@@ -12,23 +12,16 @@ if __name__ == '__main__':
                           description='Run a mcoAC job. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/classification.html',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-j','--job'], 'Job', 'has arguments', 'optional'),
-                                   ScriptOption(['-v','--verbose'], 'Verbose', 'no arguments', 'required')])
+                          options=[ScriptOption(['-j', '--job'], 'Jobfile', 'string', 'optional'),
+                                   ScriptOption(['-v', '--verbose'], 'Verbose', 'no arguments', 'required', False)])
 
-    verbose = False
+    jobFile, verbose = parse_script_options(sys.argv[1:], helper)
 
-    try:
-        jobFile, verbose = parse_script_options(sys.argv[1:], helper)
-    except Exception:
-        #print e
-        sys.exit()
-
-    job = MCOACJob(0,0,0,0,0,0,0,0,0,0,0,0)
+    job = MCOACJob(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     job.fromXMLFile(jobFile)
-    
-    verbose = verbose is True
+
     try:
-        mcoAC(job,True,verbose)
+        mcoAC(job, True, verbose)
     except:
         if pytom_mpi.rank() == 0:
             from pytom.alignment.ExMaxAlignment import ExMaxManager

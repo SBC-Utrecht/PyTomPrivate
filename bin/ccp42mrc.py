@@ -7,6 +7,27 @@ Created on Jul 21, 2011
 '''
 
 
+def ccp42mrc(filename, target):
+    from pytom_volume import read
+    from pytom.tools.files import checkFileExists, checkDirExists
+    import os
+
+    if not checkFileExists(filename):
+        raise RuntimeError('CCP4 file not found! ', filename)
+
+    if not checkDirExists(target):
+        raise RuntimeError('Destination directory not found! ', target)
+
+    emfile = read(filename)
+
+    splitName = filename.split(os.sep)
+    filename = splitName[len(splitName) - 1]
+
+    newFilename = target + os.sep + filename[0:len(filename) - 3] + '.mrc'
+
+    emfile.write(newFilename, 'mrc')
+
+
 if __name__ == '__main__':
     # parse command line arguments
     import sys
@@ -33,24 +54,3 @@ if __name__ == '__main__':
             if file[len(file)-3:len(file)] == '.ccp4':
                 print directory + os.sep + file , target
                 ccp42mrc(directory + os.sep + file,target)
-
-
-def ccp42mrc(filename, target):
-    from pytom_volume import read
-    from pytom.tools.files import checkFileExists, checkDirExists
-    import os
-
-    if not checkFileExists(filename):
-        raise RuntimeError('CCP4 file not found! ', filename)
-
-    if not checkDirExists(target):
-        raise RuntimeError('Destination directory not found! ', target)
-
-    emfile = read(filename)
-
-    splitName = filename.split(os.sep)
-    filename = splitName[len(splitName) - 1]
-
-    newFilename = target + os.sep + filename[0:len(filename) - 3] + '.mrc'
-
-    emfile.write(newFilename, 'mrc')

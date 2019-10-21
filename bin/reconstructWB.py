@@ -76,6 +76,8 @@ if __name__ == '__main__':
         import numpy
 
         polishedCoordinates = numpy.loadtxt(particlePolishFile, dtype=LOCAL_ALIGNMENT_RESULTS)
+    else:
+        polishedCoordinates = None
 
     if alignmentResultFile and not checkFileExists(alignmentResultFile):
         raise Exception('alignmentResultFile does not exists. Please provide an existing file or omit this flag.')
@@ -103,10 +105,11 @@ if __name__ == '__main__':
             print 'Error reading particleList XML file! Abort'
             sys.exit()
 
-        if not len(polishedCoordinates['AlignmentTransX']) == len(particleList) * len(projections):
-            raise Exception("The length of the polished alignment list does not correspond to the theoretical length, "
-                            "are you sure every parameter is correct? polished list len {:d}, particle  list len {:d}"
-                            " and projection len {:d}".format(len(polishedCoordinates['AlignmentTransX']), len(particleList), len(projections)))
+        if polishedCoordinates:
+            if not len(polishedCoordinates['AlignmentTransX']) == len(particleList) * len(projections):
+                raise Exception("The length of the polished alignment list does not correspond to the theoretical length, "
+                                "are you sure every parameter is correct? polished list len {:d}, particle  list len {:d}"
+                                " and projection len {:d}".format(len(polishedCoordinates['AlignmentTransX']), len(particleList), len(projections)))
 
         from pytom.basic.structures import PickPosition
         for n, particle in enumerate(particleList):

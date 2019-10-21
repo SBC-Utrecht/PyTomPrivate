@@ -11,19 +11,12 @@ if __name__ == '__main__':
                           description='Run a mcoEXMX job. Documentation is available at\n \
                           http://www.pytom.org/doc/pytom/classification.html',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-j','--job'], 'Job', 'has arguments', 'required'),
-                                   ScriptOption(['-v','--verbose'], 'Verbose', 'has arguments', 'required')])
+                          options=[ScriptOption(['-j', '--job'], 'Jobfile', 'string', 'required'),
+                                   ScriptOption(['-v', '--verbose'], 'Verbose', 'no arguments', 'optional', False)])
 
-
-    try:
-        jobFile, verbose = parse_script_options(sys.argv[1:], helper)
-    except Exception:
-#        print e
-        sys.exit()
-
-    verbose = verbose == 'True'
+    jobFile, verbose = parse_script_options(sys.argv[1:], helper)
     
     job = MCOEXMXJob(0,0,0,0,0,0,0,0,0,0,0,0)
     job.fromXMLFile(jobFile)
 
-    mcoEXMX(job,True,verbose)
+    mcoEXMX(job, True, verbose)
