@@ -1,25 +1,24 @@
 #!/usr/bin/env pytom
 
 def em2mrc(filename,target):
-	from pytom_volume import read
-	from pytom.tools.files import checkFileExists,checkDirExists
-	import os
-	
-	if not checkFileExists(filename):
-		raise RuntimeError('EM file not found! ',filename)
+    from pytom_volume import read
+    from pytom.tools.files import checkFileExists,checkDirExists
+    import os
+    
+    if not checkFileExists(filename):
+        raise RuntimeError('EM file not found! ',filename)
 
-	if not checkDirExists(target):
-		raise RuntimeError('Destination directory not found! ', target)
+    if not checkDirExists(target):
+        raise RuntimeError('Destination directory not found! ', target)
 
-	emfile = read(filename)
-	
-	splitName = filename.split(os.sep)
-	filename = splitName[len(splitName)-1]
-	
-	
-	newFilename = target + os.sep + filename[0:len(filename)-3] + '.mrc'
+    emfile = read(filename)
+    
+    splitName = filename.split(os.sep)
+    filename = splitName[len(splitName)-1]
 
-	emfile.write(newFilename,'mrc')
+    newFilename = target + os.sep + filename[0:len(filename)-3] + '.mrc'
+
+    emfile.write(newFilename,'mrc')
 
 
 if __name__ == '__main__':
@@ -31,15 +30,11 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Convert em file to mrc.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-f','--file'], 'Filename', 'has arguments', 'optional'),
-                                   ScriptOption(['-d','--directory'], 'A directory of files.', 'has arguments', 'optional'),
-                                   ScriptOption(['-t','--targetPath'], 'Path to new file.', 'has arguments', 'optional')])
+                          options=[ScriptOption(['-f','--file'], 'Filename', 'string', 'optional'),
+                                   ScriptOption(['-d','--directory'], 'A directory of files.', 'string', 'optional'),
+                                   ScriptOption(['-t','--targetPath'], 'Path to new file.', 'string', 'required')])
 
-    try:
-        filename, directory, target = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
+    filename, directory, target = parse_script_options(sys.argv[1:], helper)
     
     if filename:
         #convert only one file
@@ -50,8 +45,5 @@ if __name__ == '__main__':
         fileList = os.listdir(directory)
         for file in fileList:
             if file[len(file)-3:len(file)] == '.em':
-                print directory + os.sep + file , target
-                em2mrc(directory + os.sep + file,target)
-				
-						
-		
+                print directory + os.sep + file, target
+                em2mrc(directory + os.sep + file, target)

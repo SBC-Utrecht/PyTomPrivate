@@ -18,19 +18,14 @@ if __name__ == '__main__':
     import os
     
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
-                          description='Cut particles out from a volume, given the particle list. Documentation is available at\n\
+                          description='Cut particles out from a volume, given the particle list. Documentation is available at\
                           http://www.pytom.org/doc/pytom/cutParticles.html',
                           authors='Yuxiang Chen',
-                          options= [ScriptOption(['-v','--volume'], 'Volume.', 'has arguments', 'required'),
-                                    ScriptOption(['-p','--particleFile'], 'Particle list.', 'has arguments', 'required'),
-                                    ScriptOption(['-c','--cubeSize'], 'Cube size along each dimension.', 'has arguments', 'required')])
+                          options= [ScriptOption(['-v', '--volume'], 'Volume.', 'string', 'required'),
+                                    ScriptOption(['-p', '--particleFile'], 'Particle list.', 'string', 'required'),
+                                    ScriptOption(['-c', '--cubeSize'], 'Cube size along each dimension.', 'int', 'required')])
 
-    try:
-        volFilename, plFilename, cubeSize = parse_script_options(sys.argv[1:], helper)
-    except:
-        sys.exit()
-
-    cubeSize = int(cubeSize)
+    volFilename, plFilename, cubeSize = parse_script_options(sys.argv[1:], helper)
 
     particleList = ParticleList()
     try:
@@ -60,7 +55,7 @@ if __name__ == '__main__':
 
     i = 0
     for particle in particleList:
-        i = i+1 # even if some particles are skipped, the progress shall be updated
+        i = i+1  # even if some particles are skipped, the progress shall be updated
         prog.update(i)
         
         pi = particle.getPickPosition()
@@ -77,9 +72,9 @@ if __name__ == '__main__':
                 print ''
                 continue
             
-            v = subvolume(vol, x, y, z, cubeSize, cubeSize, cubeSize) # faster this way
+            v = subvolume(vol, x, y, z, cubeSize, cubeSize, cubeSize)  # faster this way
             
-            newParticleList.append(particle) # this part should be inside the try block
+            newParticleList.append(particle)  # this part should be inside the try block
             v.write(particle.getFilename())
         except:
             print 'Error for'

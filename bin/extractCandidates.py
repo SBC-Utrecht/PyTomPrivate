@@ -6,9 +6,6 @@ Created on Jun 9, 2010
 @author: chen
 '''
 
-def usage():
-    print "Usage: ./scriptname -j jobFilename -r resultFilename -o orientationFilename -n maxNumOfParticles [-v minScoreValue] -s sizeOfParticleInRadius -p particleList -m  [-w (write to disk, length along each dimension)] [-g margin]"
-
 
 def extractCandidates(jobFilename='', resultFilename='', orientFilename='', sizeParticle=None, maxNumParticle=0, minScore=-1, write2disk=0, margin=None):
     # construct the original job from the xml file
@@ -56,28 +53,21 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
                           description='Extract candidate molecules from localization result.',
                           authors='Yuxiang Chen',
-                          options= [ScriptOption(['-j','--jobFile'], 'Localization job XML file.', 'has arguments', 'required'),
-                                    ScriptOption(['-r','--result'], 'File with score coefficients (score.em).', 'has arguments', 'required'),
-                                    ScriptOption(['-o','--orientation'], 'File with orientation indices (angles.em).', 'has arguments', 'required'),
-                                    ScriptOption(['-n','--numberCandidates'], 'Number of candidates to extract.', 'has arguments', 'required'),
-                                    ScriptOption(['-s','--size'], 'Radius around potential candidate that will be ignored during further processing.', 'has arguments', 'required'),
-                                    ScriptOption(['-p','--particleList'], 'Name of particle list XML file.', 'has arguments', 'required'),
-                                    ScriptOption(['-t','--particlePath'], 'Path prepended to each particle.', 'has arguments', 'optional'),
-                                    ScriptOption(['-v','--minimalScoreValue'], 'Minimal score value to which to extract.', 'has arguments', 'optional'),
-                                    ScriptOption(['-m','--motlList'], 'Write a MOTL file with candidates. The name of the file will be an extension of the particle list with .em.', 'has arguments','optional'),
-                                    ScriptOption(['-g','--margin'], 'Size of outer margin that will be ignored for potential candidates.', 'has arguments','optional'),
-                                    ScriptOption(['-w','--sizeCubes'], 'If specified, it will cut out candidates from the original tomogram with the specified size.', 'has arguments','optional'),
+                          options= [ScriptOption(['-j', '--jobFile'], 'Localization job XML file.', 'has arguments', 'required'),
+                                    ScriptOption(['-r', '--result'], 'File with score coefficients (score.em).', 'has arguments', 'required'),
+                                    ScriptOption(['-o', '--orientation'], 'File with orientation indices (angles.em).', 'has arguments', 'required'),
+                                    ScriptOption(['-n', '--numberCandidates'], 'Number of candidates to extract.', 'has arguments', 'required'),
+                                    ScriptOption(['-s', '--size'], 'Radius around potential candidate that will be ignored during further processing.', 'has arguments', 'required'),
+                                    ScriptOption(['-p', '--particleList'], 'Name of particle list XML file.', 'has arguments', 'required'),
+                                    ScriptOption(['-t', '--particlePath'], 'Path prepended to each particle.', 'has arguments', 'optional'),
+                                    ScriptOption(['-v', '--minimalScoreValue'], 'Minimal score value to which to extract.', 'float', 'optional', -1),
+                                    ScriptOption(['-m', '--motlList'], 'Write a MOTL file with candidates. The name of the file will be an extension of the particle list with .em.', 'has arguments','optional'),
+                                    ScriptOption(['-g', '--margin'], 'Size of outer margin that will be ignored for potential candidates.', 'has arguments','optional'),
+                                    ScriptOption(['-w', '--sizeCubes'], 'If specified, it will cut out candidates from the original tomogram with the specified size.', 'has arguments','optional'),
                                     ScriptOption(['--scale'], 'Scale coordinates by a factor. Set > 1 to adjust to larger volumes. Use 2 if the localization tomo was 1x binned.', 'has arguments', 'optional')])
 
-    try:
-        jobFilename, resultFilename, orientFilename, maxNumParticle, sizeParticle, plFilename, particlePath, minScore, motlFilename, margin, write2disk, scale = parse_script_options(sys.argv[1:], helper)
-    except:
-        sys.exit()
-        
-    if minScore == None:
-        minScore = -1
-    else:
-        minScore = float(minScore)
+    jobFilename, resultFilename, orientFilename, maxNumParticle, sizeParticle, plFilename, particlePath, minScore, motlFilename, margin, write2disk, scale = parse_script_options(sys.argv[1:], helper)
+
     if write2disk == None:
         write2disk = 0
     if margin.__class__ == str:
@@ -139,4 +129,3 @@ if __name__ == '__main__':
             pl.append(newParticle.toParticle())
             
         pl.toMOTL(motlFilename)
-        

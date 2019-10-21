@@ -18,26 +18,18 @@ if __name__ == '__main__':
     from pytom.tools.script_helper import ScriptHelper, ScriptOption
     from pytom.tools.parse_script_options import parse_script_options
     
-    helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
-                          description='Convert coordinate list to particle list.',
-                          authors='Friedrich Foerster',
-                          options=[ScriptOption(['-p','--particleList'], 
-			               'Particle List', 'has arguments', 'required'),
-                                   ScriptOption(['-c','--coords'], 
-				       'Coordinate List (ascii file from EMAN2)', 
-				       'has arguments', 'required'),
-                                   ScriptOption(['-s','--subtomoPrefix'], 
-				       'path and filename for subtomogram files (e.g., MyPath/particle_)', 
-				       'has arguments', 'optional'),
-                                   ScriptOption(['-w','--wedgeAngles'], 
-				       'missing wedge angle(s) [counter-clock, clock] or single angle', 
-				       'has arguments', 'optional')])
+    helper = ScriptHelper(
+        sys.argv[0].split('/')[-1], # script name
+        description='Convert coordinate list to particle list.',
+        authors='Friedrich Foerster',
+        options=[ScriptOption(['-p', '--particleList'], 'Particle List', 'string', 'required'),
+                 ScriptOption(['-c', '--coords'], 'Coordinate List (ascii file from EMAN2)', 'has arguments', 'required'),
+                 ScriptOption(['-s', '--subtomoPrefix'], 'path and filename for subtomogram files'
+                                                         ' (e.g., MyPath/particle_)', 'string', 'optional'),
+                 ScriptOption(['-w', '--wedgeAngles'], 'missing wedge angle(s) [counter-clock, clock] or single angle',
+                              'has arguments', 'optional')])
 
-    try:
-        plName, coordName, subtomoPrefix, w, help = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
+    plName, coordName, subtomoPrefix, w = parse_script_options(sys.argv[1:], helper)
 
     if w:
         if len(w.split(',')) > 1:

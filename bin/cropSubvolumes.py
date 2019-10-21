@@ -58,43 +58,26 @@ def writeCroppedParticles(particleListName, output, center, cubesize):
         pl_new[ipart].setShift(shift=Shift(0,0,0))
     return pl_new
 
-                  
-                  
+
 if __name__ == '__main__':
     import sys
     from pytom.tools.script_helper import ScriptHelper, ScriptOption
     from pytom.tools.parse_script_options import parse_script_options
 
-    options=[ScriptOption(['--particleList'], 'Name of particle list', 'has arguments', 'required'),
-             ScriptOption(['--output'], 'Name of output particles (<output>_<index>.em)', 'has arguments', 'required'),
+    options=[ScriptOption(['--particleList'], 'Name of particle list', 'string', 'required'),
+             ScriptOption(['--output'], 'Name of output particles (<output>_<index>.em)', 'string', 'required'),
              ScriptOption(['--center'], 'Center of output particles in template orientation (3dim vec:x,y,z) starting at 0', 
-                          'has arguments', 'optional'),
-             ScriptOption(['--cubesize'], 'Size of output particles in pixel', 'has arguments', 'required'),
-             ScriptOption(['--outParticleList'], 'Name of output particle list', 'has arguments', 'optional')]
-
+                          'int,int,int', 'optional', [0, 0, 0]),
+             ScriptOption(['--cubesize'], 'Size of output particles in pixel', 'int', 'required'),
+             ScriptOption(['--outParticleList'], 'Name of output particle list', 'has arguments', 'optional',
+                          'particleListCropped.xml')]
 
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
                           description='Script for cropping particles',
                           authors='Friedrich Foerster, Stefan Pfeffer',
                           options=options)
-    
-    if len(sys.argv) == 1:
-        print helper
-        sys.exit()
-    particleListName, output, center, cubesize, outParticleListName = parse_script_options(sys.argv[1:], helper)
 
-    if not center:
-        center = [0,0,0]
-    else:
-        center = [int(center.split(',')[0]), int(center.split(',')[1]), int(center.split(',')[2])]
-    if not output:
-        raise ValueError("provide output filename")
-    if not cubesize:
-        raise ValueError("provide cubesize of new volumes")
-    else:
-        cubesize = int(cubesize)
-    if not outParticleListName:
-        outParticleListName='particleListCropped.xml'
+    particleListName, output, center, cubesize, outParticleListName = parse_script_options(sys.argv[1:], helper)
 
     pl_new = writeCroppedParticles(particleListName=particleListName, 
                                    output=output, center=center, 

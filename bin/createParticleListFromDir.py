@@ -18,20 +18,13 @@ if __name__ == '__main__':
                           description='Create a particle list from the EM files in a directory. Documentation is available at\n\
                           http://www.pytom.org/doc/pytom/genParticleList.html',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-d'], 'Directory', 'has arguments', 'required'),
-                                   ScriptOption(['-p'], 'Particle name prefix', 'has arguments', 'optional'),
-                                   ScriptOption(['-w'], 'Wedge Angle (degree)', 'has arguments', 'required'),
-                                   ScriptOption(['-o'], 'Output particle list', 'has arguments', 'required')])
-    
+                          options=[ScriptOption(['-d'], 'Directory', 'string', 'required'),
+                                   ScriptOption(['-p'], 'Particle name prefix', 'string', 'optional', ''),
+                                   ScriptOption(['-w'], 'Wedge Angle (degree)', 'float', 'required'),
+                                   ScriptOption(['-o'], 'Output particle list', 'string', 'required')])
 
-    try:
-        dir_name, name_prefix, wedge_angle, output,  = parse_script_options(sys.argv[1:], helper)
-    except:
-        sys.exit()
-    
-    if name_prefix is None:
-        name_prefix = ''
-    wedge_angle = float(wedge_angle)
+    dir_name, name_prefix, wedge_angle, output,  = parse_script_options(sys.argv[1:], helper)
+
     w = SingleTiltWedge(wedge_angle)
     
     pl = ParticleList()
@@ -51,4 +44,3 @@ if __name__ == '__main__':
     pl.setWedgeAllParticles(w)
     
     pl.toXMLFile(output)
-    

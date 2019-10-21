@@ -13,7 +13,7 @@ def em2ccp4(filename,target):
     import os
     
     if not checkFileExists(filename):
-        raise RuntimeError('EM file not found! ',filename)
+        raise RuntimeError('EM file not found! ', filename)
 
     if not checkDirExists(target):
         raise RuntimeError('Destination directory not found! ', target)
@@ -22,12 +22,10 @@ def em2ccp4(filename,target):
     
     splitName = filename.split(os.sep)
     filename = splitName[len(splitName)-1]
-    
-    
+
     newFilename = target + os.sep + filename[0:len(filename)-3] + '.ccp4'
 
     emfile.write(newFilename,'ccp4')
-
 
 
 if __name__ == '__main__':
@@ -39,15 +37,11 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Convert em file to ccp4.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-f','--file'], 'Filename', 'has arguments', 'optional'),
-                                   ScriptOption(['-d','--directory'], 'A directory of files.', 'has arguments', 'optional'),
-                                   ScriptOption(['-t','--targetPath'], 'Path to new file.', 'has arguments', 'optional')])
+                          options=[ScriptOption(['-f', '--file'], 'Filename', 'string', 'optional'),
+                                   ScriptOption(['-d', '--directory'], 'A directory of files.', 'string', 'optional'),
+                                   ScriptOption(['-t', '--targetPath'], 'Path to new file.', 'string', 'required')])
 
-    try:
-        filename, directory, target, help = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
+    filename, directory, target, help = parse_script_options(sys.argv[1:], helper)
     
     if filename:
         #convert only one file
@@ -58,5 +52,5 @@ if __name__ == '__main__':
         fileList = os.listdir(directory)
         for file in fileList:
             if file[len(file)-3:len(file)] == '.em':
-                print directory + os.sep + file , target
-                em2ccp4(directory + os.sep + file,target)
+                print directory + os.sep + file, target
+                em2ccp4(directory + os.sep + file, target)
