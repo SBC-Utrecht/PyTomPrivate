@@ -69,7 +69,14 @@ def convertfile(file, format, target, chaindata):
 def print_errors(message):
     """To print to stderr and use fancy styling, for multiple errors"""
     import sys
-    sys.stderr.write("\033[91m" + message + "\033[0m\nSee --help for help on how to use this function\n")
+    color1 = ""
+    color2 = ""
+
+    if sys.stdout.isatty():
+        color1 = "\033[91m"
+        color2 = "\033[0m"
+
+    sys.stderr.write(color1 + message + color2 + "\nSee --help for help on how to use this function\n")
     sys.exit()
 
 
@@ -77,7 +84,15 @@ def print_error(message, exit=True, warning=False):
     """To print to stderr and use fancy styling, on a single line"""
     import sys
     color = "93" if warning else "91"
-    sys.stderr.write("\033[{:s}m{:s}\033[0m\n".format(color, message))
+
+    color1 = ""
+    color2 = ""
+
+    if sys.stdout.isatty():
+        color1 = "\033[" + color + "m"
+        color2 = "\033[0m"
+
+    sys.stderr.write("{:s}{:s}{:s}\n".format(color1, message, color2))
     if exit:
         sys.exit()
 

@@ -95,8 +95,15 @@ def parse_script_options(args, helper):
         exception += "EXCEPTION:" + e.message + "\n"
 
     if exception != "":
-        print("Some exception(s) while parsing the command line arguments:\n\033[91m" + exception + "\033[0m\nUse '--help' to get information on how this script can be called.")
         import sys
+        color1 = ""
+        color2 = ""
+
+        if sys.stdout.isatty():
+            color1 = "\033[91m"
+            color2 = "\033[0m"
+
+        print("Some exception(s) while parsing the command line arguments:\n" + color1 + exception + color2 + "\nUse '--help' to get information on how this script can be called.")
         sys.exit()
 
     return res[:-1] # Because the last option is by definition the help option
