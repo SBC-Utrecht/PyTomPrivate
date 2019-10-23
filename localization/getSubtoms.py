@@ -15,25 +15,15 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Cut out the subtomograms from another tomogram given the particle list and the binning factor.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-v'], 'Volume.', 'has arguments', 'required'),
-                                   ScriptOption(['-p'], 'Particle list.', 'has arguments', 'required'),
-                                   ScriptOption(['-b'], 'Binning factor.', 'has arguments', 'required'),
-                                   ScriptOption(['-s'], 'Size in each dimension (in radius).', 'has arguments', 'required'),
-                                   ScriptOption(['-w'], 'Wedge angle.', 'has arguments', 'required'),
-                                   ScriptOption(['-d'], 'Destination directory.', 'has arguments', 'optional'),
-                                   ScriptOption(['-r'], 'Resulting particle list for alignment.', 'has arguments', 'required')])
+                          options=[ScriptOption(['-v'], 'Volume.', 'string', 'required'),
+                                   ScriptOption(['-p'], 'Particle list.', 'string', 'required'),
+                                   ScriptOption(['-b'], 'Binning factor.', 'uint', 'required'),
+                                   ScriptOption(['-s'], 'Size in each dimension (in radius).', 'uint', 'required'),
+                                   ScriptOption(['-w'], 'Wedge angle.', 'int', 'required'),
+                                   ScriptOption(['-d'], 'Destination directory.', 'string', 'optional', '.'),
+                                   ScriptOption(['-r'], 'Resulting particle list for alignment.', 'string', 'required')])
 
-    try:
-        vol_filename, pl_filename, binning, radius, w, dest_dir, res_name = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
-    
-    binning = int(binning)
-    radius = int(radius)
-    w = int(w)
-    if not dest_dir:
-        dest_dir = '.'
+    vol_filename, pl_filename, binning, radius, w, dest_dir, res_name = parse_script_options(sys.argv[1:], helper)
     
     from pytom_volume import read, subvolume
     v = read(vol_filename)

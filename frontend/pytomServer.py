@@ -216,39 +216,12 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Start PyTom User Interface.',
                           authors='Thomas Hrabe',
-                          options=[ScriptOption(['-h','--hostname'], 'Hostname of server.(name of computer you are logged into)', 'has arguments', 'optional'),
-                                   ScriptOption(['-p','--port'], 'Specify port of server (if you do not know what that means, use 8080)', 'has arguments', 'optional'),
-                                   ScriptOption(['-b','--browser'], 'Name of browser to start.', 'has arguments', 'optional'),
-                                   ScriptOption(['-d','--disableBrowser'], 'Disable browser at start.', 'no arguments', 'optional')])
- 
-    defaultHostname = None
-    defaultPort = 8080
-    defaultBrowser = 'firefox'
-    
-    if checkFileExists('/Applications/Firefox.app/Contents/MacOS/firefox'):
-        defaultBrowser = '/Applications/Firefox.app/Contents/MacOS/firefox'
-    
-    defaultDisableBrowser = False
+                          options=[ScriptOption(['-h', '--hostname'], 'Hostname of server.(name of computer you are logged into)', 'string', 'optional'),
+                                   ScriptOption(['-p', '--port'], 'Specify port of server (if you do not know what that means, use 8080)', 'int', 'optional', 8080),
+                                   ScriptOption(['-b', '--browser'], 'Name of browser to start.', 'has arguments', 'optional', 'firefox' if not checkFileExists('/Applications/Firefox.app/Contents/MacOS/firefox') else '/Applications/Firefox.app/Contents/MacOS/firefox'),
+                                   ScriptOption(['-d', '--disableBrowser'], 'Disable browser at start.', 'no arguments', 'optional', False)])
 
-    try:
-        hostname, port, browser, disableBrowser = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
-    
-    if not hostname:
-        hostname = defaultHostname
-        
-    if not port:
-        port = defaultPort
-    else:
-        port = int(port)
-        
-    if not browser:
-        browser = defaultBrowser
-    
-    if not disableBrowser:
-        disableBrowser = defaultDisableBrowser
+    hostname, port, browser, disableBrowser = parse_script_options(sys.argv[1:], helper)
     
     if not port or not hostname:
         print helper
@@ -262,10 +235,8 @@ if __name__ == '__main__':
         print 'Starting browser: ', browser
     print ''
     print '----------------------------------------------------------------------------------------'
-    
-    
+
     httpd = BaseHTTPServer.HTTPServer((hostname,port),PyTomHTTPServer)
-    
     
     if not disableBrowser:
         import os
@@ -274,7 +245,7 @@ if __name__ == '__main__':
         if pid == 0:
             try:
                 print browser + ' http://' + hostname + ":" + str(port) + '/index.html'
-                os.system(browser + ' http://' + hostname + ":" + str(port) )
+                os.system(browser + ' http://' + hostname + ":" + str(port))
             except:
                 print 'Problems starting your browser. Please start browser manually.'
                 pass

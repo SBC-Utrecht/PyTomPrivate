@@ -14,24 +14,15 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Reconstruct a volume from its projections using weighted back projection.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption('-p', 'Projection prefix.', 'has arguments', 'required'),
-                                   ScriptOption('-a', 'Projection suffix.', 'has arguments', 'required'),
-                                   ScriptOption('-w', 'Apply weighting to the projections or not', 'no arguments', 'optional'),
-                                   ScriptOption('-f', 'Projection start index (int).', 'has arguments', 'required'),
-                                   ScriptOption('-t', 'Projection end index (int).', 'has arguments', 'required'),
-                                   ScriptOption('-s', 'Volume size.', 'has arguments', 'required'),
-                                   ScriptOption('-o', 'Output filename.', 'has arguments', 'required')])
+                          options=[ScriptOption('-p', 'Projection prefix.', 'string', 'required'),
+                                   ScriptOption('-a', 'Projection suffix.', 'string', 'required'),
+                                   ScriptOption('-w', 'Apply weighting to the projections or not', 'string', 'optional'),
+                                   ScriptOption('-f', 'Projection start index.', 'int', 'required'),
+                                   ScriptOption('-t', 'Projection end index.', 'int', 'required'),
+                                   ScriptOption('-s', 'Volume size.', 'int,int,int', 'required'),
+                                   ScriptOption('-o', 'Output filename.', 'string', 'required')])
 
-    try:
-        prefix, suffix, weighting, start_idx, end_idx, vol_size, output = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
-    
-    # parse the argument
-    start_idx = int(start_idx)
-    end_idx = int(end_idx)
-    vol_size = [int(i) for i in vol_size.split(",")]
+    prefix, suffix, weighting, start_idx, end_idx, vol_size, output = parse_script_options(sys.argv[1:], helper)
     
     from pytom.reconstruction.reconstructionStructures import Projection, ProjectionList
     projections = ProjectionList()
@@ -39,6 +30,5 @@ if __name__ == '__main__':
         p = Projection(prefix+str(i)+suffix)
         projections.append(p)
     
-    vol = projections.reconstructVolume( dims=vol_size, reconstructionPosition=[0,0,0], binning=1, applyWeighting=weighting)
+    vol = projections.reconstructVolume(dims=vol_size, reconstructionPosition=[0, 0, 0], binning=1, applyWeighting=weighting)
     vol.write(output)
-    

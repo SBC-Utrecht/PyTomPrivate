@@ -14,27 +14,18 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Do the Gaussian fitting on the found particle list.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-f','--file'], 'Particle list after extracting candidates.', 'has arguments', 'required'),
-                                   ScriptOption(['-n','--numberBins'], 'Number of bins of histogram. Default is 10.', 'has arguments', 'optional'),
-                                   ScriptOption(['-p','--gaussianPeak'], 'The correspondent index of the gaussian peak.', 'has arguments', 'required'),
-                                   ScriptOption(['-c','--numberParticles'], 'Number of particles up to CCC value.', 'has arguments', 'optional'),
-                                   ScriptOption(['-i','--imageFile'], 'Save plot to a image file.', 'has arguments', 'optional')])
+                          options=[ScriptOption(['-f', '--file'], 'Particle list after extracting candidates.', 'string', 'required'),
+                                   ScriptOption(['-n', '--numberBins'], 'Number of bins of histogram.', 'uint', 'optional', 10),
+                                   ScriptOption(['-p', '--gaussianPeak'], 'The correspondent index of the gaussian peak.', 'int', 'required'),
+                                   ScriptOption(['-c', '--numberParticles'], 'Number of particles up to CCC value.', 'float', 'optional'),
+                                   ScriptOption(['-i', '--imageFile'], 'Save plot to a image file.', 'string', 'optional')])
 
-    try:
-        pl_filename, num_steps, peak_index, ccc_value, imageFile = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
+    pl_filename, num_steps, peak_index, ccc_value, imageFile = parse_script_options(sys.argv[1:], helper)
     
     # process the arguments
-    num_steps = int(num_steps)
-    if not num_steps:
-        num_steps = 10
-    
-    peak_index = int(peak_index)
-    
+
     scores = []
-    
+
     # read out the scores
     from pytom.localization.structures import readParticleFile
     foundParticles = readParticleFile(pl_filename)
@@ -57,8 +48,7 @@ if __name__ == '__main__':
         lower = x[i]; upper = x[i+1]
         n = len([v for v in scores if lower<=v<=upper])
         y.append(n)
-        
-    
+
     # plot
     from matplotlib import pyplot
     import matplotlib
@@ -112,7 +102,6 @@ if __name__ == '__main__':
     print 'Two sigma position: %f, number of estimation: %f' % (mu-2*sigma, estimate)
     
     if ccc_value:
-        ccc_value = float(ccc_value)
         estimate = 0.
         for i in x:
             if i > ccc_value:

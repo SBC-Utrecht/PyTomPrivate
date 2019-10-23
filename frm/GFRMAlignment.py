@@ -551,13 +551,10 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
                           description='Subtomogram alignment by Fast Rotational Matching.',
                           authors='Yuxiang Chen',
-                          options= [ScriptOption(['-j'], 'Job xml file.', 'has arguments', 'optional'),
-                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'required')])
-    
-    try:
-        job_filename, verbose = parse_script_options(sys.argv[1:], helper)
-    except:
-        sys.exit()
+                          options= [ScriptOption(['-j'], 'Job xml file.', 'string', 'required'),
+                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'optional', False)])
+
+    job_filename, verbose = parse_script_options(sys.argv[1:], helper)
     
     # check the job
     job = FRMJob()

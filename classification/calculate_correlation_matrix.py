@@ -204,29 +204,19 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1],
                           description='Calculate the correlation matrix, given the aligned particle list. The result will be written to the disk named correlation_matrix.csv.',
                           authors='Yuxiang Chen',
-                          options= [ScriptOption(['-p'], 'Aligned particle list file.', 'has arguments', 'required'),
-                                    ScriptOption(['-m'], 'Mask.', 'has arguments', 'required'),
-                                    ScriptOption(['-f'], 'Frequency (after binning).', 'has arguments', 'required'),
-                                    ScriptOption(['-b'], 'Binning factor.', 'has arguments', 'optional'),
-                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'optional')])
-    
-    try:
-        pl_filename, mask_filename, freq, binning, verbose = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print(e)
-        sys.exit()
+                          options= [ScriptOption(['-p'], 'Aligned particle list file.', 'string', 'required'),
+                                    ScriptOption(['-m'], 'Mask.', 'string', 'required'),
+                                    ScriptOption(['-f'], 'Frequency (after binning).', 'int', 'required'),
+                                    ScriptOption(['-b'], 'Binning factor.', 'uint', 'optional', 1),
+                                    ScriptOption(['-v'], 'Verbose mode.', 'no arguments', 'optional', False)])
+
+    pl_filename, mask_filename, freq, binning, verbose = parse_script_options(sys.argv[1:], helper)
     
     if verbose:
         from pytom.tools.timing import Timing
         t = Timing()
         t.start()
-    
-    # construct the job
-    freq = int(freq)
-    if not binning:
-        binning = 1
-    else:
-        binning = int(binning)
+
     job = {}
     job["ParticleList"] = pl_filename
     job["Mask"] = mask_filename

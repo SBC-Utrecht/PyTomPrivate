@@ -13,19 +13,12 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Plot angular distribution around a certain axis.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-p'], 'Particle list.', 'has arguments', 'required'),
+                          options=[ScriptOption(['-p'], 'Particle list.', 'string', 'required'),
                                    ScriptOption(['-a'], 'Euler angle specifying the axis in ZXZ convention', 'has arguments', 'required'),
-                                   ScriptOption(['-c'], 'cut out range', 'has arguments', 'optional'),
-                                   ScriptOption(['-o'], 'Output file', 'has arguments', 'required')])
+                                   ScriptOption(['-c'], 'cut out range', 'float,float,float', 'optional'),
+                                   ScriptOption(['-o'], 'Output file', 'string', 'required')])
 
-    try:
-        pl_filename, axis_angles, cut_out_range, output = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
-
-    if cut_out_range is not None:
-        cut_out_range = [float(i) for i in cut_out_range.split(',')]
+    pl_filename, axis_angles, cut_out_range, output = parse_script_options(sys.argv[1:], helper)
 
     from pytom.basic.structures import Rotation, ParticleList
     pl = ParticleList()
@@ -60,4 +53,3 @@ if __name__ == '__main__':
     for d in dist:
         f.write(str(d)+'\n')
     f.close()
-    

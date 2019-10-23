@@ -240,7 +240,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     if not skip_alignment:
         print("{:s}> Started on running the process".format(gettime()))
 
-        output = mpi.parfor(run_single_tilt_angle_unpack, input_to_processes)
+        output = mpi.parfor(run_single_tilt_angle_unpack, input_to_processes) # Some problem internally 23/10/2019
 
         from pytom.basic.datatypes import fmtLAR, headerLocalAlignmentResults, LOCAL_ALIGNMENT_RESULTS
         np.savetxt(results_file, np.array(output, dtype=LOCAL_ALIGNMENT_RESULTS), fmt=fmtLAR,
@@ -259,8 +259,7 @@ def run_single_tilt_angle_unpack(inp):
     @return: the value from "run_single_tilt_angle"
     @returntype: list
     """
-    return run_single_tilt_angle(
-        inp[0], inp[1], inp[2], inp[3], inp[4], inp[5], inp[6], inp[7], inp[8], inp[9], inp[10], inp[11])
+    return run_single_tilt_angle(*inp)
 
 
 def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position, particle_rotation,  particle_filename,

@@ -14,22 +14,12 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Reconstruct the whole tomogram from projections using iterative NFFT method.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption('-d', 'Unbinned projection directory. Note the projections should be aligned but not weighted!', 'has arguments', 'required'),
-                                   ScriptOption('-o', 'Output filename.', 'has arguments', 'required'),
-                                   ScriptOption('-i', 'Number of iterations to run.', 'has arguments', 'optional')])
+                          options=[ScriptOption('-d', 'Unbinned projection directory. Note the projections should be aligned but not weighted!', 'string', 'required'),
+                                   ScriptOption('-o', 'Output filename.', 'string', 'required'),
+                                   ScriptOption('-i', 'Number of iterations to run.', 'uint', 'optional', 10)])
 
-    try:
-        proj_dir, output_filename, iter = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
-    
-    # parse the arguments
-    if not iter:
-        iter = 10
-    else:
-        iter = int(iter)
-    
+    proj_dir, output_filename, iter = parse_script_options(sys.argv[1:], helper)
+
     # start reconstruction
     from tompy.io import read, write
     from nufft.reconstruction import fourier_2d1d_iter_reconstruct

@@ -15,13 +15,10 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Plot angular distribution of a particle list',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-p'], 'Particle list', 'has arguments', 'required'),
-                                   ScriptOption(['-c'], 'Class label to plot', 'has arguments', 'optional')])
+                          options=[ScriptOption(['-p'], 'Particle list', 'string', 'required'),
+                                   ScriptOption(['-c'], 'Class label to plot', 'string', 'optional')])
 
-    try:
-        pl_filename, class_label = parse_script_options(sys.argv[1:], helper)
-    except:
-        sys.exit()
+    pl_filename, class_label = parse_script_options(sys.argv[1:], helper)
 
     # load the particle list
     pl = ParticleList()
@@ -86,4 +83,3 @@ if __name__ == '__main__':
     ax.set_title("Bottom View", va='bottom')
     
     plt.show()
-    

@@ -14,8 +14,8 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Mirror the volume.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption(['-v'], 'Input volume.', 'has arguments', 'required'),
-                                   ScriptOption(['-o'], 'Output volume, defaults to the input name appended with "_mirror.em".', 'has arguments', 'optional')])
+                          options=[ScriptOption(['-v'], 'Input volume.', 'string', 'required'),
+                                   ScriptOption(['-o'], 'Output volume, defaults to the input name appended with "_mirror.em".', 'string', 'optional')])
 
     input_filename, output_filename = parse_script_options(sys.argv[1:], helper)
     

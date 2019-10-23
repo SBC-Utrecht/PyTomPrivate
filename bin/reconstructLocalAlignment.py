@@ -121,7 +121,7 @@ if __name__ == '__main__':
 
         local_alignment(proj, vol_size, binning, offset, tilt_angles, n[0], proj_dir, mpi, reconstruction_method,
                         infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles,
-                        skip_alignment, True if i == 3 else False, fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist)
+                        skip_alignment, (True if i == 3 else False), fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist)
         print("Finished "+n[0])
 
     mpi.end()

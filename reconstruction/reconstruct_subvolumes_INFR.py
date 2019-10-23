@@ -14,27 +14,14 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Reconstruct the subvolumes from projections using Fourier space method.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption('-p', 'Particle list.', 'has arguments', 'required'),
-                                   ScriptOption('-d', 'Unbinned projection directory. Note the projections should be aligned but not weighted!', 'has arguments', 'required'),
-                                   ScriptOption('-s', 'Output particle size (int).', 'has arguments', 'optional'),
-                                   ScriptOption('-b', 'Binning factor of the particle list.', 'has arguments', 'required'),
-                                   ScriptOption('-o', 'Cutting offset of the particle list.', 'has arguments', 'required'),
-                                   ScriptOption('-i', 'Number of iterations to run.', 'has arguments', 'optional')])
+                          options=[ScriptOption('-p', 'Particle list.', 'string', 'required'),
+                                   ScriptOption('-d', 'Unbinned projection directory. Note the projections should be aligned but not weighted!', 'string', 'required'),
+                                   ScriptOption('-s', 'Output particle size', 'int', 'required'),
+                                   ScriptOption('-b', 'Binning factor of the particle list.', 'uint', 'required'),
+                                   ScriptOption('-o', 'Cutting offset of the particle list.', 'int,int,int', 'required'),
+                                   ScriptOption('-i', 'Number of iterations to run.', 'uint', 'optional', 10)])
 
-    try:
-        pl_filename, proj_dir, vol_size, binning, offset, iter = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
-    
-    # parse the argument
-    vol_size = int(vol_size)
-    binning = int(binning)
-    offset = [int(i) for i in offset.split(',')]
-    if iter:
-        iter = int(iter)
-    else:
-        iter = 10
+    pl_filename, proj_dir, vol_size, binning, offset, iter = parse_script_options(sys.argv[1:], helper)
     
     # force the user to specify even-sized volume
     assert vol_size % 2 == 0

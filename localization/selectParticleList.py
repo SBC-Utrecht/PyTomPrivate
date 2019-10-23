@@ -14,21 +14,12 @@ if __name__ == '__main__':
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
                           description='Select the particle list for alignment according to the class list.',
                           authors='Yuxiang Chen',
-                          options=[ScriptOption('-p', 'Particle list.', 'has arguments', 'required'),
-                                   ScriptOption('-c', 'Class label file.', 'has arguments', 'required'),
-                                   ScriptOption('-o', 'Output particle list.', 'has arguments', 'required'),
-                                   ScriptOption('-t', 'True positive class.', 'has arguments', 'optional')])
+                          options=[ScriptOption('-p', 'Particle list.', 'string', 'required'),
+                                   ScriptOption('-c', 'Class label file.', 'string', 'required'),
+                                   ScriptOption('-o', 'Output particle list.', 'string', 'required'),
+                                   ScriptOption('-t', 'True positive class.', 'int', 'optional', 0)])
 
-    try:
-        pl_filename, class_label_filename, output, tp_label = parse_script_options(sys.argv[1:], helper)
-    except Exception as e:
-        print e
-        sys.exit()
-    
-    if tp_label is None:
-        tp_label = 1
-    else:
-        tp_label = int(tp_label)
+    pl_filename, class_label_filename, output, tp_label = parse_script_options(sys.argv[1:], helper)
     
     from pytom.basic.structures import ParticleList
     pl = ParticleList(".")
