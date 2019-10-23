@@ -7,25 +7,7 @@ Created on Jul 21, 2011
 '''
 
 
-def ccp42em(filename, target):
-    from pytom_volume import read
-    from pytom.tools.files import checkFileExists, checkDirExists
-    import os
-
-    if not checkFileExists(filename):
-        raise RuntimeError('CCP4 file not found! ', filename)
-
-    if not checkDirExists(target):
-        raise RuntimeError('Destination directory not found! ', target)
-
-    emfile = read(filename)
-
-    splitName = filename.split(os.sep)
-    filename = splitName[len(splitName) - 1]
-
-    newFilename = target + os.sep + filename[0:len(filename) - 3] + '.em'
-
-    emfile.write(newFilename, 'em')
+from pytom.basic.files import cpp42em
 
 
 if __name__ == '__main__':

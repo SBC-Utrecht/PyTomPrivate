@@ -199,6 +199,7 @@ class NaiveAtom:
 
         self._z = value
 
+
 def naivePDBParser(pdbPath,chainName=None):
 
     atomList = []
@@ -271,125 +272,8 @@ def mmCIFParser(filePath,chainName = None):
         finally:
             pass
 
-    return atoms    
+    return atoms
 
-def atomList2em(atomList,pixelSize, cubeSize, densityNegative = False):
-    """
-    atomList2em:
-    @param atomList:
-    @param pixelSize:
-    @param cubeSize:
-    @param densityNegative:
-    @return:    
-    """
-    from math import floor
-    from pytom_volume import vol
-    
-    if len(atomList) == 0:
-        raise RuntimeError('atomList2em : Your atom list is empty!')
-    
-    #get map
-    volume = vol(cubeSize, cubeSize, cubeSize)
-    volume.setAll(0.0)
-    
-    centroidX = 0
-    centroidY = 0
-    centroidZ = 0
-    
-    for i in range(len(atomList)):
-        centroidX += atomList[i].getX() 
-        centroidY += atomList[i].getY()
-        centroidZ += atomList[i].getZ()
-    
-    centroidX = centroidX / len(atomList)
-    centroidY = centroidY / len(atomList)
-    centroidZ = centroidZ / len(atomList)
-    
-    centerX = floor(float(cubeSize)/2.0)
-    centerY = floor(float(cubeSize)/2.0)
-    centerZ = floor(float(cubeSize)/2.0)
-    
-    shiftX = centroidX - centerX
-    shiftY = centroidY - centerY
-    shiftZ = centroidZ - centerZ
-    
-    for i in range(len(atomList)):
-        atomList[i].setX(round(atomList[i].getX()/pixelSize) + centerX)
-        atomList[i].setY(round(atomList[i].getY()/pixelSize) + centerY)
-        atomList[i].setZ(round(atomList[i].getZ()/pixelSize) + centerZ)
-
-    periodicTableAvailable = True
-    try:
-            #searching for periodic table library http://pypi.python.org/pypi/periodictable
-        from periodictable import elements
-    except ImportError:
-        periodicTableAvailable = False
-        
-    for i in range(len(atomList)):
-        x = int(atomList[i].getX())
-        y = int(atomList[i].getY())
-        z = int(atomList[i].getZ())
-        
-        if  x >= cubeSize or y >= cubeSize or z >= cubeSize:
-            raise RuntimeError('Cube size is too small. Please specify a larger cube for PDB structure!')
-        
-        currentValue = volume(x, y, z)
-        
-        if periodicTableAvailable:
-            atomName = atomList[i].getAtomType()[0]
-            element = elements.symbol(atomName)
-            mass = element.mass
-            volume.setV(currentValue + mass, x,y,z)    
-        else: 
-            if atomList[i].getAtomType()[0] == 'H': ##maybe take this out
-                volume.setV(currentValue + 1.0, x,y,z)   
-            elif  atomList[i].getAtomType()[0] == 'C':
-                volume.setV(currentValue + 6.0, x,y,z)
-            elif atomList[i].getAtomType()[0] == 'N':
-                volume.setV(currentValue + 7.0, x,y,z)
-            elif atomList[i].getAtomType()[0] == 'O':
-                volume.setV(currentValue + 8.0, x,y,z)
-            elif atomList[i].getAtomType()[0] == 'P':
-                volume.setV(currentValue + 15.0, x,y,z)
-            elif atomList[i].getAtomType()[0] == 'S':
-                volume.setV(currentValue + 16.0, x,y,z)
-    
-    if densityNegative:
-        volume = volume * -1
-    
-    return volume
-
-def pdb2em(pdbPath, pixelSize, cubeSize, chain = None,densityNegative = False):
-    """
-    pdb2em: Creates an volume out of a PDB file
-    @param pdbPath: Path to PDB file or PDB id for online download
-    @param pixelSize: The pixel size to convert to 
-    @param cubeSize: Resulting cube size
-    @return: A volume
-    @author: Thomas Hrabe & Luis Kuhn
-    """
-    from math import floor
-    from pytom_volume import vol
-    
-    atomList = naivePDBParser(pdbPath,chain)
-    
-    return atomList2em(atomList,pixelSize,cubeSize,densityNegative)
-
-def mmCIF2em(mmCIFPath, pixelSize, cubeSize, chain = None,densityNegative = False):
-    """
-    pdb2em: Creates an volume out of a mmCIF file
-    @param mmCIFPath: Path to mmCIF file 
-    @param pixelSize: The pixel size to convert to 
-    @param cubeSize: Resulting cube size
-    @return: A volume
-    @author: Thomas Hrabe 
-    """
-    from math import floor
-    from pytom_volume import vol
-    
-    atomList = mmCIFParser(mmCIFPath,chain)
-    
-    return atomList2em(atomList,pixelSize,cubeSize,densityNegative)
 
 def initSphere(cubeSize,radius,smoothing=0,centerX=None,centerY=None,centerZ=None):
     """
@@ -418,6 +302,7 @@ def initSphere(cubeSize,radius,smoothing=0,centerX=None,centerY=None,centerZ=Non
     initSphere(sphere,radius,smoothing,0,centerX,centerY,centerZ)
 
     return sphere
+
 
 def cutParticlesFromTomogram(particleList,cubeSize,sourceTomogram,coordinateBinning = 0,binningFactorOut = 0):
     """
@@ -490,6 +375,7 @@ def int32toint8(n):
         bytearr.append(d)
     return bytearr
 
+
 import numpy as np
 def int8toint32(bytearr):
     """
@@ -499,7 +385,8 @@ def int8toint32(bytearr):
     n = np.int32(0)
     n = bytearr[3]*(256**3) + bytearr[2]*(256**2) + bytearr[1]*256 + bytearr[0]
     return n
-        
+
+
 class EMHeader():
     def __init__(self):
         self.raw_data = np.zeros(128, dtype='int32')
@@ -676,6 +563,7 @@ class EMHeader():
     def from_binary(self, data):
         self.raw_data = data
 
+
 def read_em_header(filename):
     """
     read_em_header: Reads the EM header only.
@@ -698,6 +586,7 @@ def read_em_header(filename):
         f.close()
 
     return header
+
 
 def read_em(filename, binning=None):
     """Read the whole EM file: the header as well as the data.
@@ -728,6 +617,7 @@ def read_em(filename, binning=None):
 
     return v, header
 
+
 def write_em(filename, data, header=None):
     """Write the EM header as well as the data into one file.
     @param filename: filename
@@ -746,6 +636,7 @@ def write_em(filename, data, header=None):
             f.write(header.to_binary())
         finally:
             f.close()
+
 
 def write_em_header(filename, header):
     try:
@@ -770,3 +661,240 @@ def read_size(filename):
     f.close()
 
     return [x,y,z]
+
+
+# Conversion between fileformats
+
+
+def atomList2em(atomList, pixelSize, cubeSize, densityNegative=False):
+    """
+    atomList2em:
+    @param atomList:
+    @param pixelSize:
+    @param cubeSize:
+    @param densityNegative:
+    @return:
+    """
+    from math import floor
+    from pytom_volume import vol
+
+    if len(atomList) == 0:
+        raise RuntimeError('atomList2em : Your atom list is empty!')
+
+    # get map
+    volume = vol(cubeSize, cubeSize, cubeSize)
+    volume.setAll(0.0)
+
+    centroidX = 0
+    centroidY = 0
+    centroidZ = 0
+
+    for i in range(len(atomList)):
+        centroidX += atomList[i].getX()
+        centroidY += atomList[i].getY()
+        centroidZ += atomList[i].getZ()
+
+    centroidX = centroidX / len(atomList)
+    centroidY = centroidY / len(atomList)
+    centroidZ = centroidZ / len(atomList)
+
+    centerX = floor(float(cubeSize) / 2.0)
+    centerY = floor(float(cubeSize) / 2.0)
+    centerZ = floor(float(cubeSize) / 2.0)
+
+    shiftX = centroidX - centerX
+    shiftY = centroidY - centerY
+    shiftZ = centroidZ - centerZ
+
+    for i in range(len(atomList)):
+        atomList[i].setX(round(atomList[i].getX() / pixelSize) + centerX)
+        atomList[i].setY(round(atomList[i].getY() / pixelSize) + centerY)
+        atomList[i].setZ(round(atomList[i].getZ() / pixelSize) + centerZ)
+
+    periodicTableAvailable = True
+    try:
+        # searching for periodic table library http://pypi.python.org/pypi/periodictable
+        from periodictable import elements
+    except ImportError:
+        periodicTableAvailable = False
+
+    for i in range(len(atomList)):
+        x = int(atomList[i].getX())
+        y = int(atomList[i].getY())
+        z = int(atomList[i].getZ())
+
+        if x >= cubeSize or y >= cubeSize or z >= cubeSize:
+            raise RuntimeError('Cube size is too small. Please specify a larger cube for PDB structure!')
+
+        currentValue = volume(x, y, z)
+
+        if periodicTableAvailable:
+            atomName = atomList[i].getAtomType()[0]
+            element = elements.symbol(atomName)
+            mass = element.mass
+            volume.setV(currentValue + mass, x, y, z)
+        else:
+            if atomList[i].getAtomType()[0] == 'H':  ##maybe take this out
+                volume.setV(currentValue + 1.0, x, y, z)
+            elif atomList[i].getAtomType()[0] == 'C':
+                volume.setV(currentValue + 6.0, x, y, z)
+            elif atomList[i].getAtomType()[0] == 'N':
+                volume.setV(currentValue + 7.0, x, y, z)
+            elif atomList[i].getAtomType()[0] == 'O':
+                volume.setV(currentValue + 8.0, x, y, z)
+            elif atomList[i].getAtomType()[0] == 'P':
+                volume.setV(currentValue + 15.0, x, y, z)
+            elif atomList[i].getAtomType()[0] == 'S':
+                volume.setV(currentValue + 16.0, x, y, z)
+
+    if densityNegative:
+        volume = volume * -1
+
+    return volume
+
+
+def pdb2em(pdbPath, pixelSize, cubeSize, chain=None, densityNegative=False):
+    """
+    pdb2em: Creates an volume out of a PDB file
+    @param pdbPath: Path to PDB file or PDB id for online download
+    @param pixelSize: The pixel size to convert to
+    @param cubeSize: Resulting cube size
+    @return: A volume
+    @author: Thomas Hrabe & Luis Kuhn
+    """
+    from math import floor
+    from pytom_volume import vol
+
+    atomList = naivePDBParser(pdbPath, chain)
+
+    return atomList2em(atomList, pixelSize, cubeSize, densityNegative)
+
+
+def mmCIF2em(mmCIFPath, pixelSize, cubeSize, chain=None, densityNegative=False):
+    """
+    pdb2em: Creates an volume out of a mmCIF file
+    @param mmCIFPath: Path to mmCIF file
+    @param pixelSize: The pixel size to convert to
+    @param cubeSize: Resulting cube size
+    @return: A volume
+    @author: Thomas Hrabe
+    """
+    from math import floor
+    from pytom_volume import vol
+
+    atomList = mmCIFParser(mmCIFPath, chain)
+
+    return atomList2em(atomList, pixelSize, cubeSize, densityNegative)
+
+
+def ccp42em(filename, target):
+    from pytom_volume import read
+    from pytom.tools.files import checkFileExists, checkDirExists
+    import os
+
+    if not checkFileExists(filename):
+        raise RuntimeError('CCP4 file not found! ', filename)
+
+    if not checkDirExists(target):
+        raise RuntimeError('Destination directory not found! ', target)
+
+    emfile = read(filename)
+
+    newFilename = name_to_format(filename, target, "em")
+
+    emfile.write(newFilename, 'em')
+
+
+def ccp42mrc(filename, target):
+    from pytom_volume import read
+    from pytom.tools.files import checkFileExists, checkDirExists
+    import os
+
+    if not checkFileExists(filename):
+        raise RuntimeError('CCP4 file not found! ', filename)
+
+    if not checkDirExists(target):
+        raise RuntimeError('Destination directory not found! ', target)
+
+    emfile = read(filename)
+
+    newFilename = name_to_format(filename, target, "mrc")
+
+    emfile.write(newFilename, 'mrc')
+
+
+def em2mrc(filename, target):
+    from pytom_volume import read
+    from pytom.tools.files import checkFileExists, checkDirExists
+    import os
+
+    if not checkFileExists(filename):
+        raise RuntimeError('EM file not found! ', filename)
+
+    if not checkDirExists(target):
+        raise RuntimeError('Destination directory not found! ', target)
+
+    emfile = read(filename)
+
+    newFilename = name_to_format(filename, target, "mrc")
+
+    emfile.write(newFilename, 'mrc')
+
+
+def em2ccp4(filename, target):
+    from pytom_volume import read
+    from pytom.tools.files import checkFileExists, checkDirExists
+    import os
+
+    if not checkFileExists(filename):
+        raise RuntimeError('EM file not found! ', filename)
+
+    if not checkDirExists(target):
+        raise RuntimeError('Destination directory not found! ', target)
+
+    emfile = read(filename)
+
+    newFilename = name_to_format(filename, target, "ccp4")
+
+    emfile.write(newFilename, 'ccp4')
+
+
+def mrc2ccp4(filename, target):
+    from pytom_volume import read
+    from pytom.tools.files import checkFileExists, checkDirExists
+    import os
+
+    if not checkFileExists(filename):
+        raise RuntimeError('MRC file not found! ', filename)
+
+    if not checkDirExists(target):
+        raise RuntimeError('Destination directory not found! ', target)
+
+    emfile = read(filename)
+
+    newFilename = name_to_format(filename, target, "ccp4")
+
+    emfile.write(newFilename, 'ccp4')
+
+
+def mrc2em(filename, target):
+    from pytom_volume import read
+    from pytom.tools.files import checkFileExists, checkDirExists
+    import os
+    if not checkFileExists(filename):
+        raise RuntimeError('MRC file not found! ', filename)
+
+    if not checkDirExists(target):
+        raise RuntimeError('Destination directory not found! ', target)
+
+    emfile = read(filename)
+
+    newFilename = name_to_format(filename, target, "em")
+
+    emfile.write(newFilename, 'em')
+
+
+def name_to_format(filename, target, extension):
+    import os
+    basename = os.path.basename(filename)
+    return target + ("" if target.endswith(os.sep) else os.sep) + ".".join(basename.split(".")[:-1]) + '.' + extension

@@ -1,24 +1,6 @@
 #!/usr/bin/env pytom
 
-def em2mrc(filename,target):
-    from pytom_volume import read
-    from pytom.tools.files import checkFileExists,checkDirExists
-    import os
-    
-    if not checkFileExists(filename):
-        raise RuntimeError('EM file not found! ',filename)
-
-    if not checkDirExists(target):
-        raise RuntimeError('Destination directory not found! ', target)
-
-    emfile = read(filename)
-    
-    splitName = filename.split(os.sep)
-    filename = splitName[len(splitName)-1]
-
-    newFilename = target + os.sep + filename[0:len(filename)-3] + '.mrc'
-
-    emfile.write(newFilename,'mrc')
+from pytom.basic.files import em2mrc
 
 
 if __name__ == '__main__':
