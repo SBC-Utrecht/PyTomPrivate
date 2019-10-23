@@ -48,6 +48,7 @@ def parse_script_options(args, helper):
                         if opt.arg:
                             if n + 1 >= len(args):
                                 exception += "Option {:s} requires arguments but none are given\n".format(name)
+                                continue
 
                             a, e = parse_argument(args[n+1], opt.arg_str, name)
                             if e != "": exception += e + "\n"
@@ -94,7 +95,7 @@ def parse_script_options(args, helper):
         exception += "EXCEPTION:" + e.message + "\n"
 
     if exception != "":
-        print("Some exception(s) while parsing the command line arguments:\n" + exception + "\nUse '--help' to get information on how this script can be called.")
+        print("Some exception(s) while parsing the command line arguments:\n\033[91m" + exception + "\033[0m\nUse '--help' to get information on how this script can be called.")
         import sys
         sys.exit()
 
@@ -124,7 +125,7 @@ def parse_argument(inp, arg_str, option):
         res = []
         reg = "^" + arg_str + "$"
         # construct a regex based on the arg_str
-        for r in ((".", "\."), ("(", "\("), ("[", "\["), ("uint", r"(\d+)"), ("int", r"([-+]?\d+)"), ("float", r"([-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]\d+)?)"), ("string", r"(\S+)")):
+        for r in ((".", "\."), ("(", "\("), ("[", "\["), ("uint", r"(\d+)"), ("int", r"([-+]?\d+)"), ("float", r"([-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]\d+)?)"), ("string", r"(\S+?)")):
             reg = reg.replace(*r)
         match = re.match(reg, inp)
         if match:
