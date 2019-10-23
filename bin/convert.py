@@ -67,7 +67,7 @@ def convertfile(file, format, target, chaindata):
 
 
 def print_errors(message):
-    """To print to stderr and use fancy styling, for multiple errors"""
+    """To print to stderr and use fancy styling (if possible), for multiple errors"""
     import sys
     color1 = ""
     color2 = ""
@@ -80,12 +80,21 @@ def print_errors(message):
     sys.exit()
 
 
-def print_error(message, exit=True, warning=False):
-    """To print to stderr and use fancy styling, on a single line"""
+def print_single_error(message, warning=False):
+    """
+    To print to stderr and use fancy styling (if possible), on a single line
+
+    :param message: The error message to show
+    :type message: str
+    :param warning: If the error is an error or a warning, changes the style
+    :type warning: bool
+    :return: void
+    :returntype: void
+    """
     import sys
     color = "93" if warning else "91"
 
-    color1 = ""
+    color1 = "WARNING: " if warning else "ERROR: "
     color2 = ""
 
     if sys.stdout.isatty():
@@ -93,8 +102,11 @@ def print_error(message, exit=True, warning=False):
         color2 = "\033[0m"
 
     sys.stderr.write("{:s}{:s}{:s}\n".format(color1, message, color2))
-    if exit:
-        sys.exit()
+
+
+def warn_if_file_exists(filename):
+    if os.path.exists(filename):
+        print_single_error("File: {:s} already exists will be overwritten".format(filename), warning=True)
 
 
 def test_validity(filename, directory, target, format, chaindata):
@@ -162,6 +174,8 @@ if __name__ == '__main__':
     test_validity(filename, directory, target, format, chaindata)
 
     if filename:
+        warn_if_file_exists(f.name_to_format(filename, target, format))
+
         num, ex = convertfile(filename, format, target, chaindata)
 
         # Print possible errors
@@ -169,23 +183,19 @@ if __name__ == '__main__':
             print_errors(ex)
 
     elif directory:
-        import os
-
         fileList = os.listdir(directory)
-        for filename in fileList:
-            # Try for every file if the conversion is possible
-            newname = f.name_to_format(filename, target, format)
-            if os.path.exists(newname):
-                print_error("File: {:s} already exists will be overwritten".format(newname), exit=False, warning=True)
 
-            num = 1
+        for filename in fileList:
+            warn_if_file_exists(f.name_to_format(filename, target, format))
+
             try:
                 num, ex = convertfile(filename, format, target, chaindata)
             except Exception as e:
+                num = 1
                 ex = "CONVERSION EXCEPTION " + e.message
 
             # Print the result, ignores status code -1
             if num == 0:
                 print("Converted {:s} to {:s}".format(filename, newname))
             elif num == 1:
-                print_error("File: {:s} gave error: {:s}".format(filename, ex), exit=False)
+                print_single_error("File: {:s} gave error: {:s}".format(filename, ex))
