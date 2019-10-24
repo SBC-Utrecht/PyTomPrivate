@@ -443,7 +443,7 @@ class ProjectionList(PyTomClass):
 
     def reconstructVolumes(self, particles, cubeSize, binning=1, applyWeighting=False,
                            showProgressBar=False, verbose=False, preScale=1, postScale=1,
-                           alignResultFile='', num_procs=10, num_procs_read=10, particle_polish_file=None):
+                           alignResultFile='', num_procs=10, num_procs_read=10, particle_polish_file=None, dimz=None):
         """
         reconstructVolumes: reconstruct a subtomogram given a particle object.
 
@@ -500,7 +500,7 @@ class ProjectionList(PyTomClass):
         procs = []
 
         for pid in range(num_procs):
-            args = (pid, num_procs, verbose, binning, postScale, cubeSize)
+            args = (pid, num_procs, verbose, binning, postScale, cubeSize, dimz)
             if particle_polish_file is None:
                 proc = Process(target=self._worker_reconstruct_volumes, args=args)
             else:
@@ -512,7 +512,7 @@ class ProjectionList(PyTomClass):
             time.sleep(0.4)
             procs = [proc for proc in procs if proc.is_alive()]
 
-    def _worker_reconstruct_volumes(self, pid, num_procs, verbose, binning, postScale, cubeSize):
+    def _worker_reconstruct_volumes(self, pid, num_procs, verbose, binning, postScale, cubeSize, dimz):
         from pytom_volume import vol, backProject, rescaleSpline
         from pytom.basic.files import read
 
@@ -557,7 +557,7 @@ class ProjectionList(PyTomClass):
 
             del vol_bp
 
-    def _worker_reconstruct_volumes_polished(self, pid, num_procs, verbose, binning, postScale, cubeSize):
+    def _worker_reconstruct_volumes_polished(self, pid, num_procs, verbose, binning, postScale, cubeSize, dimz):
         from pytom_volume import vol, backProject, rescaleSpline, pasteCenter, paste, complexRealMult
         from pytom.basic.files import read, read_size
         from pytom.basic.transformations import general_transform2d
@@ -573,8 +573,10 @@ class ProjectionList(PyTomClass):
         print("polishfile:", self.particle_polish_file)
 
         dimx, dimy, _ = read_size(self._list[0].getFilename())
+        dimz = dimx if dimz is None else dimz
         print(dimx, dimy)
         print(self._list)
+        print(len(self._list))
 
         weightSlice = fourierFilterShift_ReducedComplex(rampFilter(cubeSize, cubeSize))
         circleFilterRadius = cubeSize / 2
@@ -620,12 +622,12 @@ class ProjectionList(PyTomClass):
                 folder = os.path.dirname(proj.getFilename())
                 filename = '{}/sorted_aligned_{}.em'.format(folder, n + 1)
 
-                offsetX = float(self.particle_polish_file['AlignmentTransX'][start_index + n])
-                offsetY = float(self.particle_polish_file['AlignmentTransY'][start_index + n])
+                offsetX = 0 #float(self.particle_polish_file['AlignmentTransX'][start_index + n])
+                offsetY = 0 #float(self.particle_polish_file['AlignmentTransY'][start_index + n])
 
                 # Set the coordinates to absolute (top left) and to 2D on this projection
-                yy = y + dimy / 2
-                xx = cos(tiltangle * pi / 180) * x - sin(tiltangle * pi / 180) * z + dimx / 2
+                yy = y #+ dimy / 2
+                xx = cos(tiltangle * pi / 180) * (x - dimx / 2) - sin(tiltangle * pi / 180) * (z - dimz / 2) + dimx / 2
 
                 x_top = int(round(xx) - raw_size / 2 + round(offsetX))
                 y_top = int(round(yy) - raw_size / 2 + round(offsetY))
@@ -636,8 +638,11 @@ class ProjectionList(PyTomClass):
                 x_diff = min(0, x_top) + min(0, x_bot)
                 y_diff = min(0, y_top) + min(0, y_bot)
 
-                img = read(filename, [max(0, x_top), max(0, y_top), 0, max(0, raw_size + x_diff),
-                                      max(0, raw_size + y_diff), 1], [0, 0, 0], [binning, binning, 1])
+                try:
+                    img = read(filename, [max(0, x_top), max(0, y_top), 0, max(0, raw_size + x_diff),
+                                         max(0, raw_size + y_diff), 1], [0, 0, 0], [binning, binning, 1])
+                except Exception as e:
+                    raise Exception("Exception in read {:s}\ntop {:d},{:d} bot {:d},{:d} size {:d},{:d} 3d {:f},{:f},{:f} 2d {:f},{:f} offset {:f},{:f}".format(e.message, x_top, y_top, x_bot, y_bot, max(0, raw_size + x_diff), max(0, raw_size + y_diff), x, y, z, xx, yy, offsetX, offsetY))
 
                 x_shift = xx - round(xx) + offsetX - round(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.
                 y_shift = yy - round(yy) + offsetY - round(offsetY) + (-min(0, y_top) + min(0, y_bot)) / 2.

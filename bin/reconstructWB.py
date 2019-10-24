@@ -42,12 +42,13 @@ if __name__ == '__main__':
                                 ScriptOption(['--numReadProcesses'], 'The maximum number of reading processes. BEWARE!'
                                               ' a single read thread easily consumes up to 4 Gb (for a 4k picture) so '
                                               'keep that in mind to not overload the nodes. If not specified this will '
-                                              'be the same as numProcesses.', 'uint', 'optional')])
+                                              'be the same as numProcesses.', 'uint', 'optional'),
+                                ScriptOption(['--dimZ'], 'The dimension on the Z axis, default is the same as dimension X', 'uint', 'optional')])
         
     particleList = None
 
     tomogram, particleListXMLPath, projectionList, projectionDirectory, aw, size, coordinateBinning, recOffset, \
-    projBinning, alignmentResultFile, particlePolishFile, numProcesses, numReadProcesses = parse_script_options(sys.argv[1:], helper)
+    projBinning, alignmentResultFile, particlePolishFile, numProcesses, numReadProcesses, dimz = parse_script_options(sys.argv[1:], helper)
 
     print(projectionDirectory, projectionList)
    
@@ -105,30 +106,30 @@ if __name__ == '__main__':
             print 'Error reading particleList XML file! Abort'
             sys.exit()
 
-        if polishedCoordinates:
+        if polishedCoordinates is not None:
             if not len(polishedCoordinates['AlignmentTransX']) == len(particleList) * len(projections):
                 raise Exception("The length of the polished alignment list does not correspond to the theoretical length, "
                                 "are you sure every parameter is correct? polished list len {:d}, particle  list len {:d}"
                                 " and projection len {:d}".format(len(polishedCoordinates['AlignmentTransX']), len(particleList), len(projections)))
 
-        from pytom.basic.structures import PickPosition
-        for n, particle in enumerate(particleList):
-            pickPosition = particle.getPickPosition()
-            x = (pickPosition.getX() * coordinateBinning + recOffset[0]) / projBinning
-            y = (pickPosition.getY() * coordinateBinning + recOffset[1]) / projBinning
-            z = (pickPosition.getZ() * coordinateBinning + recOffset[2]) / projBinning
-            particle.setPickPosition(PickPosition(x=x, y=y, z=z))
-
-            # Shifting each particle (by the shift of another particle) does not really help with aligning to every
-            # specific projection, I should build support for the particlepolishfile into reconstructVolumes
-            # to shift every single projection in a unique way for every single particle
-
-            # if particlePolishFile:
-            #    x -= polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
-            #    y -= polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
+        #from pytom.basic.structures import PickPosition
+        #for n, particle in enumerate(particleList):
+        #    pickPosition = particle.getPickPosition()
+        #    x = (pickPosition.getX() * coordinateBinning + recOffset[0]) / projBinning
+        #    y = (pickPosition.getY() * coordinateBinning + recOffset[1]) / projBinning
+        #    z = (pickPosition.getZ() * coordinateBinning + recOffset[2]) / projBinning
+        #    particle.setPickPosition(PickPosition(x=x, y=y, z=z))
+#
+        #    # Shifting each particle (by the shift of another particle) does not really help with aligning to every
+        #    # specific projection, I should build support for the particlepolishfile into reconstructVolumes
+        #    # to shift every single projection in a unique way for every single particle
+#
+        #    # if particlePolishFile:
+        #    #    x -= polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
+        #    #    y -= polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
 
         projections.reconstructVolumes(particles=particleList, cubeSize=int(size[0]),
                                        binning=projBinning, applyWeighting=aw,
                                        showProgressBar=True, verbose=False,
                                        preScale=projBinning, postScale=1, alignResultFile=alignmentResultFile,
-                                       num_procs=numProcesses, num_procs_read=numReadProcesses, particle_polish_file=polishedCoordinates)
+                                       num_procs=numProcesses, num_procs_read=numReadProcesses, particle_polish_file=polishedCoordinates, dimz=dimz)

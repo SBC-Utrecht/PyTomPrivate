@@ -124,7 +124,7 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
 def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
                     mpi, projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
                     averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False,
-                    start_glocal=True, fsc_path='', glocal_jobname='glocaljob', glocal_nodes=5, glocal_particlelist=None):
+                    start_glocal=True, fsc_path='', glocal_jobname='glocaljob', glocal_nodes=5, glocal_particlelist=None, dimz=None):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
@@ -230,7 +230,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
         # loop over tiltrange, take patch and cross correlate with reprojected subtomogram
         for img, ang in zip(projections, tilt_angles):
             input_to_processes.append([ang, subtomogram, offset, vol_size, particle.getPickPosition().toVector(), rot,
-                                       particle.getFilename(), particle_number, binning, img, create_graphics, fsc_path])
+                                       particle.getFilename(), particle_number, binning, img, create_graphics, fsc_path, dimz])
 
     print(len(input_to_processes))
     print("{:s}> Created the input array".format(gettime()))
@@ -240,7 +240,14 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     if not skip_alignment:
         print("{:s}> Started on running the process".format(gettime()))
 
-        output = mpi.parfor(run_single_tilt_angle_unpack, input_to_processes) # Some problem internally 23/10/2019
+        #for d in dir(input_to_processes): print(d)
+
+        lists = zip(*input_to_processes)
+        print(len(lists))
+
+        #for d in dir(zip(*[list[a] for a in range(len(lists))])): print(d)
+
+        output = mpi.parfor(run_single_tilt_angle, zip(lists[0], lists[1],lists[2],lists[3],lists[4],lists[5],lists[6],lists[7],lists[8],lists[9],lists[10],lists[11])) # Some problem internally 23/10/2019
 
         from pytom.basic.datatypes import fmtLAR, headerLocalAlignmentResults, LOCAL_ALIGNMENT_RESULTS
         np.savetxt(results_file, np.array(output, dtype=LOCAL_ALIGNMENT_RESULTS), fmt=fmtLAR,
@@ -248,7 +255,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
         print("{:s}> Ran the processes".format(gettime()))
 
-    run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal, glocal_jobname, glocal_nodes, particle_list_filename if glocal_particlelist is None else glocal_particlelist)
+    run_polished_subtomograms(particle_list_filename, projection_directory, results_file, binning, offset, vol_size, start_glocal, glocal_jobname, glocal_nodes, (particle_list_filename if glocal_particlelist is None else glocal_particlelist), dimz)
 
 
 def run_single_tilt_angle_unpack(inp):
@@ -263,7 +270,7 @@ def run_single_tilt_angle_unpack(inp):
 
 
 def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position, particle_rotation,  particle_filename,
-                          particle_number, binning, img, create_graphics=False, fsc_path=""):
+                          particle_number, binning, img, create_graphics=False, fsc_path="", dimz=None):
     """
     To run a single tilt angle to allow for parallel computing
 
@@ -320,7 +327,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     # Get the size of the original projection
     dim_x = img.shape[0]
     # dim_y = img.shape[1]
-    dim_z = dim_x  # make z dim the same as x!
+    dim_z = dim_x if dimz is None else dimz  # make z dim the same as x!
 
     x, y, z = particle_position
     x = (x + offset[0]) * binning
@@ -337,10 +344,14 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     yy = y  # assume the rotation axis is around y
     xx = (cos(ang * pi / 180) * (x - dim_x / 2) - sin(ang * pi / 180) * (z - dim_z / 2)) + dim_x / 2
 
+    print(xx, yy)
+
     # cut the small patch out
     v = vol_size / 2
     patch = cut_from_projection(img.sum(axis=2), [xx, yy], [vol_size, vol_size])  # img.sum(axis=2)[int(xx-v):int(xx+v), int(yy-v):int(yy+v)]
     patch = patch - patch.mean()
+
+    print(patch.mean(), patch.shape, patch)
 
     # filter using FSC
     fsc_mask = None
@@ -354,8 +365,12 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
         print("Not an existing FSC file: " + fsc_path)
 
     # Cross correlate the template and patch, this should give the pixel shift it is after
+    print("CCf: " + str(ang))
     ccf = normalised_cross_correlation_numpy(template, patch, fsc_mask)
+    print(ccf.mean(), ccf)
+    print("Subpixel: " + str(ang))
     points2d = find_sub_pixel_max_value_2d(ccf)
+    print("greategraphics: " + str(create_graphics))
 
     x_diff = points2d[0] - vol_size / 2
     y_diff = points2d[1] - vol_size / 2
@@ -455,7 +470,7 @@ def axis_title(axis, title):
 
 
 def run_polished_subtomograms(particle_list_filename, projection_directory, particle_polish_file, binning, offset,
-                              vol_size, start_glocal, glocal_jobname, glocal_nodes, glocal_particle_list):
+                              vol_size, start_glocal, glocal_jobname, glocal_nodes, glocal_particle_list, dimz):
     """
     Reconstructs subtomograms based on a polished particlelist, writes these to the places as specified in particlelist
 
@@ -510,9 +525,9 @@ reconstructWB.py --particleList {:s} \
 --projBinning 1 \
 --recOffset {:d},{:d},{:d} \
 --particlePolishFile {:s} \
--n 20"""\
+{:s}-n 20"""\
         .format(cwd, particle_list_filename, projection_directory, binning, vol_size, offset[0], offset[1], offset[2],
-                particle_polish_file)
+                particle_polish_file, ("" if dimz is None else ("--dimZ " + str(dimz) + " ")))
 
     f = open("polished_subtomograms.sh", "w+")
     f.write(first_batchfile)
@@ -727,7 +742,7 @@ def find_sub_pixel_max_value(inp, k=4):
     return output
 
 
-def find_sub_pixel_max_value_2d(inp, interpolate_factor=100, smoothing=2, dim=10, border_size=2, ignore_border=75):
+def find_sub_pixel_max_value_2d(inp, interpolate_factor=100, smoothing=2, dim=10, border_size=2, ignore_border=37): #ignore_border for 200: 75
     """
     To find the highest point in a given numpy array based on 2d spline interpolation, returns the maximum with subpixel
     precision.
@@ -801,6 +816,8 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=100, smoothing=2, dim=10
     x, y, = np.mgrid[x_start:x_end, y_start:y_end]
     xnew, ynew = np.mgrid[x_start:x_end:complex((x_end - x_start) * interpolate_factor),
                           y_start:y_end:complex((y_end - y_start) * interpolate_factor)]
+
+    print(x_start, x_end, y_start, y_end)
 
     # Interpolate the points
     with warnings.catch_warnings():
