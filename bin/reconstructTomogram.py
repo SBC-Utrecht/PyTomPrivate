@@ -78,8 +78,8 @@ if __name__ == '__main__':
     if filetype is None:
         if volumeName:
             filetype = volumeName.split('.')[-1]
-    else: #TODO bug? shouldn't this be one identation level in? otherwise it overwrites userinput
-        filetype = 'em'
+        else:
+            filetype = 'em'
 
     if voldims == [0, 0, 0]:
         onlyWeightedProjections = True

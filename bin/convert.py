@@ -10,9 +10,11 @@ To join the conversion scripts scattered all around the bin folder into one sing
 
 import pytom.basic.files as f
 import os
+#from pytom.gui.guiFunctions import createMetaDataFiles
 
 # The lookup tables for the conversion functions
 extensions = ["em", "mrc", "ccp4"]
+all_extensions = extensions + ["pl", "meta"]
 lookuptable = [
     ["Same",        f.em2mrc,  f.em2ccp4],
     [f.mrc2em,      "Same",    f.mrc2ccp4],
@@ -40,15 +42,28 @@ def special(file, format, target, chaindata):
         os.remove(em_name)
 
 
-def convertfile(file, format, target, chaindata):
+def convertfile(file, format, target, chaindata, subtomo_prefix, wedge_angles):
     """Convert a file to the given format, returns (statuscode, errormessage)"""
     in_ex = file.split('.')[-1]
+    if in_ex == "map": in_ex = "mrc"
 
     if in_ex in special_extensions:
         if chaindata is None:
             return 1, "For conversion from special format ({:s} and {:s}) chaindata is needed".format(", ".join([a for a in special_extensions[:-1]]), special_extensions[-1])
-        special(file, target, chaindata)
+        special(file, format, target, chaindata)
         return 0, ""
+
+    if in_ex == "txt" and format == "pl":
+        if coordsdata is None:
+            return 1, "For conversion from coordinates to a particlelist coordsdata is needed"
+        try:
+            f.convertCoords2PL(f.name_to_format(file, target, format), file, subtomoPrefix=subtomo_prefix, wedgeAngle=wedge_angles)
+        except:
+            return 1, "Exception while converting coordinatesfile {:s} to a particlelist".format(file)
+
+    if in_ex == "mdoc" and format == "meta":
+        #createMetaDataFiles(f.name_to_format(file, target, format), [file], target, mdoc_only=True)
+        return 1, "Not in Gui mode"
 
     try:
         index_from = extensions.index(in_ex)
@@ -59,7 +74,9 @@ def convertfile(file, format, target, chaindata):
 
     func = lookuptable[index_from][index_to]
 
-    if func == "Same":
+    if func is None:
+        return -1, "Converting from {:s} to {:s} is not implemented yet".format(in_ex, format)
+    elif func == "Same":
         return -1, "Converting from {:s} to the same format seems not needed".format(in_ex)
     else:
         func(file, target)
@@ -129,9 +146,9 @@ def test_validity(filename, directory, target, format, chaindata):
     if filename and directory:
         exceptions += "Only use one input at a time, only --file or --directory\n"
 
-    if not format in extensions:
+    if not format in all_extensions:
         exceptions += "The output format is not valid, choose between: {:s} and {:s}\n".format(
-            ", ".join([a for a in extensions[:-1]]), extensions[-1])
+            ", ".join([a for a in all_extensions[:-1]]), all_extensions[-1])
 
     if not filename and not directory:
         exceptions += "There needs to be at least one input, so provide --file or --directory\n"
@@ -148,8 +165,8 @@ if __name__ == '__main__':
 
     helper = ScriptHelper(
         sys.argv[0].split('/')[-1],  # script name
-        description='Converts file(s) to the given output file, converts freely between em, mrc and ccp4 and converts '
-                    'from pdb and mmCIF to the other three formats.',
+        description='Converts file(s) to the given output file, converts freely between {:s} and {:s} and converts '
+                    'from {:s} and {:s}'.format(", ".join([a for a in all_extensions[:-1]]), all_extensions[-1], ", ".join([a for a in special_extensions[:-1]]), special_extensions[-1]),
         authors='Douwe Schulte',
         options=[ScriptOption(
                      ['-f', '--file'], 'Filename will convert this single file to the target format, not to be used in '
@@ -166,9 +183,35 @@ if __name__ == '__main__':
                  ScriptOption(
                      ['-c', '--chainData'], 'Data needed for conversion from the special formats ({:s} and {:s}), in the format \
                      pixelsSize,cubeSize,invertDensity,chain (invertDensity is 1 or 0)'.format(", ".join([a for a in special_extensions[:-1]]), special_extensions[-1]),
-                     'float,uint,uint,string', 'optional')])
+                     'float,uint,uint,string', 'optional'),
+                 ScriptOption(
+                     ['-s', '--subtomoPrefix'], 'Data needed for the conversion from coordinates to a particlelist. Pat'
+                                                'h and filename for subtomogram files (e.g., MyPath/particle_)',
+                     'string', 'optional'),
+                 ScriptOption(
+                     ['-w', '--wedgeAngles'], 'Data needed for the conversion from coordinates to a particlelist. '
+                                              'Missing wedge angle(s) [counter-clock, clock] or single angle',
+                     'has arguments', 'optional')])
 
-    filename, directory, target, format, chaindata = parse_script_options(sys.argv[1:], helper)
+    #TODO write --filter to filter input files maybe on (glob) pattern or else on extension or similar
+
+    filename, directory, target, format, chaindata, subtomo_prefix, w = parse_script_options(sys.argv[1:], helper)
+
+    try:
+        if w:
+            split = w.split(',')
+            if len(split) == 2:
+                wedge_angles = []
+                wedge_angles.append(float(split[0]))
+                wedge_angles.append(float(split[1]))
+            elif len(split) == 1:
+                wedge_angles = float(w)
+            else:
+                raise Exception("The amount of angles given to wedge angle is not valid (has to be one or two).")
+        else:
+            wedge_angles = None
+    except Exception as e:
+        print_errors("The parsing of the wedge angle was not successful.\n{:s}".format(e.message))
 
     # Test for validity of the arguments passed, will stop execution if an error is found
     test_validity(filename, directory, target, format, chaindata)
@@ -176,7 +219,7 @@ if __name__ == '__main__':
     if filename:
         warn_if_file_exists(f.name_to_format(filename, target, format))
 
-        num, ex = convertfile(filename, format, target, chaindata)
+        num, ex = convertfile(filename, format, target, chaindata, subtomo_prefix, wedge_angles)
 
         # Print possible errors
         if num != 0:

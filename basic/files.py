@@ -894,6 +894,14 @@ def mrc2em(filename, target):
     emfile.write(newFilename, 'em')
 
 
+def convertCoords2PL(coordinate_file, particleList_file, subtomoPrefix=None,
+        wedgeAngle=None):
+    pl = ParticleList()
+    pl.loadCoordinateFile( filename=coordinate_file, name_prefix=subtomoPrefix,
+        wedgeAngle=wedgeAngle)
+    pl.toXMLFile(particleList_file)
+
+
 def name_to_format(filename, target, extension):
     import os
     basename = os.path.basename(filename)
