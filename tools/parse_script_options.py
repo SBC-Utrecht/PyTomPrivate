@@ -130,9 +130,10 @@ def parse_argument(inp, arg_str, option):
         return inp, ""
     else:
         res = []
+        arg_str = re.escape(arg_str)
         reg = "^" + arg_str + "$"
         # construct a regex based on the arg_str
-        for r in ((".", "\."), ("(", "\("), ("[", "\["), ("uint", r"(\d+)"), ("int", r"([-+]?\d+)"), ("float", r"([-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]\d+)?)"), ("string", r"(\S+?)")):
+        for r in (("uint", r"(\d+)"), ("int", r"([-+]?\d+)"), ("float", r"([-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]\d+)?)"), ("string", r"(\S+?)")):
             reg = reg.replace(*r)
         match = re.match(reg, inp)
         if match:
