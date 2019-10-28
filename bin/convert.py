@@ -10,6 +10,7 @@ To join the conversion scripts scattered all around the bin folder into one sing
 
 import pytom.basic.files as f
 import os
+import re
 #from pytom.gui.guiFunctions import createMetaDataFiles
 
 # The lookup tables for the conversion functions
@@ -54,8 +55,6 @@ def convertfile(file, format, target, chaindata, subtomo_prefix, wedge_angles):
         return 0, ""
 
     if in_ex == "txt" and format == "pl":
-        if coordsdata is None:
-            return 1, "For conversion from coordinates to a particlelist coordsdata is needed"
         try:
             f.convertCoords2PL(f.name_to_format(file, target, format), file, subtomoPrefix=subtomo_prefix, wedgeAngle=wedge_angles)
         except:
@@ -191,11 +190,18 @@ if __name__ == '__main__':
                  ScriptOption(
                      ['-w', '--wedgeAngles'], 'Data needed for the conversion from coordinates to a particlelist. '
                                               'Missing wedge angle(s) [counter-clock, clock] or single angle',
-                     'has arguments', 'optional')])
+                     'has arguments', 'optional'),
+                 ScriptOption(['--filter'], 'A filter for input files, any matching files will be converted, it uses '
+                                            'simple glob syntax: $ matches anything substring from 0 to inifite size, ? will match'
+                                            ' any single character, anything else will be matched exactly, unless the '
+                                            'case insensitive flag is used, flags: i, for case insensitive, f, for full'
+                                            ' length match, leaving no room for characters in front of or after the '
+                                            'pattern. Structure: "pattern/flags" or "pattern" if no flags should be used'
+                              , 'string', 'optional')])
 
     #TODO write --filter to filter input files maybe on (glob) pattern or else on extension or similar
 
-    filename, directory, target, format, chaindata, subtomo_prefix, w = parse_script_options(sys.argv[1:], helper)
+    filename, directory, target, format, chaindata, subtomo_prefix, w, pattern = parse_script_options(sys.argv[1:], helper)
 
     try:
         if w:
@@ -213,6 +219,34 @@ if __name__ == '__main__':
     except Exception as e:
         print_errors("The parsing of the wedge angle was not successful.\n{:s}".format(e.message))
 
+    # Parse the pattern
+
+    if pattern:
+        # Escape the filter so that it can be compiled without issues
+        pattern = re.escape(pattern)
+        # Create the pattern matches
+        pattern = pattern.replace('?', '??').replace('$', '.*?')
+
+        if len(pattern.split('/')) > 1:
+            flags = pattern.split('/')[-1]
+            pattern = '/'.join(pattern.split('/')[:-1])
+        else:
+            flags = ''
+            pattern = pattern
+
+        if 'f' in flags:
+            pattern = '^' + pattern + '$'
+
+        try:
+            if 'i' in flags:
+                input_filter = re.compile(pattern, re.IGNORECASE)
+            else:
+                input_filter = re.compile(pattern)
+        except:
+            print_errors("The parsing of the filter pattern was not successful.")
+    else:
+        input_filter = None
+
     # Test for validity of the arguments passed, will stop execution if an error is found
     test_validity(filename, directory, target, format, chaindata)
 
@@ -229,16 +263,17 @@ if __name__ == '__main__':
         fileList = os.listdir(directory)
 
         for filename in fileList:
-            warn_if_file_exists(f.name_to_format(filename, target, format))
+            if input_filter is None or (input_filter is not None and input_filter.match(filename)):
+                warn_if_file_exists(f.name_to_format(filename, target, format))
 
-            try:
-                num, ex = convertfile(filename, format, target, chaindata)
-            except Exception as e:
-                num = 1
-                ex = "CONVERSION EXCEPTION " + e.message
+                try:
+                    num, ex = convertfile(filename, format, target, chaindata, subtomo_prefix, wedge_angles)
+                except Exception as e:
+                    num = 1
+                    ex = "CONVERSION EXCEPTION " + e.message
 
-            # Print the result, ignores status code -1
-            if num == 0:
-                print("Converted {:s} to {:s}".format(filename, newname))
-            elif num == 1:
-                print_single_error("File: {:s} gave error: {:s}".format(filename, ex))
+                # Print the result, ignores status code -1
+                if num == 0:
+                    print("Converted {:s} to {:s}".format(filename, f.name_to_format(filename, target, format)))
+                elif num == 1:
+                    print_single_error("File: {:s} gave error: {:s}".format(filename, ex))
