@@ -443,7 +443,7 @@ class ProjectionList(PyTomClass):
 
     def reconstructVolumes(self, particles, cubeSize, binning=1, applyWeighting=False,
                            showProgressBar=False, verbose=False, preScale=1, postScale=1,
-                           alignResultFile='', num_procs=10, num_procs_read=10, particle_polish_file=None, dimz=None, notpolished=False):
+                           alignResultFile='', num_procs=10, num_procs_read=10, particle_polish_file=None, dimz=None, notpolished=False, coordbinning=1, offset=(0,0,0)):
         """
         reconstructVolumes: reconstruct a subtomogram given a particle object.
 
@@ -500,11 +500,10 @@ class ProjectionList(PyTomClass):
         procs = []
 
         for pid in range(num_procs):
-            args = (pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished)
             if particle_polish_file is None:
-                proc = Process(target=self._worker_reconstruct_volumes, args=args)
+                proc = Process(target=self._worker_reconstruct_volumes, args=(pid, num_procs, verbose, binning, postScale, cubeSize))
             else:
-                proc = Process(target=self._worker_reconstruct_volumes_polished, args=args)
+                proc = Process(target=self._worker_reconstruct_volumes_polished, args=(pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished, coordbinning, offset))
             procs.append(proc)
             proc.start()
 
@@ -512,7 +511,7 @@ class ProjectionList(PyTomClass):
             time.sleep(0.4)
             procs = [proc for proc in procs if proc.is_alive()]
 
-    def _worker_reconstruct_volumes(self, pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished):
+    def _worker_reconstruct_volumes(self, pid, num_procs, verbose, binning, postScale, cubeSize):
         from pytom_volume import vol, backProject, rescaleSpline
         from pytom.basic.files import read
 
@@ -557,7 +556,7 @@ class ProjectionList(PyTomClass):
 
             del vol_bp
 
-    def _worker_reconstruct_volumes_polished(self, pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished):
+    def _worker_reconstruct_volumes_polished(self, pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished, coordbinning, offset):
         from pytom_volume import vol, backProject, rescaleSpline, pasteCenter, paste, complexRealMult
         from pytom.basic.files import read, read_size
         from pytom.basic.transformations import general_transform2d
@@ -574,7 +573,7 @@ class ProjectionList(PyTomClass):
 
         dimx, dimy, _ = read_size(self._list[0].getFilename())
         dimz = dimx if dimz is None else dimz
-        print(dimx, dimy)
+        print(dimx, dimy, dimz, "dimensions tomogram")
         print(self._list)
         print(len(self._list))
 
@@ -589,9 +588,16 @@ class ProjectionList(PyTomClass):
             if pos >= len(particles): break
             index += 1
             p = particles[pos]
-            x = p.getPickPosition().getX()
-            y = p.getPickPosition().getY()
-            z = p.getPickPosition().getZ()
+            px = p.getPickPosition().getX()
+            py = p.getPickPosition().getY()
+            pz = p.getPickPosition().getZ()
+
+            print(offset, coordbinning, binning)
+
+            # Create relative (from the center) coordinates, including the user defined offset
+            x = int(round((px * coordbinning + offset[0]) / binning))
+            y = int(round((py * coordbinning + offset[1]) / binning))
+            z = int(round((pz * coordbinning + offset[2]) / binning))
 
             stack = vol(cubeSize, cubeSize, len(self._list))
             stack.setAll(0.0)
@@ -613,7 +619,7 @@ class ProjectionList(PyTomClass):
             print(raw_size)
 
             for n, proj in enumerate(self._list):
-                tiltangle = int(self.particle_polish_file['TiltAngle'][start_index + n]) # Int because that seems to give better results, it is still unclear why (Douwe and Gijs)
+                tiltangle = int(round(self.particle_polish_file['TiltAngle'][start_index + n])) # Int because that seems to give better results, it is still unclear why (Gijs)
 
                 # print(tiltangle, start_index, n)
 
@@ -626,9 +632,9 @@ class ProjectionList(PyTomClass):
                 offsetY = 0 if notpolished else float(self.particle_polish_file['AlignmentTransY'][start_index + n])
 
                 # Set the coordinates to absolute (top left) and to 2D on this projection
-                yy = y #+ dimy / 2
-                xx = cos(tiltangle * pi / 180) * (x - dimx / 2) - sin(tiltangle * pi / 180) * (z - dimz / 2) + dimx / 2
-
+                yy = y + dimy / 2
+                xx = cos(tiltangle * pi / 180) * x - sin(tiltangle * pi / 180) * z + dimx / 2
+                print(tiltangle, yy, xx)
                 x_top = int(round(xx) - raw_size / 2 + round(offsetX))
                 y_top = int(round(yy) - raw_size / 2 + round(offsetY))
                 x_bot = dimx - x_top - raw_size
@@ -642,12 +648,12 @@ class ProjectionList(PyTomClass):
                     img = read(filename, [max(0, x_top), max(0, y_top), 0, max(0, raw_size + x_diff),
                                          max(0, raw_size + y_diff), 1], [0, 0, 0], [binning, binning, 1])
                 except Exception as e:
-                    raise Exception("Exception in read {:s}\ntop {:d},{:d} bot {:d},{:d} size {:d},{:d} 3d {:f},{:f},{:f} 2d {:f},{:f} offset {:f},{:f}".format(e.message, x_top, y_top, x_bot, y_bot, max(0, raw_size + x_diff), max(0, raw_size + y_diff), x, y, z, xx, yy, offsetX, offsetY))
+                    raise Exception("Exception in read {:s}\ntop {:d},{:d} bot {:d},{:d} size {:d},{:d} pick {:f},{:f},{:f} 3d {:f},{:f},{:f} 2d {:f},{:f} offset {:f},{:f}".format(e.message, x_top, y_top, x_bot, y_bot, max(0, raw_size + x_diff), max(0, raw_size + y_diff), px, py, pz, x, y, z, xx, yy, offsetX, offsetY))
 
                 x_shift = xx - round(xx) + offsetX - round(offsetX) + (-min(0, x_top) + min(0, x_bot)) / 2.
                 y_shift = yy - round(yy) + offsetY - round(offsetY) + (-min(0, y_top) + min(0, y_bot)) / 2.
 
-                print(x_shift, y_shift, offsetX - round(offsetX), offsetY - round(offsetY))
+                #print(x_shift, y_shift, offsetX - round(offsetX), offsetY - round(offsetY))
 
                 interpolated_temp = general_transform2d(v=img, shift=[x_shift, y_shift], rot=0, scale=1, order=[2,1,0], crop=True)
 
@@ -669,7 +675,7 @@ class ProjectionList(PyTomClass):
                 #reconstructionPosition(cubeSize / 2, 2, n, 0)
 
                 from pytom_numpy import vol2npy
-                print(vol2npy(img).mean(), vol2npy(interpolated).mean(), tiltangle)
+                #print(vol2npy(img).mean(), vol2npy(interpolated).mean(), tiltangle)
 
                 # import pylab as pl
                 # from pytom_numpy import vol2npy

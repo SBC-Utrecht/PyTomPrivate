@@ -133,4 +133,4 @@ if __name__ == '__main__':
                                        binning=projBinning, applyWeighting=aw,
                                        showProgressBar=True, verbose=False,
                                        preScale=projBinning, postScale=1, alignResultFile=alignmentResultFile,
-                                       num_procs=numProcesses, num_procs_read=numReadProcesses, particle_polish_file=polishedCoordinates, dimz=dimz, notpolished=notpolished)
+                                       num_procs=numProcesses, num_procs_read=numReadProcesses, particle_polish_file=polishedCoordinates, dimz=dimz, notpolished=notpolished, coordbinning=coordinateBinning, offset=recOffset)
