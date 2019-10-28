@@ -56,10 +56,16 @@ if __name__ == '__main__':
                                                 'optional', strftime("glocaljob-%D-%m-%Y", gmtime())),
                                    ScriptOption(['--GNodes'], 'The amount of nodes GLocal can use', 'uint', 'optional', 5),
                                    ScriptOption(['--Gparticlelist'], 'The particlelist to be used by GLocal', 'string', 'optional'),
-                                   ScriptOption(['--dimZ'], 'The dimension on the Z axis, default is the same as dimension X', 'uint', 'optional')])
+                                   ScriptOption(['--dimZ'], 'The dimension on the Z axis, default is the same as dimension X', 'uint', 'optional'),
+                                   ScriptOption(['--peakBorder'],
+                                                'The border used in peak calculation after cross correlation, for a '
+                                                'size of 200 a border size of 75 can be used, for a size of 100 37 can '
+                                                'be used.',
+                                                'uint', 'optional', 75)])
 
     proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
-     create_graphics, number_of_particles, skip_alignment, fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist, dimz = parse_script_options(sys.argv[1:], helper)
+    create_graphics, number_of_particles, skip_alignment, fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist, \
+    dimz, peak_border = parse_script_options(sys.argv[1:], helper)
 
     if reconstruction_method == "WBP" or reconstruction_method == "INFR":
         create_subtomograms = True
@@ -122,7 +128,7 @@ if __name__ == '__main__':
 
         local_alignment(proj, vol_size, binning, offset, tilt_angles, n[0], proj_dir, mpi, reconstruction_method,
                         infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles,
-                        skip_alignment, (True if i == 3 else False), fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist, dimz)
+                        skip_alignment, (True if i == 3 else False), fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist, dimz, peak_border)
         print("Finished "+n[0])
 
     mpi.end()

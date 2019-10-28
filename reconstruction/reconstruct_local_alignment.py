@@ -124,7 +124,7 @@ def write_subtomograms(particlelist, projection_directory, offset, binning, vol_
 def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
                     mpi, projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
                     averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False,
-                    start_glocal=True, fsc_path='', glocal_jobname='glocaljob', glocal_nodes=5, glocal_particlelist=None, dimz=None):
+                    start_glocal=True, fsc_path='', glocal_jobname='glocaljob', glocal_nodes=5, glocal_particlelist=None, dimz=None, peak_border=75):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
@@ -186,6 +186,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     import numpy as np
     import glob
     import os
+    from pytom.tompy.io import read_size
 
     # load particle list
     from pytom.basic.structures import ParticleList
@@ -215,6 +216,10 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     # progressBar = FixedProgBar(0, len(input_to_processes), 'Particle volumes generated ')
     # progressBar.update(0)
 
+    dimz = read_size(particlelist[0].getPickPosition().getOriginFilename())[2] if dimz is None else dimz
+
+    print(dimz)
+
     input_to_processes = []
     particle_number = -1
     for particle in particlelist:
@@ -230,7 +235,8 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
         # loop over tiltrange, take patch and cross correlate with reprojected subtomogram
         for img, ang in zip(projections, tilt_angles):
             input_to_processes.append([ang, subtomogram, offset, vol_size, particle.getPickPosition().toVector(), rot,
-                                       particle.getFilename(), particle_number, binning, img, create_graphics, fsc_path, dimz])
+                                       particle.getFilename(), particle_number, binning, img, create_graphics, fsc_path,
+                                       dimz, peak_border])
 
     print(len(input_to_processes))
     print("{:s}> Created the input array".format(gettime()))
@@ -247,7 +253,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
         #for d in dir(zip(*[list[a] for a in range(len(lists))])): print(d)
 
-        output = mpi.parfor(run_single_tilt_angle, zip(lists[0], lists[1],lists[2],lists[3],lists[4],lists[5],lists[6],lists[7],lists[8],lists[9],lists[10],lists[11])) # Some problem internally 23/10/2019
+        output = mpi.parfor(run_single_tilt_angle, zip(lists[0], lists[1],lists[2],lists[3],lists[4],lists[5],lists[6],lists[7],lists[8],lists[9],lists[10],lists[11],lists[12],lists[13])) # Some problem internally 23/10/2019
 
         from pytom.basic.datatypes import fmtLAR, headerLocalAlignmentResults, LOCAL_ALIGNMENT_RESULTS
         np.savetxt(results_file, np.array(output, dtype=LOCAL_ALIGNMENT_RESULTS), fmt=fmtLAR,
@@ -270,7 +276,7 @@ def run_single_tilt_angle_unpack(inp):
 
 
 def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position, particle_rotation,  particle_filename,
-                          particle_number, binning, img, create_graphics=False, fsc_path="", dimz=None):
+                          particle_number, binning, img, create_graphics, fsc_path, dimz, peak_border):
     """
     To run a single tilt angle to allow for parallel computing
 
@@ -369,7 +375,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     ccf = normalised_cross_correlation_numpy(template, patch, fsc_mask)
     print(ccf.mean(), ccf)
     print("Subpixel: " + str(ang))
-    points2d = find_sub_pixel_max_value_2d(ccf)
+    points2d = find_sub_pixel_max_value_2d(ccf, ignore_border=peak_border)
     print("greategraphics: " + str(create_graphics))
 
     x_diff = points2d[0] - vol_size / 2
@@ -390,7 +396,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
 
         nccf = normalised_cross_correlation_numpy(template, npatch.squeeze())
         npoints = find_sub_pixel_max_value(nccf)
-        npoints2d = find_sub_pixel_max_value_2d(nccf)
+        npoints2d = find_sub_pixel_max_value_2d(nccf, ignore_border=peak_border)
 
         import pylab as pp
 

@@ -443,7 +443,7 @@ class ProjectionList(PyTomClass):
 
     def reconstructVolumes(self, particles, cubeSize, binning=1, applyWeighting=False,
                            showProgressBar=False, verbose=False, preScale=1, postScale=1,
-                           alignResultFile='', num_procs=10, num_procs_read=10, particle_polish_file=None, dimz=None):
+                           alignResultFile='', num_procs=10, num_procs_read=10, particle_polish_file=None, dimz=None, notpolished=False):
         """
         reconstructVolumes: reconstruct a subtomogram given a particle object.
 
@@ -500,7 +500,7 @@ class ProjectionList(PyTomClass):
         procs = []
 
         for pid in range(num_procs):
-            args = (pid, num_procs, verbose, binning, postScale, cubeSize, dimz)
+            args = (pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished)
             if particle_polish_file is None:
                 proc = Process(target=self._worker_reconstruct_volumes, args=args)
             else:
@@ -512,7 +512,7 @@ class ProjectionList(PyTomClass):
             time.sleep(0.4)
             procs = [proc for proc in procs if proc.is_alive()]
 
-    def _worker_reconstruct_volumes(self, pid, num_procs, verbose, binning, postScale, cubeSize, dimz):
+    def _worker_reconstruct_volumes(self, pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished):
         from pytom_volume import vol, backProject, rescaleSpline
         from pytom.basic.files import read
 
@@ -557,7 +557,7 @@ class ProjectionList(PyTomClass):
 
             del vol_bp
 
-    def _worker_reconstruct_volumes_polished(self, pid, num_procs, verbose, binning, postScale, cubeSize, dimz):
+    def _worker_reconstruct_volumes_polished(self, pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished):
         from pytom_volume import vol, backProject, rescaleSpline, pasteCenter, paste, complexRealMult
         from pytom.basic.files import read, read_size
         from pytom.basic.transformations import general_transform2d
@@ -622,8 +622,8 @@ class ProjectionList(PyTomClass):
                 folder = os.path.dirname(proj.getFilename())
                 filename = '{}/sorted_aligned_{}.em'.format(folder, n + 1)
 
-                offsetX = 0 #float(self.particle_polish_file['AlignmentTransX'][start_index + n])
-                offsetY = 0 #float(self.particle_polish_file['AlignmentTransY'][start_index + n])
+                offsetX = 0 if notpolished else (self.particle_polish_file['AlignmentTransX'][start_index + n])
+                offsetY = 0 if notpolished else float(self.particle_polish_file['AlignmentTransY'][start_index + n])
 
                 # Set the coordinates to absolute (top left) and to 2D on this projection
                 yy = y #+ dimy / 2

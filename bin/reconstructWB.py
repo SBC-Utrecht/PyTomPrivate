@@ -43,12 +43,13 @@ if __name__ == '__main__':
                                               ' a single read thread easily consumes up to 4 Gb (for a 4k picture) so '
                                               'keep that in mind to not overload the nodes. If not specified this will '
                                               'be the same as numProcesses.', 'uint', 'optional'),
-                                ScriptOption(['--dimZ'], 'The dimension on the Z axis, default is the same as dimension X', 'uint', 'optional')])
+                                ScriptOption(['--dimZ'], 'The dimension on the Z axis, default is the same as dimension X', 'uint', 'optional'),
+                                ScriptOption(['--notPolished'], "Do not apply the shifts in the particlelist, for testing purposes", 'no arguments', 'optional', False)])
         
     particleList = None
 
     tomogram, particleListXMLPath, projectionList, projectionDirectory, aw, size, coordinateBinning, recOffset, \
-    projBinning, alignmentResultFile, particlePolishFile, numProcesses, numReadProcesses, dimz = parse_script_options(sys.argv[1:], helper)
+    projBinning, alignmentResultFile, particlePolishFile, numProcesses, numReadProcesses, dimz, notpolished = parse_script_options(sys.argv[1:], helper)
 
     print(projectionDirectory, projectionList)
    
@@ -132,4 +133,4 @@ if __name__ == '__main__':
                                        binning=projBinning, applyWeighting=aw,
                                        showProgressBar=True, verbose=False,
                                        preScale=projBinning, postScale=1, alignResultFile=alignmentResultFile,
-                                       num_procs=numProcesses, num_procs_read=numReadProcesses, particle_polish_file=polishedCoordinates, dimz=dimz)
+                                       num_procs=numProcesses, num_procs_read=numReadProcesses, particle_polish_file=polishedCoordinates, dimz=dimz, notpolished=notpolished)
