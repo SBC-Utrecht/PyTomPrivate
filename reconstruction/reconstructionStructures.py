@@ -479,7 +479,7 @@ class ProjectionList(PyTomClass):
             progressBar = FixedProgBar(0, len(particles), 'Particle volumes generated ')
             progressBar.update(0)
 
-        if not alignResultFile and particle_polish_file is None:
+        if not alignResultFile: # and particle_polish_file is None:
             self.projectionstacks = self.toProjectionStack(
                 binning=binning, applyWeighting=applyWeighting, showProgressBar=False,
                 verbose=False)
@@ -503,7 +503,7 @@ class ProjectionList(PyTomClass):
             if particle_polish_file is None:
                 proc = Process(target=self._worker_reconstruct_volumes, args=(pid, num_procs, verbose, binning, postScale, cubeSize))
             else:
-                proc = Process(target=self._worker_reconstruct_volumes_polished, args=(pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished, coordbinning, offset))
+                proc = Process(target=self._worker_reconstruct_volumes_polished_2, args=(pid, num_procs, verbose, binning, postScale, cubeSize))
             procs.append(proc)
             proc.start()
 
@@ -544,6 +544,74 @@ class ProjectionList(PyTomClass):
 
             if verbose:
                 print(x / binning, y / binning, z / binning)
+
+            backProject(vol_img, vol_bp, vol_phi, vol_the, reconstructionPosition, vol_offsetProjections)
+
+            if postScale > 1:
+                volumeRescaled = vol(cubeSize / postScale, cubeSize / postScale, cubeSize / postScale)
+                rescaleSpline(vol_bp, volumeRescaled)
+                volumeRescaled.write(filename)
+            else:
+                vol_bp.write(filename)
+
+            del vol_bp
+
+    def _worker_reconstruct_volumes_polished_2(self, pid, num_procs, verbose, binning, postScale, cubeSize):
+        from pytom_volume import vol, backProject, rescaleSpline
+        import pytom.basic.combine_transformations as ct
+        import numpy as np
+        from pytom.basic.files import read
+
+        [vol_img, vol_phi, vol_the, vol_offsetProjections] = self.projectionstacks
+        particles = self.reconstruct_volume_particles
+
+        index = 0
+        assert num_procs >= 1
+        while True:
+            pos = index*num_procs+pid
+            if pos >= len(particles): break
+            index += 1
+            p = particles[pos]
+            x = p.getPickPosition().getX()
+            y = p.getPickPosition().getY()
+            z = p.getPickPosition().getZ()
+            filename = p.getFilename()
+
+            vol_bp = vol(cubeSize, cubeSize, cubeSize)
+            vol_bp.setAll(0.0)
+
+            reconstructionPosition = vol(3, len(self), 1)
+            reconstructionPosition.setAll(0.0)
+
+            start_index = pos * len(self._list)
+            notpolished = True
+
+            # adjust coordinates of subvolumes to binned reconstruction
+            for i in range(len(self)):
+                offsetX = 0 if notpolished else float(self.particle_polish_file['AlignmentTransX'][start_index + i])
+                offsetY = 0 if notpolished else float(self.particle_polish_file['AlignmentTransY'][start_index + i])
+
+                pick_position = np.matrix([x,y,z]).T
+                rotation = ct.matrix_rotate_3d_y(self._list[i].getTiltAngle())
+
+                shift = np.matrix([offsetX, offsetY, 0]).T
+                translate_center = np.matrix([3710/2, 3710/2, 3710/2]).T
+                new_position = rotation * (pick_position - translate_center)
+                print("NEW", new_position)
+                new_position_shifted = new_position + shift
+                reposition = np.linalg.inv(rotation) * new_position_shifted
+                reposition = np.array( (reposition + translate_center).T )[0]
+                print(reposition)
+                print(self._list[i].getTiltAngle(), "New Position", reposition[0], reposition[1], reposition[2], "Old Position", x, y, z, offsetX, offsetY)
+
+                reconstructionPosition(float(reposition[0] / binning), 0, i, 0)
+                reconstructionPosition(float(reposition[1] / binning), 1, i, 0)
+                reconstructionPosition(float(reposition[2] / binning), 2, i, 0)
+
+            if verbose:
+                print(x / binning, y / binning, z / binning)
+
+            print(reconstructionPosition)
 
             backProject(vol_img, vol_bp, vol_phi, vol_the, reconstructionPosition, vol_offsetProjections)
 
@@ -634,6 +702,7 @@ class ProjectionList(PyTomClass):
                 # Set the coordinates to absolute (top left) and to 2D on this projection
                 yy = y + dimy / 2
                 xx = cos(tiltangle * pi / 180) * x - sin(tiltangle * pi / 180) * z + dimx / 2
+
                 print(tiltangle, yy, xx)
                 x_top = int(round(xx) - raw_size / 2 + round(offsetX))
                 y_top = int(round(yy) - raw_size / 2 + round(offsetY))

@@ -56,7 +56,7 @@ if __name__ == '__main__':
                                                 'optional', strftime("glocaljob-%D-%m-%Y", gmtime())),
                                    ScriptOption(['--GNodes'], 'The amount of nodes GLocal can use', 'uint', 'optional', 5),
                                    ScriptOption(['--Gparticlelist'], 'The particlelist to be used by GLocal', 'string', 'optional'),
-                                   ScriptOption(['--dimZ'], 'The dimension on the Z axis, default is the same as dimension X', 'uint', 'optional'),
+                                   ScriptOption(['--dimZ'], 'The dimension on the Z axis unbinned, default is the same as dimension X', 'uint', 'optional'),
                                    ScriptOption(['--peakBorder'],
                                                 'The border used in peak calculation after cross correlation, for a '
                                                 'size of 200 a border size of 75 can be used, for a size of 100 37 can '

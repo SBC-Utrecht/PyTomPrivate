@@ -113,21 +113,21 @@ if __name__ == '__main__':
                                 "are you sure every parameter is correct? polished list len {:d}, particle  list len {:d}"
                                 " and projection len {:d}".format(len(polishedCoordinates['AlignmentTransX']), len(particleList), len(projections)))
 
-        #from pytom.basic.structures import PickPosition
-        #for n, particle in enumerate(particleList):
-        #    pickPosition = particle.getPickPosition()
-        #    x = (pickPosition.getX() * coordinateBinning + recOffset[0]) / projBinning
-        #    y = (pickPosition.getY() * coordinateBinning + recOffset[1]) / projBinning
-        #    z = (pickPosition.getZ() * coordinateBinning + recOffset[2]) / projBinning
-        #    particle.setPickPosition(PickPosition(x=x, y=y, z=z))
-#
-        #    # Shifting each particle (by the shift of another particle) does not really help with aligning to every
-        #    # specific projection, I should build support for the particlepolishfile into reconstructVolumes
-        #    # to shift every single projection in a unique way for every single particle
-#
-        #    # if particlePolishFile:
-        #    #    x -= polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
-        #    #    y -= polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
+        from pytom.basic.structures import PickPosition
+        for n, particle in enumerate(particleList):
+            pickPosition = particle.getPickPosition()
+            x = (pickPosition.getX() * coordinateBinning + recOffset[0]) / projBinning
+            y = (pickPosition.getY() * coordinateBinning + recOffset[1]) / projBinning
+            z = (pickPosition.getZ() * coordinateBinning + recOffset[2]) / projBinning
+            particle.setPickPosition(PickPosition(x=x, y=y, z=z))
+
+            # Shifting each particle (by the shift of another particle) does not really help with aligning to every
+            # specific projection, I should build support for the particlepolishfile into reconstructVolumes
+            # to shift every single projection in a unique way for every single particle
+
+            # if particlePolishFile:
+            #    x -= polishedCoordinates['AlignmentTransX'][n] / float(projBinning)
+            #    y -= polishedCoordinates['AlignmentTransY'][n] / float(projBinning)
 
         projections.reconstructVolumes(particles=particleList, cubeSize=int(size[0]),
                                        binning=projBinning, applyWeighting=aw,

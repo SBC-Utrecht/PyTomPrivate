@@ -216,7 +216,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     # progressBar = FixedProgBar(0, len(input_to_processes), 'Particle volumes generated ')
     # progressBar.update(0)
 
-    dimz = read_size(particlelist[0].getPickPosition().getOriginFilename())[2] if dimz is None else dimz
+    dimz = read_size(particlelist[0].getPickPosition().getOriginFilename())[2] * binning if dimz is None else dimz
 
     print(dimz)
 
@@ -320,12 +320,13 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     # assert isinstance(img, str)
     # assert isinstance(create_graphics, bool)
 
-    print(ang)
+    print(ang, offset, binning, particle_position)
     from pytom.tompy.transform import rotate3d
     import numpy as np
     from math import cos, sin, pi
     from pytom.tompy.transform import cut_from_projection
     from pytom.tompy.io import read
+    import matplotlib
 
     subtomogram = read(subtomogram)
     img = read(img)
@@ -334,6 +335,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     dim_x = img.shape[0]
     # dim_y = img.shape[1]
     dim_z = dim_x if dimz is None else dimz  # make z dim the same as x!
+    print(dim_x, dim_z)
 
     x, y, z = particle_position
     x = (x + offset[0]) * binning
@@ -437,8 +439,8 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
 
         axis_title(ax_1_0, u"Cross correlation\ncutout × template")
         ax_1_0.imshow(ccf)
-        ax_1_0.plot([p[0] for p in points], [p[1] for p in points], fillstyle='none', **m_style)
-        ax_1_0.plot([points2d[0]], [points2d[1]], fillstyle='none', **m_style_alt)
+        ax_1_0.plot([p[1] for p in points], [p[0] for p in points], fillstyle='none', **m_style)
+        ax_1_0.plot([points2d[1]], [points2d[0]], fillstyle='none', **m_style_alt)
         ax_1_0.plot([vol_size / 2], [vol_size / 2], ",k")
 
         ax_1_1.text(0.5, 0.8,

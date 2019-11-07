@@ -36,6 +36,8 @@ if __name__ == '__main__':
         mask= read(mask) 
     except:
         mask = None
+
+    
         
     if v1Filename and v2Filename:    
         v1 = read(v1Filename)
@@ -55,9 +57,11 @@ if __name__ == '__main__':
         pl.fromXMLFile(particleList)
         # Remove all shifts, useful for particle polishing
         if noshift:
+            print('set shift to zero')
             for particle in pl:
                 particle.getShift().scale(0)
-        
+
+
         if len(pl) <= 1:
             raise RuntimeError('There is only 1 or less particles in the particle list. Need at least two! Abort!')
         
