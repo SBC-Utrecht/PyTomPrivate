@@ -196,7 +196,9 @@ if __name__ == '__main__':
                                             ' any single character, anything else will be matched exactly, unless the '
                                             'case insensitive flag is used, flags: i, for case insensitive, f, for full'
                                             ' length match, leaving no room for characters in front of or after the '
-                                            'pattern. Structure: "pattern/flags" or "pattern" if no flags should be used'
+                                            'pattern. Structure: "pattern/flags" or "pattern" if no flags should be used.'
+                                            ' Example: "$.em/fi" will match all em files with the possibility of the extension'
+                                            ' to be written in caps as well (so .em/.Em/.eM/.EM).'
                               , 'string', 'optional')])
 
     #TODO write --filter to filter input files maybe on (glob) pattern or else on extension or similar
