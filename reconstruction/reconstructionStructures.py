@@ -503,7 +503,8 @@ class ProjectionList(PyTomClass):
             if particle_polish_file is None:
                 proc = Process(target=self._worker_reconstruct_volumes, args=(pid, num_procs, verbose, binning, postScale, cubeSize))
             else:
-                proc = Process(target=self._worker_reconstruct_volumes_polished_2, args=(pid, num_procs, verbose, binning, postScale, cubeSize))
+                proc = Process(target=self._worker_reconstruct_volumes_polished, args=(pid, num_procs, verbose, binning, postScale, cubeSize, dimz, notpolished, coordbinning, offset))
+                #proc = Process(target=self._worker_reconstruct_volumes_polished_2, args=(pid, num_procs, verbose, binning, postScale, cubeSize))
             procs.append(proc)
             proc.start()
 
@@ -584,7 +585,7 @@ class ProjectionList(PyTomClass):
             reconstructionPosition.setAll(0.0)
 
             start_index = pos * len(self._list)
-            notpolished = True
+            notpolished = False
 
             # adjust coordinates of subvolumes to binned reconstruction
             for i in range(len(self)):

@@ -13,6 +13,7 @@ if __name__ == '__main__':
     from pytom.tools.parse_script_options import parse_script_options
     from pytom.tompy.mpi import MPI
     from time import gmtime, strftime
+    from pytom.reconstruction.reconstruct_local_alignment import polish_particles
 
     helper = ScriptHelper(sys.argv[0].split('/')[-1],  # script name
                           description='Reconstruct a local alignment of particles based on a global alignment.',
@@ -31,16 +32,7 @@ if __name__ == '__main__':
                                                 'int,int,int', 'required'),
                                    ScriptOption(['-a', '--averagedSubtomogram'],
                                                 'The path to an averaged subtomogram, to use instead of many '
-                                                'subtomograms', 'string', 'optional', False),
-                                   ScriptOption(['-i', '--INFRIterations'],
-                                                'Number of iterations to run, when running INFR, using this option '
-                                                'automatically sets the reconstruction method to INFR.',
-                                                'uint', 'optional', False),
-                                   ScriptOption(['-m', '--reconstructionMethod'],
-                                                'The reconstruction method for creating the initial subtomograms, has '
-                                                'to be INFR or WBP. If this is not specified no initial subtomograms '
-                                                'are created and subtomograms are expected to be made available in the '
-                                                'normal folder.', 'string', 'optional'),
+                                                'subtomograms', 'string', 'required'),
                                    ScriptOption(['-g', '--createGraphics'],
                                                 'Flag to turn on to create graphical reports of intermediate steps of '
                                                 'the particle polishing', 'no arguments', 'optional', False),
@@ -57,34 +49,25 @@ if __name__ == '__main__':
                                    ScriptOption(['--GNodes'], 'The amount of nodes GLocal can use', 'uint', 'optional', 5),
                                    ScriptOption(['--Gparticlelist'], 'The particlelist to be used by GLocal', 'string', 'optional'),
                                    ScriptOption(['--dimZ'], 'The dimension on the Z axis unbinned, default is the same as dimension X', 'uint', 'optional'),
-                                   ScriptOption(['--peakBorder'],
-                                                'The border used in peak calculation after cross correlation, for a '
-                                                'size of 200 a border size of 75 can be used, for a size of 100 37 can '
-                                                'be used.',
-                                                'uint', 'optional', 75)])
+                                   ScriptOption(['-std', '--shiftStandardDeviation'],
+                                                'Used to constrain the maximum shift found by the peak finding'
+                                                ' algorithm, defined as the standard deviation excepted', 'uint', 'optional', 5),
+                                   ScriptOption(['--peakBorderSize'],
+                                                'Used to constrain the maximum shift found by the peak finding'
+                                                ' algorithm, defined as the maximum number of standard deviations'
+                                                ' a peak can be found from the center.', 'uint', 'optional', 5)
+                                   ])
 
-    proj_dir, vol_size, binning, offset, averaged_subtomogram, infr_iter, reconstruction_method, \
-    create_graphics, number_of_particles, skip_alignment, fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist, \
-    dimz, peak_border = parse_script_options(sys.argv[1:], helper)
+    proj_dir, vol_size, binning, offset, averaged_subtomogram, create_graphics, number_of_particles, skip_alignment, \
+    fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist, dimz, std, std_num = parse_script_options(sys.argv[1:], helper)
 
-    if reconstruction_method == "WBP" or reconstruction_method == "INFR":
-        create_subtomograms = True
-    elif reconstruction_method == "" or not reconstruction_method:
-        create_subtomograms = False
-    else:
-        raise Exception((reconstruction_method if reconstruction_method else "[nothing]") +
-                        " is not a known reconstruction method, use WBP or INFR")
+    if vol_size % 2 != 0:
+        raise ValueError("The particle size has to be an even number.")
 
-    if infr_iter:
-        reconstruction_method = "INFR"
-    else:
-        infr_iter = -1
-
-    # force the user to specify even-sized volume
-    assert vol_size % 2 == 0
-
-    # pass everything to the function in reconstruction/reconstruct_local_alignment.py
-    from pytom.reconstruction.reconstruct_local_alignment import local_alignment
+    peak_border = vol_size / 2 - std * std_num
+    if peak_border < 0:
+        raise ValueError("The given shiftStandardDeviation and peakBorderSize result in a maximal shift "
+                         "bigger than the given volume. Please use a bigger volume or a smaller maximal shift.")
 
     names = []
     if ':' in proj_dir:
@@ -96,9 +79,6 @@ if __name__ == '__main__':
     else:
         raise Exception("The data given is not valid (invalid number of items, should be at least two)")
 
-    # Split particlelist based on filename
-    # Map filename to right projection directory
-
     print("Parsed arguments")
 
     from pytom.tompy.mpi import MPI
@@ -107,7 +87,7 @@ if __name__ == '__main__':
     mpi.begin()
 
     for i, n in enumerate(names):
-        print("Running "+n[0])
+        print("Running " + n[0])
         proj_dir = n[1]
 
         # load projection list
@@ -126,9 +106,9 @@ if __name__ == '__main__':
 
         print(tilt_angles)
 
-        local_alignment(proj, vol_size, binning, offset, tilt_angles, n[0], proj_dir, mpi, reconstruction_method,
-                        infr_iter, create_graphics, create_subtomograms, averaged_subtomogram, number_of_particles,
-                        skip_alignment, (True if i == 3 else False), fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist, dimz, peak_border)
+        polish_particles(proj, vol_size, binning, offset, tilt_angles, n[0], proj_dir, mpi,
+                        averaged_subtomogram, number_of_particles, skip_alignment, (True if i == 3 else False),
+                        fsc_path, glocal_jobname, glocal_nodes, glocal_particlelist, dimz, peak_border, create_graphics)
         print("Finished "+n[0])
 
     mpi.end()

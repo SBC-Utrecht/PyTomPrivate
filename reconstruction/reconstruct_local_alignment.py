@@ -4,170 +4,64 @@
 """
 Created on Sep 02, 2019
 
-@author: dschulte
+@author: Douwe Schulte
 """
 
 
-def write_subtomograms(particlelist, projection_directory, offset, binning, vol_size, tilt_angles,
-                       reconstruction_method='WBP', infr_iterations=1):
-    """
-    To create subtomograms of all particles in the list
-
-    @param particlelist: list with all particles
-    @type particlelist: ParticleList
-    @param projection_directory: the directory of the projections
-    @type projection_directory: str
-    @param offset: the offset
-    @type offset: list(int, int, int)
-    @param binning: the binningfactor used
-    @type binning: int
-    @param vol_size: the size of the volume to be reconstructed (in pixels)
-    @type vol_size: int
-    @param tilt_angles: the tilt angles as belonging to the projections
-    @type tilt_angles: list(int)
-    @param reconstruction_method: the method used to reconstruct the volumes (choose "WBP" or "INFR")
-    @type reconstruction_method: str
-    @param infr_iterations: the amount of iterations used when choosing INFR (int)
-    @type infr_iterations: int
-    @return: nothing, writes the volumes to disk
-    @returntype: void
-    """
-    import os.path
-    assert isinstance(projection_directory, str)
-    assert os.path.isdir(projection_directory)
-    assert isinstance(offset, list) and len(offset) == 3
-    assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
-    assert isinstance(binning, int)
-    assert isinstance(vol_size, int)
-    assert isinstance(tilt_angles, int)
-    assert reconstruction_method == "WBP" or reconstruction_method == "INFR"
-    assert isinstance(infr_iterations, int) and infr_iterations > 0
-
-    from math import cos, sin, pi
-    from pytom.tompy.transform import cut_from_projection
-    from nufft.reconstruction import fourier_2d1d_iter_reconstruct, fourier_2d1d_gridding_reconstruct
-    from pytom.tools.ProgressBar import FixedProgBar
-    from pytom.tompy.io import read, write
-    from pytom.reconstruction.reconstructionStructures import ProjectionList
-    import numpy as np
-
-    projection_list = ProjectionList()
-    projection_list.loadDirectory(projection_directory)
-    projection_list.sort()
-
-    if reconstruction_method == 'WBP':
-        # transform the cropping offset
-        tmp = projection_list[0]
-        sx = tmp.getXSize()  # here should be the size of original projection!
-        sy = tmp.getYSize()
-
-        offset[0] = -sx / 2 + offset[0] * binning
-        offset[1] = -sy / 2 + offset[1] * binning
-        offset[2] = -sx / 2 + offset[2] * binning
-
-        from pytom.basic.structures import PickPosition
-        for particle in particlelist:
-            pick_position = particle.getPickPosition()
-            x = (pick_position.getX() * binning + offset[0])
-            y = (pick_position.getY() * binning + offset[1])
-            z = (pick_position.getZ() * binning + offset[2])
-            particle.setPickPosition(PickPosition(x=x, y=y, z=z))
-
-        # Reconstruct all particles
-        projection_list.reconstructVolumes(particles=particlelist, cubeSize=vol_size, binning=1, applyWeighting=True,
-                                           showProgressBar=False, verbose=False, preScale=1, postScale=1)
-
-    elif reconstruction_method == 'INFR':
-        # NOT WORKING YET some bugs are still in
-
-        print(len(projection_list))
-        print("INFR NOT TESTED YET")
-        dim_x = projection_list[0].getXSize()  # here should be the size of original projection!
-        # dim_y = projection_list[0].getYSize()
-        dim_z = dim_x  # make z dim the same as x!
-
-        # reconstruct each particles
-
-        prog = FixedProgBar(0, len(particlelist) - 1, '')
-
-        i = 0
-        for m, p in enumerate(particlelist[:1]):
-            prog.update(i)
-            i += 1
-
-            # transfer the coordinate system
-            x, y, z = p.getPickPosition().toVector()
-            x = (x + offset[0]) * binning
-            y = (y + offset[1]) * binning
-            z = (z + offset[2]) * binning
-
-            subregions = []
-            n = 0
-            for img, ang in zip(projection_list[:], tilt_angles[:]):
-                n += 1
-                # project the coordinate to 2D image
-                yy = y  # assume the rotation axis is around y
-                xx = (cos(ang * pi / 180) * (x - dim_x / 2) - sin(ang * pi / 180) * (z - dim_z / 2)) + dim_x / 2
-
-                # cut the small patch out
-                patch = cut_from_projection(img, [xx, yy], [vol_size, vol_size])
-                patch = patch - np.mean(patch)
-
-                # fill in the subregion
-                subregions.append(patch)
-
-            # reconstruct INFR
-            v = fourier_2d1d_iter_reconstruct(subregions, tilt_angles, infr_iterations)
-            write("Subtomograms/{:s}/particle_{:d}.em".format(particlelist.getFilename(), m), v)
-
-
-def local_alignment(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
-                    mpi, projection_method='WBP', infr_iterations=1, create_graphics=False, create_subtomograms=False,
-                    averaged_subtomogram=False, number_of_particles=-1, skip_alignment=False,
-                    start_glocal=True, fsc_path='', glocal_jobname='glocaljob', glocal_nodes=5, glocal_particlelist=None, dimz=None, peak_border=75):
+def polish_particles(projections, vol_size, binning, offset, tilt_angles, particle_list_filename, projection_directory,
+                     mpi, averaged_subtomogram, number_of_particles=-1, skip_alignment=False, start_glocal=True,
+                     fsc_path='', glocal_jobname='glocaljob', glocal_nodes=5, glocal_particlelist=None, dimz=None,
+                     peak_border=75, create_graphics=False):
     """
     To polish a particle list based on (an) initial subtomogram(s).
 
-    @param projections: a list with filenames of projections
-    @type projections: list(str)
-    @param vol_size: the size of the volume to build the new subtomogram in (in pixels)
-    @type vol_size: int
-    @param binning: the binning factor used
-    @type binning: int
-    @param offset: the offset used (x, y, z)
-    @type offset: list(int, int, int)
-    @param tilt_angles: the list of tiltangles used
-    @type tilt_angles: list(int)
-    @param particle_list_filename: the filename of the particlelist
-    @type particle_list_filename: str
-    @param projection_directory: the directory of the projections
-    @type projection_directory: str
-    @param projection_method: the projection method used when create_subtomograms is True
-               (possible values: WBP and INFR)
-    @type projection_method: str
-    @param infr_iterations: the amount of iterations to use when INFR projection is used
-    @type infr_iterations: int
-    @param create_graphics: to create plots of major parts of the algorithm, mainly used for debugging
+    :param projections: a list with filenames of projections
+    :type projections: list(str)
+    :param vol_size: the size of the volume to build the new subtomogram in (in pixels)
+    :type vol_size: int
+    :param binning: the binning factor used
+    :type binning: int
+    :param offset: the offset used (x, y, z)
+    :type offset: list(int, int, int)
+    :param tilt_angles: the list of tiltangles used
+    :type tilt_angles: list(int)
+    :param particle_list_filename: the filename of the particlelist
+    :type particle_list_filename: str
+    :param projection_directory: the directory of the projections
+    :type projection_directory: str
+    :param mpi: the instance of mpi which can be used for multi threading
+    :type mpi: mpi instance
+    :param create_graphics: to create plots of major parts of the algorithm, mainly used for debugging
                and initial creation
-    @type create_graphics: bool
-    @param create_subtomograms: to flag if initial subtomograms of the particles should be made (takes a long time!)
-    @type create_subtomograms: bool
-    @param averaged_subtomogram: to give a path to an averaged subtomogram to be used instead of subtomograms of all
-               particles separately (False for off, otherwise a string)
-    @type averaged_subtomogram: bool or str
-    @param number_of_particles: to use a subset of the particles for the particle polishing
-    @type number_of_particles: int
-    @param skip_alignment: skips the alignment phase, does not do particle polishing
-    @type skip_alignment: bool
-    @return: nothing, it writes everything to disk
-    @returntype: void
+    :type create_graphics: bool
+    :param averaged_subtomogram: to give a path to an averaged subtomogram to be used instead of subtomograms of all
+               particles separately
+    :type averaged_subtomogram: str
+    :param number_of_particles: to use a subset of the particles for the particle polishing
+    :type number_of_particles: int
+    :param skip_alignment: skips the alignment phase, does not do particle polishing
+    :type skip_alignment: bool
+    :param start_glocal: If GLocal has to be started, it will always reconstruct but GLocal is only useful if all tomgrams are reconstructed
+    :type start_glocal: bool
+    :param fsc_path: path to an FSC file to be used as a filter in the cross correlation.
+    :type fsc_path: str
+    :param glocal_jobname: the name of the GLocal job (if run)
+    :type glocal_jobname: str
+    :param glocal_nodes: the number of nodes to be used by GLocal (if run)
+    :type glocal_nodes: int
+    :param glocal_particlelist: the particlelist to be used by GLocal (if run)
+    :type glocal_particlelist: str
+    :param dimz: the dimension in the Z axis, if not equal to dimX
+    :type dimz: int
+    :param peak_border: the border to be ignored by the peak finding algorithm, defined as the amount of pixels from the side
+    :type peak_border: int
+    :return: nothing, it writes everything to disk
+    :returntype: void
     """
     assert number_of_particles == -1 or number_of_particles > 0
-    assert infr_iterations > 0
     assert binning > 0
     assert vol_size > 0
     assert vol_size % 2 == 0
-    assert projection_method == "WBP" or projection_method == "INFR"
     assert isinstance(projections, list)
     assert isinstance(vol_size, int)
     assert isinstance(binning, int)
@@ -176,15 +70,12 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     assert isinstance(tilt_angles, list)
     assert isinstance(particle_list_filename, str)
     assert isinstance(projection_directory, str)
-    assert isinstance(infr_iterations, int)
     assert isinstance(create_graphics, bool)
-    assert isinstance(create_subtomograms, bool)
-    assert isinstance(averaged_subtomogram, str) or averaged_subtomogram is False
+    assert isinstance(averaged_subtomogram, str)
     assert isinstance(number_of_particles, int)
     assert isinstance(skip_alignment, bool)
 
     import numpy as np
-    import glob
     import os
     from pytom.tompy.io import read_size
 
@@ -200,21 +91,7 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
 
     print(len(particlelist))
 
-    # If needed create all subtomograms
-    if create_subtomograms:
-        write_subtomograms(particlelist, projection_directory, offset, binning, vol_size, tilt_angles,
-                           projection_method, infr_iterations)
-
-    # Read all subtomograms
-    subtomograms = []
-    if not averaged_subtomogram:
-        subtomograms = [f for f in glob.glob("Subtomograms/{:s}/*".format(particle_list_name))]
-
     print("{:s}> Creating the input array".format(gettime()))
-
-    # from pytom.tools.ProgressBar import FixedProgBar
-    # progressBar = FixedProgBar(0, len(input_to_processes), 'Particle volumes generated ')
-    # progressBar.update(0)
 
     dimz = read_size(particlelist[0].getPickPosition().getOriginFilename())[2] * binning if dimz is None else dimz
 
@@ -224,17 +101,12 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     particle_number = -1
     for particle in particlelist:
         particle_number += 1
-        if averaged_subtomogram:
-            subtomogram = averaged_subtomogram
-        else:
-            subtomogram = subtomograms[particle_number]
 
         rot = (particle.getRotation().getZ1(), particle.getRotation().getX(), particle.getRotation().getZ2())
-        # getX() Z1() Z2() (phi: z1, the: x, psi: z2) test forwards or backwards
 
         # loop over tiltrange, take patch and cross correlate with reprojected subtomogram
         for img, ang in zip(projections, tilt_angles):
-            input_to_processes.append([ang, subtomogram, offset, vol_size, particle.getPickPosition().toVector(), rot,
+            input_to_processes.append([ang, averaged_subtomogram, offset, vol_size, particle.getPickPosition().toVector(), rot,
                                        particle.getFilename(), particle_number, binning, img, create_graphics, fsc_path,
                                        dimz, peak_border])
 
@@ -246,12 +118,8 @@ def local_alignment(projections, vol_size, binning, offset, tilt_angles, particl
     if not skip_alignment:
         print("{:s}> Started on running the process".format(gettime()))
 
-        #for d in dir(input_to_processes): print(d)
-
         lists = zip(*input_to_processes)
         print(len(lists))
-
-        #for d in dir(zip(*[list[a] for a in range(len(lists))])): print(d)
 
         output = mpi.parfor(run_single_tilt_angle, zip(lists[0], lists[1],lists[2],lists[3],lists[4],lists[5],lists[6],lists[7],lists[8],lists[9],lists[10],lists[11],lists[12],lists[13])) # Some problem internally 23/10/2019
 
@@ -306,19 +174,6 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     @return: the newly found positions of the particle, as a list  in the LOCAL_ALIGNMENT_RESULTS format
     @returntype: list
     """
-    # assert isinstance(ang, float)
-    # assert isinstance(subtomogram, str)
-    # assert isinstance(offset, list) and len(offset) == 3
-    # assert isinstance(offset[0], int) and isinstance(offset[1], int) and isinstance(offset[2], int)
-    # assert isinstance(vol_size, int)
-    # assert isinstance(particle_position, tuple)
-    # assert isinstance(particle_rotation, tuple)
-    # assert isinstance(particle_filename, str)
-    # assert isinstance(particle_number, int)
-    # assert isinstance(binning, int)
-    # assert binning > 0
-    # assert isinstance(img, str)
-    # assert isinstance(create_graphics, bool)
 
     print(ang, offset, binning, particle_position)
     from pytom.tompy.transform import rotate3d
@@ -326,15 +181,13 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     from math import cos, sin, pi
     from pytom.tompy.transform import cut_from_projection
     from pytom.tompy.io import read
-    import matplotlib
 
     subtomogram = read(subtomogram)
     img = read(img)
 
     # Get the size of the original projection
     dim_x = img.shape[0]
-    # dim_y = img.shape[1]
-    dim_z = dim_x if dimz is None else dimz  # make z dim the same as x!
+    dim_z = dim_x if dimz is None else dimz
     print(dim_x, dim_z)
 
     x, y, z = particle_position
@@ -343,7 +196,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     z = (z + offset[2]) * binning
 
     # Get template
-    # first rotate towards orientation of the particle, then to the tilt angle
+    # First rotate towards orientation of the particle, then to the tilt angle
     rotated1 = rotate3d(subtomogram, phi=particle_rotation[0], the=particle_rotation[1], psi=particle_rotation[2])
     rotated2 = rotate3d(rotated1, the=ang)  # 'the' is the rotational axis
     template = rotated2.sum(axis=2)
@@ -352,16 +205,11 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
     yy = y  # assume the rotation axis is around y
     xx = (cos(ang * pi / 180) * (x - dim_x / 2) - sin(ang * pi / 180) * (z - dim_z / 2)) + dim_x / 2
 
-    print(xx, yy)
-
-    # cut the small patch out
-    v = vol_size / 2
-    patch = cut_from_projection(img.sum(axis=2), [xx, yy], [vol_size, vol_size])  # img.sum(axis=2)[int(xx-v):int(xx+v), int(yy-v):int(yy+v)]
+    # Cut the small patch out
+    patch = cut_from_projection(img.sum(axis=2), [xx, yy], [vol_size, vol_size])
     patch = patch - patch.mean()
 
-    print(patch.mean(), patch.shape, patch)
-
-    # filter using FSC
+    # Filter using FSC
     fsc_mask = None
     import os
     if os.path.isfile(fsc_path):
@@ -373,17 +221,14 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
         print("Not an existing FSC file: " + fsc_path)
 
     # Cross correlate the template and patch, this should give the pixel shift it is after
-    print("CCf: " + str(ang))
-    ccf = normalised_cross_correlation_numpy(template, patch, fsc_mask)
-    print(ccf.mean(), ccf)
-    print("Subpixel: " + str(ang))
+    ccf = normalised_cross_correlation(template, patch, fsc_mask)
     points2d = find_sub_pixel_max_value_2d(ccf, ignore_border=peak_border)
-    print("greategraphics: " + str(create_graphics))
 
     x_diff = points2d[0] - vol_size / 2
     y_diff = points2d[1] - vol_size / 2
 
     if create_graphics:
+        # Create an image to display and/or test the inner workings of the algorithm
         m_style = dict(color='tab:blue', linestyle=':', marker='o', markersize=5, markerfacecoloralt='tab:red')
         m_style_alt = dict(color='tab:red', linestyle=':', marker='o', markersize=5, markerfacecoloralt='tab:blue')
 
@@ -396,7 +241,7 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
         npatch = cut_from_projection(img.sum(axis=2), [xx + x_diff, yy + y_diff], [vol_size, vol_size])  # img.sum(axis=2)[int(xx+x_diff-v):int(xx+x_diff+v), int(yy+y_diff-v):int(yy+y_diff+v)]  #
         npatch = npatch - np.mean(npatch)
 
-        nccf = normalised_cross_correlation_numpy(template, npatch.squeeze())
+        nccf = normalised_cross_correlation(template, npatch.squeeze())
         npoints = find_sub_pixel_max_value(nccf)
         npoints2d = find_sub_pixel_max_value_2d(nccf, ignore_border=peak_border)
 
@@ -426,14 +271,8 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
 
         axis_title(ax_0_0, "Cutout")
         ax_0_0.imshow(patch)
-        # np.savetxt("cutout_{:04d}_tiltimage_{:05.2f}.txt".format(particle_number, ang), patch)
-        # bigpatch = cut_from_projection(img, [xx, yy], [vol_size*2, vol_size*2])
-        # bigpatch = bigpatch - np.mean(bigpatch)
-        # bigpatch = bigpatch.squeeze()
-        # np.savetxt("bigcutout_{:04d}_tiltimage_{:05.2f}.txt".format(particle_number, ang), bigpatch)
         axis_title(ax_0_1, "Template")
         ax_0_1.imshow(template)
-        # np.savetxt("template_{:04d}_tiltimage_{:05.2f}.txt".format(particle_number, ang), template)
         axis_title(ax_0_2, "Shifted Cutout\n(based on cross correlation)")
         ax_0_2.imshow(npatch.squeeze())
 
@@ -469,11 +308,11 @@ def run_single_tilt_angle(ang, subtomogram, offset, vol_size, particle_position,
 
         pp.savefig("polish_particle_{:04d}_tiltimage_{:05.2f}.png".format(particle_number, ang))
 
-    # progressbar.increment_amount()
     return particle_number, x_diff, y_diff, ang, 0, 0, particle_filename
 
 
 def axis_title(axis, title):
+    """Small helper function to simplify the creation of text on a pylab plot"""
     axis.text(0.5, 1.05, title, fontsize=8, horizontalalignment='center', transform=axis.transAxes)
 
 
@@ -601,7 +440,7 @@ sleep 5 & mpiexec -n {:d} pytom /data2/dschulte/pytom-develop/pytom/bin/GLocalJo
             print("There seems to be a problem with scheduling the job, output: " + out)
 
 
-def normalised_cross_correlation_numpy(first, second, filter_mask=None):
+def normalised_cross_correlation(first, second, filter_mask=None):
     """
     Do a cross correlation based on numpy
 
@@ -635,18 +474,7 @@ def normalised_cross_correlation_numpy(first, second, filter_mask=None):
     return np.real(fftshift(ifftn(np.multiply(fftn(second), np.conj(ffirst))))) / prod
 
 
-def normalised_cross_correlation_cupy(first, second):
-    import cupy.fft as nf
-    import cupy as np
-
-    prod = 1
-    for d in first.shape:
-        prod *= d
-
-    return np.real(nf.fftshift(nf.ifftn(np.multiply(nf.fftn(second), np.conj(nf.fftn(first)))))) / prod
-
-
-def normalised_cross_correlation_mask_numpy(first, second, mask):
+def normalised_cross_correlation_mask(first, second, mask):
     """
     Do cross correlation with a running mask based on numpy
 
@@ -699,7 +527,8 @@ def norm_inside_mask(inp, mask):
 
 def find_sub_pixel_max_value(inp, k=4):
     """
-    To find the highest point in a 2D array, with subpixel accuracy based on 1D spline interpolation .
+    To find the highest point in a 2D array, with subpixel accuracy based on 1D spline interpolation.
+    The algorithm is based on a matlab script "tom_peak.m"
 
     @param inp: A 2D numpy array containing the data points.
     @type inp: numpy array 2D
@@ -828,6 +657,8 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=100, smoothing=2, dim=10
     print(x_start, x_end, y_start, y_end)
 
     # Interpolate the points
+    # While catching warnings from the pessimistic algorithm of interpolate,
+    # which always thinks it needs too much memory
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         tck = interpolate.bisplrep(x, y, inp[x_start:x_end, y_start:y_end], s=smoothing)
@@ -842,12 +673,8 @@ def find_sub_pixel_max_value_2d(inp, interpolate_factor=100, smoothing=2, dim=10
         return result[0], result[1], cropped_inter_grid
 
 
-def gettime():
-    from time import gmtime, strftime
-    return strftime("%H:%M:%S", gmtime())
-
-
 def create_fsc_mask(fsc, size):
+    """Create a 2D mask based on an FSC curve so it can be used to do masked cross correlation"""
     from numpy import meshgrid, arange, sqrt, zeros_like, float32
 
     X, Y, Z = meshgrid(arange(size), arange(size), arange(size))
@@ -864,3 +691,10 @@ def create_fsc_mask(fsc, size):
         out[R == n] = val
 
     return out[size // 2, :, :]
+
+
+def gettime():
+    """Get the current time, to display in stdout to keep an eye on runtime"""
+    from time import gmtime, strftime
+    return strftime("%H:%M:%S", gmtime())
+
