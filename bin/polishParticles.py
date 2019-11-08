@@ -13,7 +13,7 @@ if __name__ == '__main__':
     from pytom.tools.parse_script_options import parse_script_options
     from pytom.tompy.mpi import MPI
     from time import gmtime, strftime
-    from pytom.reconstruction.reconstruct_local_alignment import polish_particles
+    from pytom.reconstruction.particle_polishing import polish_particles
 
     helper = ScriptHelper(sys.argv[0].split('/')[-1],  # script name
                           description='Reconstruct a local alignment of particles based on a global alignment.',
