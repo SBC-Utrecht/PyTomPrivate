@@ -228,6 +228,6 @@ if __name__ == '__main__':
     # output structure
     _, file = os.path.split(filepath)
     id, _ = os.path.splitext(file)
-    output_filepath = os.path.join(output_folder, f'template_{id}_{spacing*binning:.2f}A_{template.shape[0]}px.mrc')
+    output_filepath = os.path.join(output_folder, f'template_{id}_{spacing*binning:.2f}A_{template.shape[0]}px_{resolution}.mrc')
     print(f'Writing template as {output_filepath}')
     write(output_filepath, template)
