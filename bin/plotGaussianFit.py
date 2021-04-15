@@ -17,14 +17,15 @@ if __name__ == '__main__':
                           options=[ScriptOption(['-f','--file'], 'Particle list after extracting candidates.', True, False),
                                    ScriptOption(['-n','--numberBins'], 'Number of bins of histogram. Default is 10.', True, True),
                                    ScriptOption(['-p','--gaussianPeak'], 'The correspondent index of the gaussian peak.', True, False),
-                                   ScriptOption(['-c','--numberParticles'], 'Number of particles up to CCC value.', True, True),
+                                   ScriptOption(['-c','--min'], 'Only use particles with scores higher than cutoff.', True, True),
+                                   ScriptOption(['-m','--max'], 'Only use particles with scores lower than cutoff.', True, True),
                                    ScriptOption(['-i','--imageFile'], 'Save plot to a image file.', True, True),
                                    ScriptOption(['-h', '--help'], 'Help.', False, True)])
     if len(sys.argv) == 1:
         print(helper)
         sys.exit()
     try:
-        pl_filename, num_steps, peak_index, ccc_value, imageFile, help = parse_script_options(sys.argv[1:], helper)
+        pl_filename, num_steps, peak_index, min_cut, max_cut, imageFile, help = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print(e)
         sys.exit()
@@ -47,6 +48,13 @@ if __name__ == '__main__':
     for f in foundParticles:
         scores.append(float(f.score.getValue()))
     
+    # only use scores larger than ccc_cutoff
+    if min_cut: min_cut = float(min_cut)
+    else: min_cut = 0
+    if max_cut : max_cut = float(max_cut)
+    else: max_cut = 1
+    scores = [s for s in scores if min_cut < s < max_cut]
+
     # construct x and y array according to the given peak index
     scores.sort()
     min = scores[0]
@@ -118,15 +126,15 @@ if __name__ == '__main__':
             break
     print( 'Two sigma position: %f, number of estimation: %f' % (mu-2*sigma, estimate))
     
-    if ccc_value:
-        ccc_value = float(ccc_value)
-        estimate = 0.
-        for i in x:
-            if i > ccc_value:
-                estimate += gaussian_fnc(i)
-            else:
-                break
-        print('CCC value position: %f, number of estimation: %f' % (ccc_value, estimate))
+    #if ccc_value:
+    #    ccc_value = float(ccc_value)
+    #    estimate = 0.
+    #    for i in x:
+    #        if i > ccc_value:
+    #            estimate += gaussian_fnc(i)
+    #        else:
+    #            break
+    #    print('CCC value position: %f, number of estimation: %f' % (ccc_value, estimate))
     
     if imageFile is None:      
         pyplot.show()

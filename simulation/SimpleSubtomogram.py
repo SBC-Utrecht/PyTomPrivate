@@ -11,7 +11,7 @@ def simpleSimulation(volume,rotation,shiftV,wedgeInfo=None,SNR=0.1,mask=None):
     @return: a simple cryo em simulation of volume 
     """
     from pytom_volume import vol,rotate,shift,initSphere
-    from pytom.simulation import whiteNoise
+    from pytom.simulation.support import add_white_noise as whiteNoise
     
     if not rotation == [0,0,0]:
         #print '---ROTATE---'
@@ -54,9 +54,9 @@ def simpleSimulation(volume,rotation,shiftV,wedgeInfo=None,SNR=0.1,mask=None):
         #no shift and no rotation -> simply take the original volume
         c = vol(maskedCopy.sizeX(),volume.sizeY(),volume.sizeZ())
         c.copyVolume(maskedCopy)
-        noisyCopy = whiteNoise.add(c,SNR)
+        noisyCopy = whiteNoise(c,SNR)
     else:
-        noisyCopy = whiteNoise.add(shiftedCopy,SNR)
+        noisyCopy = whiteNoise(shiftedCopy,SNR)
     
     if wedgeInfo:
         #print '---WEDGE---'

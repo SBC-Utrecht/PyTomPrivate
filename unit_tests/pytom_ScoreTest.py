@@ -1,12 +1,13 @@
 import unittest
 
+
 class pytom_ScoreTest(unittest.TestCase):
     
     def setUp(self):
         """set up"""
         from pytom_volume import vol, initSphere
         from pytom.basic.structures import WedgeInfo
-        from pytom.simulation.EMSimulation import simpleSimulation
+        from pytom.simulation.SimpleSubtomogram import simpleSimulation
 
         self.wedge = 0.
         self.shift = [-1, 2, 3]
@@ -113,7 +114,65 @@ class pytom_ScoreTest(unittest.TestCase):
         p= peak(cf)
         self.assertAlmostEqual( first=c, second=cf.getV(p[0],p[1],p[2]), places=1, 
             msg='Scoring coefficient and scoring function SOC inconsistent')
-    
+
+    def test_pofScore(self):
+        """
+        Test Phase Only Filter correlation function
+        @author: Maria Cristina Trueba
+        """
+        from pytom.score.score import POFScore as score
+        from pytom_volume import peak
+
+        sc = score()
+        #Check auto-correlation coefficient
+        c = sc.scoringCoefficient(self.s, self.s)
+        self.assertAlmostEqual(first=c, second=1, places=5, msg="POFScore: Autocorrelation not == 1")
+        #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
+        c = sc.scoringCoefficient(self.s, self.v)
+        cf = sc.scoringFunction(self.s, self.v)
+        p = peak(cf)
+        self.assertAlmostEqual( first = c, second = cf.getV(p[0], p[1], p[2]), places=2, msg = "Scoring coefficient and scoring funtion POF inconsistent")
+
+    def test_fpofScore(self):
+        """
+        Test Phase Only Filter correlation function with FLCF
+        @author: Maria Cristina Trueba
+        """
+        from pytom.score.score import FPOFScore as score
+        from pytom_volume import peak
+
+        sc = score()
+        #Check auto-correlation coefficient
+        c = sc.scoringCoefficient(self.s, self.s)
+        self.assertAlmostEqual(first=c, second=1, places=5, msg="POFScore: Autocorrelation not == 1")
+        #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
+        c = sc.scoringCoefficient(self.s, self.v)
+        cf = sc.scoringFunction(self.s, self.v)
+        p = peak(cf)
+        self.assertAlmostEqual( first = c, second = cf.getV(p[0], p[1], p[2]), places=2, msg = "Scoring coefficient and scoring funtion FPOF inconsistent")
+
+
+    def test_mcfScore(self):
+        """
+        Test Mutual correlation function
+        @author: Maria Cristina Trueba
+        """
+        from pytom.score.score import MCFScore as score
+        from pytom_volume import peak
+
+        sc = score()
+        #Check auto-correlation coefficient
+        c = sc.scoringCoefficient(self.s, self.s)
+        print(c)
+        self.assertAlmostEqual(first=c, second=1, places=5, msg="MCFScore: Autocorrelation not == 1")
+        #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
+        c = sc.scoringCoefficient(self.s, self.v)
+        print("c again ", c)
+        cf = sc.scoringFunction(self.s, self.v)
+        p = peak(cf)
+        print("cf.getVp", cf.getV(p[0], p[1], p[2]))
+        self.assertAlmostEqual( first = c, second = cf.getV(p[0], p[1], p[2]), places=2, msg = "Scoring coefficient and scoring funtion MCF inconsistent")
+
     def RScore_Test(self):
         """
         """
@@ -122,7 +181,10 @@ class pytom_ScoreTest(unittest.TestCase):
         self.test_xcfScore()
         self.test_nxcfScore()
         self.test_flcfScore()
-        #self.test_socScore()
+        self.test_socScore()
+        self.test_pofScore()
+        self.test_mcfScore()
+        self.test_fpofScore()
 
 if __name__ == '__main__':
     unittest.main()

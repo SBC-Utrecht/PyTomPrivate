@@ -36,6 +36,7 @@ if __name__ == '__main__':
                                     ''', arg=True, optional=False),
                                    ScriptOption(['-d','--destination'], 'Destination : destination directory', arg=True, optional=False),
                                    ScriptOption(['-b','--band'], 'Lowpass filter : band - in pixels', arg=True, optional=False),
+                                   ScriptOption(['-c', '--corrFunc'], 'Correlation function: either FLCF, POF or MCF. Default=FLCF', arg=True, optional=False),
                                    ScriptOption(['--splitX'], 'Into how many parts do you want to split volume (X dimension)', arg=True, optional=False),
                                    ScriptOption(['--splitY'], 'Into how many parts do you want to split volume (Y dimension)', arg=True, optional=False),
                                    ScriptOption(['--splitZ'], 'Into how many parts do you want to split volume (Z dimension)', arg=True, optional=False),
@@ -47,7 +48,7 @@ if __name__ == '__main__':
         print(helper)
         sys.exit()
     try:
-        volume, reference, mask, wedge1,wedge2,angles,destination,band,sx,sy,sz,jobName,help = parse_script_options(sys.argv[1:], helper)
+        volume, reference, mask, wedge1,wedge2,angles,destination,band,corrFunc,sx,sy,sz,jobName,help = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print(e)
         sys.exit()
@@ -71,7 +72,7 @@ if __name__ == '__main__':
     from pytom.basic.structures import Mask,Reference,Wedge,BandPassFilter
     from pytom.localization.structures import Volume
     from pytom.angles.globalSampling import GlobalSampling
-    from pytom.score.score import FLCFScore
+    from pytom.score.score import FLCFScore, POFScore, MCFScore
     from pytom.localization.peak_job import PeakJob
     from pytom.frontend.serverpages.createLocalizationJob import createRunscripts
     
@@ -80,8 +81,14 @@ if __name__ == '__main__':
     m = Mask(mask)
     w = Wedge([float(wedge1),float(wedge2)])
     a = GlobalSampling(angles)
+    if corrFunc == "FLCF":
+        s = FLCFScore()
+    if corrFunc == "POF":
+        s = POFScore()
+    if corrFunc == "MCF":
+        s = MCFScore()
     
-    job = PeakJob(volume=v, reference=r, mask=m, wedge=w, rotations=a, score=FLCFScore(), jobID=0, members=1, dstDir=destination, bandpass=BandPassFilter(0,float(band),0))
+    job = PeakJob(volume=v, reference=r, mask=m, wedge=w, rotations=a, score=s , jobID=0, members=1, dstDir=destination, bandpass=BandPassFilter(0,float(band),0))
     
     job.toXMLFile(jobName)
     

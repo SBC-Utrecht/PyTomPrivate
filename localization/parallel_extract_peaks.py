@@ -110,7 +110,7 @@ class PeakWorker(object):
             v, ref, m = [vol2npy(vol).copy() for vol in (v, ref, m)]
 
         if verbose==True:
-            print(self.name + ': starting to calculate %d rotations' % rot.numberRotations() + f' om {gpuID[self.mpi_id]}')
+            print(self.name + ': starting to calculate %d rotations' % rot.numberRotations())
         [resV, orientV, sumV, sqrV] = extractPeaks(v, ref, rot, scoreFnc, m, mIsSphere, wedg, nodeName=self.name,
                                                    verboseMode=verbose, moreInfo=moreInfo, gpuID=gpuID[self.mpi_id],
                                                    jobid=self.mpi_id)

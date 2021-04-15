@@ -292,6 +292,7 @@ def stdUnderMask(volume, mask, p, meanV):
 
     return result
 
+
 def FLCF(volume, template, mask=None, stdV=None, wedge=1):
     '''
     Created on Apr 13, 2010
@@ -361,7 +362,6 @@ def FLCF(volume, template, mask=None, stdV=None, wedge=1):
     if stdV.__class__ != vol:
         meanV = meanUnderMask(volume, maskV, p)
         stdV = stdUnderMask(volume, maskV, p, meanV)
-
 
     size = volume.numelem()
     fT = fft(tempV)
@@ -1018,3 +1018,191 @@ def dev(volume, template, mask=None, volumeIsNormalized=False):
 
     return deviat
 
+def POF(volume, template, mask=None, stdV=None):
+    """
+    POF: Phase only filter correlation function
+    @param volume: The search volume
+    @type volume: L{pytom_volume.vol}
+    @param template: the template searched (this one will be used for conjugate complex multiplication)
+    @type template: L{pytom_volume.vol}
+    @param mask: Only used if specified
+    @type mask: L{pytom_volume.vol}
+    @param stdV: Will be unused, only for compatibility with FLCF
+    @return: POF volume
+    @type return: L{pytom_volume.vol}
+    @author: Maria Cristina Trueba & Marten Chaillet
+    """
+    import pytom_volume
+    from pytom_volume import vol, vol_comp, pasteCenter, conjugate, sum, real, abs, complexDiv, power, limit
+    from pytom.basic.fourier import fft, ifft, iftshift
+    from pytom.tools.macros import volumesSameSize
+
+    if volume.__class__ != vol and template.__class__ != vol:
+        raise RuntimeError('Wrong input type!')
+
+    if volume.sizeX() < template.sizeX() or volume.sizeY() < template.sizeY() or volume.sizeZ() < template.sizeZ():
+        raise RuntimeError('Template size is bigger than the target volume')
+
+    # generate the mask
+    if mask.__class__ != vol:
+        from pytom_volume import initSphere
+        mask = vol(template.sizeX(), template.sizeY(), template.sizeZ())
+        mask.setAll(0)
+        initSphere(mask, template.sizeX() / 2, 0, 0, template.sizeX() / 2, template.sizeY() / 2, template.sizeZ() / 2)
+    else:
+        if template.sizeX() != mask.sizeX() and template.sizeY() != mask.sizeY() and template.sizeZ() != mask.sizeZ():
+            raise RuntimeError('Template and mask size are not consistent!')
+
+    # Normalize template with ampli =1
+    ftemplate = fft(template)
+    template = ifft(ftemplate / abs(ftemplate))
+
+    # calculate the non-zeros
+    p = sum(mask)
+
+    # normalize the template under mask
+    meanT = meanValueUnderMask(template, mask, p)
+    stdT = stdValueUnderMask(template, mask, meanT, p)
+
+    temp = (template - meanT) / stdT
+    temp = temp * mask
+
+    # construct both the template and the mask which has the same size as target volume
+    tempV = temp
+    if volume.sizeX() != temp.sizeX() or volume.sizeY() != temp.sizeY() or volume.sizeZ() != temp.sizeZ():
+        tempV = vol(volume.sizeX(), volume.sizeY(), volume.sizeZ())
+        tempV.setAll(0)
+        pasteCenter(temp, tempV)
+
+    maskV = mask
+    if volume.sizeX() != mask.sizeX() or volume.sizeY() != mask.sizeY() or volume.sizeZ() != mask.sizeZ():
+        maskV = vol(volume.sizeX(), volume.sizeY(), volume.sizeZ())
+        maskV.setAll(0)
+        pasteCenter(mask, maskV)
+
+    size = volume.numelem()
+
+    # Normalize volume with ampli = 1
+    fvolume = fft(volume)
+    fvolume = (fvolume / abs(fvolume))
+
+    # calculate the mean and std of volume
+    if stdV.__class__ != vol:
+        fMask = fft(maskV)
+        conjugate(fMask)
+        meanV = iftshift(ifft(fMask*fvolume))/(size*p)
+
+        volume = ifft(fvolume)
+        stdV = stdUnderMask(volume, maskV, p, meanV)
+
+
+    fT = fft(tempV)
+    conjugate(fT)
+    result = iftshift(ifft(fT * fft(volume))) / stdV
+
+    result.shiftscale(0, 1 / (size * p))
+
+    return result
+
+def FPOF(volume, template, mask=None, stdV=None):
+    import pytom_volume
+    from pytom_volume import vol, pasteCenter, conjugate, sum, real, abs, complexDiv
+    from pytom.basic.fourier import fft, ifft, iftshift
+
+    fvolume = fft(volume)
+    ftemplate = fft(template)
+
+    amp1_volume = ifft(fvolume/abs(fvolume))
+    amp1_template = ifft(ftemplate/abs(ftemplate))
+
+    return FLCF(amp1_volume, amp1_template)
+
+def MCF(volume, template, mask=None, stdV=None):
+    """
+    POF: Mutual correlation function
+    @param volume: The search volume
+    @type volume: L{pytom_volume.vol}
+    @param template: the template searched (this one will be used for conjugate complex multiplication)
+    @type template: L{pytom_volume.vol}
+    @param mask: Only used if specified
+    @type mask: L{pytom_volume.vol}
+    @param stdV: Will be unused, only for compatibility with FLCF
+    @return: POF volume
+    @type return: L{pytom_volume.vol}
+    @author: Maria Cristina Trueba
+    """
+
+    import pytom_volume
+    from pytom_volume import vol, vol_comp, pasteCenter, conjugate, sum, real, abs, complexDiv, power, limit
+    from pytom.basic.fourier import fft, ifft, iftshift
+    from pytom.tools.macros import volumesSameSize
+
+    if volume.__class__ != vol and template.__class__ != vol:
+        raise RuntimeError('Wrong input type!')
+
+    if volume.sizeX() < template.sizeX() or volume.sizeY() < template.sizeY() or volume.sizeZ() < template.sizeZ():
+        raise RuntimeError('Template size is bigger than the target volume')
+
+    # generate the mask
+    if mask.__class__ != vol:
+        from pytom_volume import initSphere
+        mask = vol(template.sizeX(), template.sizeY(), template.sizeZ())
+        mask.setAll(0)
+        initSphere(mask, template.sizeX() / 2, 0, 0, template.sizeX() / 2, template.sizeY() / 2, template.sizeZ() / 2)
+    else:
+        if template.sizeX() != mask.sizeX() and template.sizeY() != mask.sizeY() and template.sizeZ() != mask.sizeZ():
+            raise RuntimeError('Template and mask size are not consistent!')
+
+    # Normalize template with ampli =1
+    ftemplate = fft(template)
+    amp_template = abs(ftemplate)
+    power(amp_template, 0.5)
+    template = iftshift(ifft(ftemplate/amp_template))
+
+    # calculate the non-zeros
+    p = sum(mask)
+
+    # normalize the template under mask
+    meanT = meanValueUnderMask(template, mask, p)
+    stdT = stdValueUnderMask(template, mask, meanT, p)
+
+    temp = (template - meanT) / stdT
+    temp = temp * mask
+
+    # construct both the template and the mask which has the same size as target volume
+    tempV = temp
+    if volume.sizeX() != temp.sizeX() or volume.sizeY() != temp.sizeY() or volume.sizeZ() != temp.sizeZ():
+        tempV = vol(volume.sizeX(), volume.sizeY(), volume.sizeZ())
+        tempV.setAll(0)
+        pasteCenter(temp, tempV)
+
+    maskV = mask
+    if volume.sizeX() != mask.sizeX() or volume.sizeY() != mask.sizeY() or volume.sizeZ() != mask.sizeZ():
+        maskV = vol(volume.sizeX(), volume.sizeY(), volume.sizeZ())
+        maskV.setAll(0)
+        pasteCenter(mask, maskV)
+
+    size = volume.numelem()
+
+    # Normalize volume with ampli = 1
+    fvolume = fft(volume)
+    amp_volume = abs(fvolume)
+    power(amp_volume, 0.5)
+    fvolume = (fvolume/amp_volume)
+
+    # calculate the mean and std of volume
+    if stdV.__class__ != vol:
+        fMask = fft(maskV)
+        conjugate(fMask)
+        meanV = iftshift(ifft(fMask * fvolume)) / (size * p)
+
+        volume = iftshift(ifft(fvolume))
+        stdV = stdUnderMask(volume, maskV, p, meanV)
+
+    fT = fft(tempV)
+    conjugate(fT)
+    result = iftshift(ifft(fT * fft(volume))) / stdV
+
+    result.shiftscale(0, 1 / (size * p))
+
+    return result

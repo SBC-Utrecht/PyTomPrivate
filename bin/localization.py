@@ -7,7 +7,8 @@ def startLocalizationJob(filename, splitX=0, splitY=0, splitZ=0, doSplitAngles=F
     verbose=True
     from pytom.localization.peak_job import PeakJob
     import os
-    job = PeakJob()
+    from pytom.score.score import FLCFScore, xcfScore, MCFScore, POFScore
+    job=PeakJob()
     job.fromXMLFile(filename)
     job.check()
     suffix = os.path.basename(job.reference.getFilename()).split('.')[0]

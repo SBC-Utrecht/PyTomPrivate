@@ -55,7 +55,7 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
     if moreInfo not in [True, False]:
         moreInfo = False
     
-    from pytom.basic.correlation import FLCF
+    from pytom.basic.correlation import FLCF, POF, MCF
     from pytom.basic.structures import WedgeInfo, Wedge
     from pytom_volume import vol, pasteCenter
     from pytom_volume import rotateSpline as rotate # for more accuracy
@@ -66,7 +66,8 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
         scoreFnc = FLCF
     
     # only FLCF needs mask
-    if scoreFnc == FLCF:
+    #if scoreFnc in [FLCF, POF, MCF]:
+    if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF:
         if mask.__class__ != vol: # construct a sphere mask by default
             from pytom_volume import initSphere;
             mask = vol(reference.sizeX(), reference.sizeY(), reference.sizeZ());
