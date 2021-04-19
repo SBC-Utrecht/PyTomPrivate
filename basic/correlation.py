@@ -1055,7 +1055,7 @@ def POF(volume, template, mask=None, stdV=None):
 
     # Normalize template with ampli =1
     ftemplate = fft(template)
-    template = ifft(ftemplate / abs(ftemplate))
+    template = iftshift(ifft(ftemplate / abs(ftemplate)))
 
     # calculate the non-zeros
     p = sum(mask)
@@ -1092,7 +1092,7 @@ def POF(volume, template, mask=None, stdV=None):
         conjugate(fMask)
         meanV = iftshift(ifft(fMask*fvolume))/(size*p)
 
-        volume = ifft(fvolume)
+        volume = iftshift(ifft(fvolume))
         stdV = stdUnderMask(volume, maskV, p, meanV)
 
 
@@ -1112,8 +1112,8 @@ def FPOF(volume, template, mask=None, stdV=None):
     fvolume = fft(volume)
     ftemplate = fft(template)
 
-    amp1_volume = ifft(fvolume/abs(fvolume))
-    amp1_template = ifft(ftemplate/abs(ftemplate))
+    amp1_volume = iftshift(ifft(fvolume/abs(fvolume)))
+    amp1_template = iftshift(ifft(ftemplate/abs(ftemplate)))
 
     return FLCF(amp1_volume, amp1_template)
 
