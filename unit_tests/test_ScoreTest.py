@@ -2,14 +2,14 @@ import unittest
 
 
 class pytom_ScoreTest(unittest.TestCase):
-    
+
     def setUp(self):
         """set up"""
         from pytom_volume import vol, initSphere
         from pytom.basic.structures import WedgeInfo
         from pytom.simulation.SimpleSubtomogram import simpleSimulation
 
-        self.wedge = 0.
+        self.wedge = 30
         self.shift = [-1, 2, 3]
         self.rotation = [0, 0, 0]
         # create sphere
@@ -127,30 +127,12 @@ class pytom_ScoreTest(unittest.TestCase):
         #Check auto-correlation coefficient
         c = sc.scoringCoefficient(self.s, self.s)
         self.assertAlmostEqual(first=c, second=1, places=5, msg="POFScore: Autocorrelation not == 1")
+
         #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
-        c = sc.scoringCoefficient(self.s, self.v)
-        cf = sc.scoringFunction(self.s, self.v)
+        c = sc.scoringCoefficient(s, self.v)
+        cf = sc.scoringFunction(s, self.v)
         p = peak(cf)
         self.assertAlmostEqual( first = c, second = cf.getV(p[0], p[1], p[2]), places=2, msg = "Scoring coefficient and scoring funtion POF inconsistent")
-
-    def test_fpofScore(self):
-        """
-        Test Phase Only Filter correlation function with FLCF
-        @author: Maria Cristina Trueba
-        """
-        from pytom.score.score import FPOFScore as score
-        from pytom_volume import peak
-
-        sc = score()
-        #Check auto-correlation coefficient
-        c = sc.scoringCoefficient(self.s, self.s)
-        self.assertAlmostEqual(first=c, second=1, places=5, msg="POFScore: Autocorrelation not == 1")
-        #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
-        c = sc.scoringCoefficient(self.s, self.v)
-        cf = sc.scoringFunction(self.s, self.v)
-        p = peak(cf)
-        self.assertAlmostEqual( first = c, second = cf.getV(p[0], p[1], p[2]), places=2, msg = "Scoring coefficient and scoring funtion FPOF inconsistent")
-
 
     def test_mcfScore(self):
         """
@@ -163,15 +145,127 @@ class pytom_ScoreTest(unittest.TestCase):
         sc = score()
         #Check auto-correlation coefficient
         c = sc.scoringCoefficient(self.s, self.s)
-        print(c)
-        self.assertAlmostEqual(first=c, second=1, places=5, msg="MCFScore: Autocorrelation not == 1")
+        self.assertAlmostEqual(first=c, second=1, places=1, msg="MCFScore: Autocorrelation not == 1")
+
         #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
         c = sc.scoringCoefficient(self.s, self.v)
-        print("c again ", c)
         cf = sc.scoringFunction(self.s, self.v)
         p = peak(cf)
-        print("cf.getVp", cf.getV(p[0], p[1], p[2]))
-        self.assertAlmostEqual( first = c, second = cf.getV(p[0], p[1], p[2]), places=2, msg = "Scoring coefficient and scoring funtion MCF inconsistent")
+        self.assertAlmostEqual( first = c, second = cf.getV(p[0], p[1], p[2]), places=1, msg = "Scoring coefficient and scoring funtion MCF inconsistent")
+
+    def test_pofScore_np(self):
+        """
+        Test Phase only filter function numpy version for gpu
+        @author: Maria Cristina Trueba
+        """
+        import numpy as np
+        from pytom.tompy.score import POFScore as score
+        from pytom_numpy import vol2npy
+        from pytom.tompy.correlation import subPixelMax3D
+
+        s = vol2npy(self.s).copy()
+        v = vol2npy(self.v).copy()
+        sc = score()
+        #Check auto-correlation coefficient
+        c = sc.scoringCoefficient(s, s)
+        self.assertAlmostEqual(first=c, second=1, places=5, msg="POFScore: Autocorrelation not == 1")
+
+        #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
+        c = sc.scoringCoefficient(s, v)
+        cf = sc.scoringFunction(s, v)
+        p = cf.max()
+        self.assertAlmostEqual( first = c, second = p, places=2, msg = "Scoring coefficient and scoring funtion POF inconsistent")
+
+
+    def test_mcfScore_np(self):
+        """
+        Test Mutual correlation function numpy version for gpu
+        @author: Maria Cristina Trueba
+        """
+        from pytom.tompy.score import MCFScore as score
+        from pytom_numpy import vol2npy
+
+        s = vol2npy(self.s).copy()
+        v = vol2npy(self.v).copy()
+        sc = score()
+
+        #Check auto-correlation coefficient
+        c = sc.scoringCoefficient(s, s)
+        self.assertAlmostEqual(first=c, second=1, places=2, msg= "POFScore: Autocorrelation not == 1")
+
+        #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
+        c = sc.scoringCoefficient(s, v)
+        cf = sc.scoringFunction(s, v)
+        p = cf.max()
+        self.assertAlmostEqual( first = c, second = p, places=1, msg = "Scoring coefficient and scoring funtion POF inconsistent")
+
+    def test_pof_gpu(self):
+        """
+        Test POF function in gpu
+        @author: Maria Cristina Trueba Sanchez
+        """
+
+        from pytom_numpy import vol2npy
+        from pytom.localization.extractPeaks import templateMatchingGPU
+        from pytom.basic.structures import Wedge, Mask
+        from pytom.tompy.correlation import POF as sFunc
+        import numpy as np
+        from pytom.tompy.io import read
+
+        #Data test
+        s = read("./testData/ribo.em")
+        #s = vol2npy(self.s).copy()
+        # v = vol2npy(self.v).copy()
+        # s = np.zeros((32, 32, 32))
+        # s[12:18,12:18,12:18]=1
+
+        #Run GPU tm
+        w = Wedge(self.wedge)
+        #m = self.mask
+        m = Mask("./testData/ribo_mask.em")
+        m = m.getVolume()
+        m = vol2npy(m).copy()
+
+        result = templateMatchingGPU(volume=s, reference=s, rotations=[[0, 0, 0]], scoreFnc=sFunc, mask=m,
+                                     maskIsSphere=True, wedgeInfo=w, padding=True, jobid=0, gpuID=1)
+        c, a, n, k = result
+
+        #Get the highest peak and compare with == 1
+        c=c.max()
+        self.assertAlmostEqual(first=c, second=1, places=4, msg= "POF in GPU Autocorrelation not == 1")
+
+    def test_mcf_gpu(self):
+        """
+        Test POF function in gpu
+        @author: Maria Cristina Trueba Sanchez
+        """
+
+        from pytom_numpy import vol2npy
+        from pytom.localization.extractPeaks import templateMatchingGPU
+        from pytom.basic.structures import Wedge, Mask
+        from pytom.tompy.correlation import MCF as sFunc
+        from pytom.tompy.io import read
+
+        #Data test
+        v = vol2npy(self.v).copy()
+        s = read("./testData/ribo.em")
+        #s = vol2npy(self.s).copy()
+
+        #Run GPU tm
+        w = Wedge(self.wedge)
+        m = Mask("./testData/ribo_mask.em")
+        #m = self.mask
+        m = m.getVolume()
+        m = vol2npy(m).copy()
+
+        result = templateMatchingGPU(volume=s, reference=s, rotations=[[0, 0, 0]], scoreFnc=sFunc, mask=m,
+                                     maskIsSphere=True, wedgeInfo=w, padding=True, jobid=0, gpuID=1)
+        c, a, n, k = result
+
+        #Get the highest peak and compare with == 1
+        c=c.max()
+        self.assertAlmostEqual(first=c, second=1, places=4, msg= "MCF in GPU Autocorrelation not == 1")
+
 
     def RScore_Test(self):
         """
@@ -184,7 +278,10 @@ class pytom_ScoreTest(unittest.TestCase):
         self.test_socScore()
         self.test_pofScore()
         self.test_mcfScore()
-        self.test_fpofScore()
+        self.test_pofScore_np()
+        self.test_mcfScore_np()
+        self.test_pof_gpu()
+        self.test_mcf_gpu()
 
 if __name__ == '__main__':
     unittest.main()

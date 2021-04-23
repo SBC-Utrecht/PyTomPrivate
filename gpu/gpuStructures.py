@@ -2,13 +2,17 @@ import threading
 import importlib
 from pytom.tompy.io import read, write
 from pytom.gpu.initialize import device, xp
+import cupy as xp
+
 
 class TemplateMatchingPlan():
-    def __init__(self, volume, template, mask, wedge, cp, vt, calc_stdV, pad, get_fft_plan, deviceid):
+    def __init__(self, volume, template, mask, wedge, cp, vt, calc_stdV, pad, get_fft_plan, deviceid, scoreFunc):
 
         import pytom.voltools as vt
-
+        print(f"Template matching uses {scoreFunc} for calculatng correlation.")
         cp.cuda.Device(deviceid).use()
+
+        self.scoreFunc = scoreFunc
 
         self.volume = cp.asarray(volume,dtype=cp.float32,order='C')
 
@@ -25,10 +29,13 @@ class TemplateMatchingPlan():
         self.templatePadded = cp.zeros_like(self.volume)
 
         self.wedge = cp.asarray(wedge,order='C')
-
+        self.threshold = 0.001
         #self.volume_fft = cp.fft.rfftn(self.volume) #* cp.array(wedgeVolume,dtype=cp.float32)
-        calc_stdV(self)
-        cp.cuda.stream.get_current_stream().synchronize()
+
+        if scoreFunc in ("FLCF"):
+            calc_stdV(self)
+            cp.cuda.stream.get_current_stream().synchronize()
+
         # del self.volume_fft
 
         self.ccc_map = cp.zeros_like(self.volume)
@@ -38,7 +45,31 @@ class TemplateMatchingPlan():
         self.p = self.mask.sum()
 
         if not get_fft_plan is None:
+
             self.volume_fft2 = cp.fft.fftn(self.volume)
+
+            if scoreFunc == "POF":
+                #from pytom.tompy.io import write
+                ampli = cp.real(cp.abs(self.volume_fft2))
+                self.volume_fft2[ampli < 0.00001] = 0
+                ampli[ampli == 0] = 1
+                self.volume_fft2 /= ampli
+                self.volume = cp.fft.ifftn(self.volume_fft2).real
+                #write("/home/ctsanchez/Desktop/volume_pof.mrc", self.volume)
+
+                calc_stdV(self)
+                cp.cuda.stream.get_current_stream().synchronize()
+
+            if scoreFunc == "MCF":
+                ampli = cp.sqrt(cp.real(cp.abs(self.volume_fft2)))
+                self.volume_fft2[ampli<0.00001]=0
+                ampli[ampli==0] = 1
+                self.volume_fft2 /= ampli
+                self.volume = cp.fft.ifftn(self.volume_fft2).real
+
+                calc_stdV(self)
+                cp.cuda.stream.get_current_stream().synchronize()
+
             self.fftplan = get_fft_plan(self.volume.astype(cp.complex64))
         else:
             self.fftplan = None
@@ -58,7 +89,6 @@ class TemplateMatchingGPU(threading.Thread):
         from cupy.fft import fftshift, rfftn, irfftn, ifftn, fftn
         import pytom.voltools as vt
         from cupyx.scipy.ndimage import map_coordinates
-
 
         if 1:
             from cupyx.scipy.fftpack.fft import get_fft_plan
@@ -112,7 +142,10 @@ class TemplateMatchingGPU(threading.Thread):
             'if (scores < ccc_map) {out = ccc_map; out2 = angleId;}',
             'updateResFromIdx')
 
-        self.plan = TemplateMatchingPlan(input[0], input[1], input[2], input[3], cp, vt, self.calc_stdV, self.pad, get_fft_plan, deviceid)
+        self.angles = input[5]
+        self.shape = input[6]
+
+        self.plan = TemplateMatchingPlan(input[0], input[1], input[2], input[3], cp, vt, self.calc_stdV, self.pad, get_fft_plan, deviceid, scoreFunc=input[4])
 
         print("Initialized job_{:03d} on device {:d}".format(self.jobid, self.deviceid))
 
@@ -120,13 +153,16 @@ class TemplateMatchingGPU(threading.Thread):
         print("RUN")
         self.Device(self.deviceid).use()
         if 1:
-            self.template_matching_gpu(self.input[4], self.input[5])
+            self.template_matching_gpu(self.angles, self.shape)
             self.completed = True
         else:
             self.completed = False
         self.active = False
 
     def template_matching_gpu(self, angle_list, dims, isSphere=True, verbose=True):
+        from pytom.gpu.gpuFunctions import POF, MCF
+        #from pytom.tompy.correlation import POF
+
 
         self.Device(self.deviceid).use()
 
@@ -143,6 +179,27 @@ class TemplateMatchingGPU(threading.Thread):
 
             # Add wedge
             self.plan.template = self.irfftn(self.rfftn(self.plan.template) * self.plan.wedge, s=self.plan.template.shape)
+            #Normalize template based on correlation function
+            if self.plan.scoreFunc == "POF":
+                #from pytom.tompy.io import write
+                ftemplate = xp.fft.fftn(self.plan.template)
+                ampli = xp.real(xp.abs(ftemplate))
+                ftemplate[ampli < 0.00001] = 0
+                ampli[ampli == 0] = 1
+                ftemplate = ftemplate / ampli
+                self.plan.template = xp.fft.ifftn(ftemplate).real
+                #write("/home/ctsanchez/Desktop/template_pof.mrc", self.plan.template)
+            elif self.plan.scoreFunc == "MCF":
+                #from pytom.tompy.io import write
+                ftemplate = xp.fft.fftn(self.plan.template)
+                ampli = xp.sqrt(xp.real(xp.abs(ftemplate)))
+                ftemplate[ampli <0.00001] = 0
+                ampli[ampli==0] = 1
+                ftemplate = ftemplate / ampli
+                self.plan.template = xp.fft.ifftn(ftemplate).real
+                #write("/home/ctsanchez/Desktop/template_mcf.mrc", self.plan.template)
+            elif self.plan.scoreFunc == "FLCF":
+                self.plan.template = self.plan.template
 
             # Normalize template
             meanT = self.meanUnderMask(self.plan.template, self.plan.mask, p=self.plan.p)
@@ -152,10 +209,10 @@ class TemplateMatchingGPU(threading.Thread):
 
             # Paste in center
             self.plan.templatePadded[CX-cx:CX+cx+mx, CY-cy:CY+cy+my,CZ-cz:CZ+cz+mz] = self.plan.template
-
             # Cross-correlate and normalize by stdV
+            #print(self.plan.stdV.sum(), self.plan.templatePadded.sum(), self.plan.stdV.dtype, self.plan.templatePadded.dtype, self.plan.volume_fft2.dtype, self.plan.p)
             self.plan.ccc_map = self.normalized_cross_correlation(self.plan.volume_fft2, self.plan.templatePadded, self.plan.stdV, self.plan.p, plan=self.plan.fftplan)
-
+            print(self.plan.ccc_map.sum(), self.plan.ccc_map.max())
             # Update the scores and angles
             self.updateResFromIdx(self.plan.scores, self.plan.angles, self.plan.ccc_map, angleId, self.plan.scores, self.plan.angles)
 

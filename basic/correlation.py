@@ -1053,12 +1053,14 @@ def POF(volume, template, mask=None, stdV=None):
         if template.sizeX() != mask.sizeX() and template.sizeY() != mask.sizeY() and template.sizeZ() != mask.sizeZ():
             raise RuntimeError('Template and mask size are not consistent!')
 
+
+    #Calculate non-zeros and size
+    p = sum(mask)
+    size = volume.numelem()
+
     # Normalize template with ampli =1
     ftemplate = fft(template)
-    template = iftshift(ifft(ftemplate / abs(ftemplate)))
-
-    # calculate the non-zeros
-    p = sum(mask)
+    template = ifft(complexDiv(ftemplate, real(abs(ftemplate))))
 
     # normalize the template under mask
     meanT = meanValueUnderMask(template, mask, p)
@@ -1080,19 +1082,19 @@ def POF(volume, template, mask=None, stdV=None):
         maskV.setAll(0)
         pasteCenter(mask, maskV)
 
-    size = volume.numelem()
-
     # Normalize volume with ampli = 1
     fvolume = fft(volume)
-    fvolume = (fvolume / abs(fvolume))
+    fvolume = complexDiv(fvolume, real(abs(fvolume)))
 
     # calculate the mean and std of volume
     if stdV.__class__ != vol:
         fMask = fft(maskV)
         conjugate(fMask)
         meanV = iftshift(ifft(fMask*fvolume))/(size*p)
+        #alternative if still does not work- remove (size*p) in line 1093
+        #meanV.shiftscale(0,1/(size*p))
 
-        volume = iftshift(ifft(fvolume))
+        volume = (ifft(fvolume))
         stdV = stdUnderMask(volume, maskV, p, meanV)
 
 
@@ -1153,14 +1155,16 @@ def MCF(volume, template, mask=None, stdV=None):
         if template.sizeX() != mask.sizeX() and template.sizeY() != mask.sizeY() and template.sizeZ() != mask.sizeZ():
             raise RuntimeError('Template and mask size are not consistent!')
 
+    # Calculate non-zeros and size
+    p = sum(mask)
+    size = volume.numelem()
+
+
     # Normalize template with ampli =1
     ftemplate = fft(template)
-    amp_template = abs(ftemplate)
+    amp_template = real(abs(ftemplate))
     power(amp_template, 0.5)
-    template = iftshift(ifft(ftemplate/amp_template))
-
-    # calculate the non-zeros
-    p = sum(mask)
+    template = ifft(complexDiv(ftemplate, amp_template))
 
     # normalize the template under mask
     meanT = meanValueUnderMask(template, mask, p)
@@ -1182,13 +1186,13 @@ def MCF(volume, template, mask=None, stdV=None):
         maskV.setAll(0)
         pasteCenter(mask, maskV)
 
-    size = volume.numelem()
+    # Normalize volume with ampli = 1 ##This is not needed after the first rotation in GPU!
+    if volume.__class__ != vol_comp:
+        fvolume = fft(volume)
+        amp_volume = real(abs(fvolume))
+        power(amp_volume, 0.5)
+        fvolume = complexDiv(fvolume, amp_volume)
 
-    # Normalize volume with ampli = 1
-    fvolume = fft(volume)
-    amp_volume = abs(fvolume)
-    power(amp_volume, 0.5)
-    fvolume = (fvolume/amp_volume)
 
     # calculate the mean and std of volume
     if stdV.__class__ != vol:
@@ -1196,7 +1200,7 @@ def MCF(volume, template, mask=None, stdV=None):
         conjugate(fMask)
         meanV = iftshift(ifft(fMask * fvolume)) / (size * p)
 
-        volume = iftshift(ifft(fvolume))
+        volume = ifft(fvolume)
         stdV = stdUnderMask(volume, maskV, p, meanV)
 
     fT = fft(tempV)

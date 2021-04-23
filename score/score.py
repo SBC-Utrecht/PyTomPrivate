@@ -99,11 +99,11 @@ def fromXML(xmlObj):
         score = nxcfScore()
     elif type == 'FLCFScore':
         score = FLCFScore()
-    # make FLCF default score
     elif type == "POFScore":
         score = POFScore()
     elif type == "MCFScore":
         score = MCFScore()
+    # make FLCF default score
     elif type == 'undefined':
         score = FLCFScore()
     elif type == 'SOCScore':
@@ -824,29 +824,3 @@ class POFScore(Score):
     def getWorstValue(self):
         return -10000000000
 
-class FPOFScore(Score):
-    """
-    POFScore : Uses the Phase Only Correlation Function for scoring with FLCF
-    @author: Thomas Hrabe & Maria Cristina Trueba
-    """
-    coefFnc = peakCoef
-
-    def __init__(self, value=None):
-
-        """
-        __init__: assigns the POF as scoringFunction, peakCoef as scoringCoefficient and Vol_G_Val as scoringCriterion
-        :param value: Current value of score
-        """
-
-        from pytom.basic.correlation import FPOF
-        self.ctor(FPOF, self.coefFnc, Vol_G_Val)
-        self._type = "FPOFScore"
-
-        # if value and (isinstance(value, (int, long)) or value.__class__ == float):
-        if value and (value.__class__ == int or value.__class__ == int or value.__class__ == float):
-            self.setValue(value)
-        else:
-            self.setValue(self.getWorstValue())
-
-    def getWorstValue(self):
-        return -10000000000

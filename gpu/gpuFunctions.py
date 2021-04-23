@@ -157,53 +157,118 @@ def stdVolUnderMaskPlanned(volume, mask, meanV, ifftnP, fftnP, plan):
 
     return var**0.5
 
+def normalized_cross_correlation(self, volume_fft, template, norm, p=1, plan=None):
+    return self.fftshift(self.ifftnP(volume_fft * self.fftnP(template, plan=plan).conj(), plan=plan)).real / (p * norm)
 
-argmax = xp.RawKernel(r'''
+def POF(fvolume, template, mask, stdV, p, fft_plan):
+    """
+        Phase only filter correlation function to save computational time by using fvolume in all but the first rotations
 
-    extern "C"  __device__ void warpReduce(volatile float* sdata, volatile int* maxid, int tid, int blockSize) {
-        if (blockSize >= 64 && sdata[tid] < sdata[tid + 32]){ sdata[tid] = sdata[tid + 32]; maxid[tid] = maxid[tid+32];} 
-        if (blockSize >= 32 && sdata[tid] < sdata[tid + 16]){ sdata[tid] = sdata[tid + 16]; maxid[tid] = maxid[tid+16];}
-        if (blockSize >= 16 && sdata[tid] < sdata[tid +  8]){ sdata[tid] = sdata[tid +  8]; maxid[tid] = maxid[tid+ 8];}
-        if (blockSize >=  8 && sdata[tid] < sdata[tid +  4]){ sdata[tid] = sdata[tid +  4]; maxid[tid] = maxid[tid+ 4];}
-        if (blockSize >=  4 && sdata[tid] < sdata[tid +  2]){ sdata[tid] = sdata[tid +  2]; maxid[tid] = maxid[tid+ 2];}
-        if (blockSize >=  2 && sdata[tid] < sdata[tid +  1]){ sdata[tid] = sdata[tid +  1]; maxid[tid] = maxid[tid+ 1];}
-    }
+        @param volume: target volume
+        @param template: template to be searched. It can be smaller than target volume
+        @param mask: template mask. If not given, default sphere mask will be used
+        @param stdV: standard deviation of the target volume under mask, which do not need to be calculated again when the mask is identical.
 
-    extern "C" __global__ 
-    void argmax(float *g_idata, float *g_odata, int *g_mdata, int n) {
-        __shared__ float sdata[1024]; 
-        __shared__ int maxid[1024];
-         
-        for (int i=0; i < 1024; i++){ 
-            sdata[i] = 0;
-            maxid[i] = 0;}
-            
-        __syncthreads();                                                                                                                              
-        
-        int blockSize = blockDim.x;                                                                                                                                                   
-        unsigned int tid = threadIdx.x;                                                                                                                                        
-        int i = blockIdx.x*(blockSize)*2 + tid;                                                                                                                       
-        int gridSize = blockSize*gridDim.x*2;                                                                                                                         
-        
-        while (i < n) {
-            if (sdata[tid] < g_idata[i]){
-                sdata[tid] = g_idata[i];
-                maxid[tid] = i;
-            }
-            if (sdata[tid] < g_idata[i+blockSize]){
-                sdata[tid] = g_idata[i+blockSize];
-                maxid[tid] = i + blockSize; 
-            }
-            i += gridSize; 
-        };
-         __syncthreads();                                                                                                                                                       
-        
-        if (blockSize >= 1024){ if (tid < 512 && sdata[tid] < sdata[tid + 512]){ sdata[tid] = sdata[tid + 512]; maxid[tid] = maxid[tid+512]; } __syncthreads(); }
-        if (blockSize >=  512){ if (tid < 256 && sdata[tid] < sdata[tid + 256]){ sdata[tid] = sdata[tid + 256]; maxid[tid] = maxid[tid+256]; } __syncthreads(); }
-        if (blockSize >=  256){ if (tid < 128 && sdata[tid] < sdata[tid + 128]){ sdata[tid] = sdata[tid + 128]; maxid[tid] = maxid[tid+128]; } __syncthreads(); }
-        if (blockSize >=  128){ if (tid <  64 && sdata[tid] < sdata[tid +  64]){ sdata[tid] = sdata[tid +  64]; maxid[tid] = maxid[tid+ 64]; } __syncthreads(); }
-        if (tid < 32){ warpReduce(sdata, maxid, tid, blockSize);}                                                                                                                                                                      
-        if (tid == 0) {g_odata[blockIdx.x] = sdata[0]; g_mdata[blockIdx.x] = maxid[0];} 
-        
+        @return: Phase only filter correlation function
+        """
+    from pytom.tompy.normalise import meanUnderMask, stdUnderMask
 
-    }''', 'argmax')
+    #Normalize template with ampli = 1
+    ftemplate = xp.fft.fftn(template)
+    template = xp.fft.ifftn(ftemplate / xp.real(xp.abs(ftemplate)))
+
+    #Normalize template with mask
+    meanT = meanUnderMask(template, mask, p=p)
+    stdT = stdUnderMask(template, mask, meanT, p=p)
+
+    temp = (template - meanT) / stdT
+    temp = temp * mask
+
+    #Calculate normalized cross correlation with fvolume
+    result = normalized_cross_correlation(fvolume, temp, stdV, p, fft_plan)
+
+    return result
+
+
+def MCF(fvolume, template, mask, stdV, p, fft_plan):
+    """
+        Mutual correlation function to save computational time by using fvolume in all but the first rotations
+
+        @param volume: target volume
+        @param template: template to be searched. It can be smaller than target volume
+        @param mask: template mask. If not given, default sphere mask will be used
+        @param stdV: standard deviation of the target volume under mask, which do not need to be calculated again when the mask is identical.
+
+        @return: Mutual correlation function
+        """
+    from pytom.tompy.normalise import meanUnderMask, stdUnderMask
+
+    # Normalize template with ampli = 1
+    ftemplate = xp.fft.fftn(template)
+    template = xp.fft.ifftn(ftemplate / xp.sqrt(xp.real(xp.abs(ftemplate))))
+
+    # Normalize template with mask
+    meanT = meanUnderMask(template, mask, p=p)
+    stdT = stdUnderMask(template, mask, meanT, p=p)
+
+    temp = (template - meanT) / stdT
+    temp = temp * mask
+
+    # Calculate normalized cross correlation with fvolume
+    result = normalized_cross_correlation(fvolume, temp, stdV, p, fft_plan)
+
+    return result
+
+
+if 'gpu' in device:
+    argmax = xp.RawKernel(r'''
+
+        extern "C"  __device__ void warpReduce(volatile float* sdata, volatile int* maxid, int tid, int blockSize) {
+            if (blockSize >= 64 && sdata[tid] < sdata[tid + 32]){ sdata[tid] = sdata[tid + 32]; maxid[tid] = maxid[tid+32];}
+            if (blockSize >= 32 && sdata[tid] < sdata[tid + 16]){ sdata[tid] = sdata[tid + 16]; maxid[tid] = maxid[tid+16];}
+            if (blockSize >= 16 && sdata[tid] < sdata[tid +  8]){ sdata[tid] = sdata[tid +  8]; maxid[tid] = maxid[tid+ 8];}
+            if (blockSize >=  8 && sdata[tid] < sdata[tid +  4]){ sdata[tid] = sdata[tid +  4]; maxid[tid] = maxid[tid+ 4];}
+            if (blockSize >=  4 && sdata[tid] < sdata[tid +  2]){ sdata[tid] = sdata[tid +  2]; maxid[tid] = maxid[tid+ 2];}
+            if (blockSize >=  2 && sdata[tid] < sdata[tid +  1]){ sdata[tid] = sdata[tid +  1]; maxid[tid] = maxid[tid+ 1];}
+        }
+
+        extern "C" __global__
+        void argmax(float *g_idata, float *g_odata, int *g_mdata, int n) {
+            __shared__ float sdata[1024];
+            __shared__ int maxid[1024];
+            /*
+            for (int i=0; i < 1024; i++){
+                sdata[i] = 0;
+                maxid[i] = 0;}
+
+            __syncthreads();
+            */
+            int blockSize = blockDim.x;
+            unsigned int tid = threadIdx.x;
+            int i = blockIdx.x*(blockSize)*2 + tid;
+            int gridSize = blockSize*gridDim.x*2;
+
+            while (i < n) {
+                //if (sdata[tid] < g_idata[i]){
+                    sdata[tid] = g_idata[i];
+                    maxid[tid] = i;
+                //}
+                if (sdata[tid] < g_idata[i+blockSize]){
+                    sdata[tid] = g_idata[i+blockSize];
+                    maxid[tid] = i + blockSize;
+                }
+                i += gridSize;
+            };
+             __syncthreads();
+
+            if (blockSize >= 1024){ if (tid < 512 && sdata[tid] < sdata[tid + 512]){ sdata[tid] = sdata[tid + 512]; maxid[tid] = maxid[tid+512]; } __syncthreads(); }
+            if (blockSize >=  512){ if (tid < 256 && sdata[tid] < sdata[tid + 256]){ sdata[tid] = sdata[tid + 256]; maxid[tid] = maxid[tid+256]; } __syncthreads(); }
+            if (blockSize >=  256){ if (tid < 128 && sdata[tid] < sdata[tid + 128]){ sdata[tid] = sdata[tid + 128]; maxid[tid] = maxid[tid+128]; } __syncthreads(); }
+            if (blockSize >=  128){ if (tid <  64 && sdata[tid] < sdata[tid +  64]){ sdata[tid] = sdata[tid +  64]; maxid[tid] = maxid[tid+ 64]; } __syncthreads(); }
+            if (tid < 32){ warpReduce(sdata, maxid, tid, blockSize);}
+            if (tid == 0) {g_odata[blockIdx.x] = sdata[0]; g_mdata[blockIdx.x] = maxid[0];}
+
+
+        }''', 'argmax')
+else:
+    argmax = xp.argmax

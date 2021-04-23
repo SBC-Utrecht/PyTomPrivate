@@ -94,6 +94,10 @@ def fromXML(xmlObj):
         score = nxcfScore()
     elif type == 'FLCFScore':
         score = FLCFScore()
+    elif type == "POFScore":
+        score = POFScore()
+    elif type == "MCFScore":
+        score = MCFScore()
     # make FLCF default score
     elif type == 'undefined':
         score = FLCFScore()
@@ -764,13 +768,27 @@ class SOCScore(Score):
         return -10000000000.0
 
 
-class MFCScore(Score):
+class MCFScore(Score):
     """
-    MFCScore : Uses the Mutual Correlation Function for scoring
-    @todo: Implementation
-    @author: Thomas Hrabe
+    MCFScore : Uses the Mutual Correlation Function for scoring
+    @author: Maria Cristina Trueba Sanchez
     """
     coefFnc = peakCoef
+
+    def __init__(self, value = None):
+        """
+        __init__: assigns the phase only filter as scoringFunction
+        @param value: current value of score
+        """
+        from pytom.tompy.correlation import MCF
+        self.ctor(MCF, self.coefFnc, Vol_G_Val)
+        self._type = "MCFScore"
+
+        # of value and (is instance(value, (int, long)) or value.__class__ == float):
+        if value and (value.__class__ == int or value.__class__ == int or value.__class__ == float):
+            self.setValue(value)
+        else:
+            self.setValue(self.getWorstValue())
 
     def getWorstValue(self):
         return -10000000000
@@ -779,11 +797,26 @@ class MFCScore(Score):
 class POFScore(Score):
     """
     POFScore : Uses the Phase Only Correlation Function for scoring
-    @todo: Implementation
-    @author: Thomas Hrabe
+    @author: Maria Cristina Trueba Sachez
     """
     coefFnc = peakCoef
 
+    def __init__(self, value=None):
+        """
+        __init__: assigns the phase only filter as scoringFunction
+        @param value: current value of score
+        """
+        from pytom.tompy.correlation import POF
+        self.ctor(POF, self.coefFnc, Vol_G_Val)
+        self._type = "POFScore"
+
+        #of value and (is instance(value, (int, long)) or value.__class__ == float):
+        if value and (value.__class__ == int or value.__class__ == int or value.__class__ == float):
+            self.setValue(value)
+        else:
+            self.setValue(self.getWorstValue())
+
     def getWorstValue(self):
         return -10000000000
+
 

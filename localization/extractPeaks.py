@@ -117,7 +117,7 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
             ref = wedgeInfo.apply(ref)
 
         # rotate the mask if it is asymmetric
-        if scoreFnc == FLCF:
+        if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF:
             if maskIsSphere == False: # if mask is not a sphere, then rotate it
                 m = vol(mask.sizeX(),mask.sizeY(),mask.sizeZ())
                 rotate(mask, m, currentRotation[0], currentRotation[1], currentRotation[2])
@@ -126,7 +126,7 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
         
         # compute the score
         # if mask is sphere and it is the first run, compute the standard deviation of the volume under mask for late use
-        if scoreFnc == FLCF and index == 0 and maskIsSphere == True:
+        if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF and index == 0 and maskIsSphere == True:
             # compute standard deviation of the volume under mask
             maskV = m
             if volume.sizeX() != m.sizeX() or volume.sizeY() != m.sizeY() or volume.sizeZ() != m.sizeZ():
@@ -141,7 +141,7 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
 
         # ref.write('template_cpu.em')
 
-        if scoreFnc == FLCF:
+        if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF:
             if maskIsSphere == True:
                 score = scoreFnc(volume, ref, m, stdV, wedge=1)
             else:
@@ -204,6 +204,9 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
     import numpy as np
     from pytom.gpu.initialize import xp
 
+    if not kwargs["gpuID"] is None:
+        import cupy as xp
+
     xp.cuda.Device(kwargs['gpuID']).use()
 
     angles = rotations[:]
@@ -220,12 +223,18 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
 
     if w1 > 1E-3 or w2 > 1E-3:
         print('Wedge applied to volume')
-        cutoff = wedgeInfo._wedgeObject._cutoffRadius if wedgeInfo._wedgeObject._cutoffRadius > 1E-3 else sx//2
+        cutoff = wedgeInfo._wedgeObject._cutoffRadius if wedgeInfo._wedgeObject._cutoffRadius > 1E-3 else sx//2-1
         smooth = wedgeInfo._wedgeObject._smooth
-        wedge = create_wedge(w1, w2, cutoff, sx, sy, sz, smooth).astype(np.complex64).get()
+        wedge = create_wedge(w1, w2, cutoff, sx, sy, sz, smooth).astype(np.complex64)
+        wedgeVolume = create_wedge(w1, w2, (SX//2)-1, SX, SY, SZ, smooth).astype(np.float32)
+        try:
+            wedge = wedge.get()
+            wedgeVolume = wedgeVolume.get()
+        except:
+            pass
 
-        wedgeVolume = create_wedge(w1, w2, (SX//2)-2, SX, SY, SZ, smooth).astype(np.float32)
-        volume = np.real(np.fft.irfftn(np.fft.rfftn(volume)* wedgeVolume.get() ))
+        volume = np.real(np.fft.irfftn(np.fft.rfftn(volume)* wedgeVolume ))
+
         del wedgeVolume
     else:
         wedge = np.ones((sx,sy,sz//2+1),dtype='float32')
@@ -248,7 +257,7 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
 
 
 
-    input = (volume, reference, mask, wedge, angles, volume.shape)
+    input = (volume, reference, mask, wedge, scoreFnc.__name__, angles, volume.shape)
 
     tm_process = TemplateMatchingGPU(jobid, kwargs['gpuID'], input=input)
     tm_process.start()
