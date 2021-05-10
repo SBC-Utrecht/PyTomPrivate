@@ -126,11 +126,12 @@ class pytom_ScoreTest(unittest.TestCase):
         sc = score()
         #Check auto-correlation coefficient
         c = sc.scoringCoefficient(self.s, self.s)
+        print("pofScore autocorrelation in cpu is, ", c)
         self.assertAlmostEqual(first=c, second=1, places=5, msg="POFScore: Autocorrelation not == 1")
 
         #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
-        c = sc.scoringCoefficient(s, self.v)
-        cf = sc.scoringFunction(s, self.v)
+        c = sc.scoringCoefficient(self.s, self.v)
+        cf = sc.scoringFunction(self.s, self.v)
         p = peak(cf)
         self.assertAlmostEqual( first = c, second = cf.getV(p[0], p[1], p[2]), places=2, msg = "Scoring coefficient and scoring funtion POF inconsistent")
 
@@ -145,6 +146,7 @@ class pytom_ScoreTest(unittest.TestCase):
         sc = score()
         #Check auto-correlation coefficient
         c = sc.scoringCoefficient(self.s, self.s)
+        print("mcfScore autocorrelation in cpu is, ", c)
         self.assertAlmostEqual(first=c, second=1, places=1, msg="MCFScore: Autocorrelation not == 1")
 
         #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
@@ -168,6 +170,7 @@ class pytom_ScoreTest(unittest.TestCase):
         sc = score()
         #Check auto-correlation coefficient
         c = sc.scoringCoefficient(s, s)
+        print("pofScore_np autocorrelation is, ", c)
         self.assertAlmostEqual(first=c, second=1, places=5, msg="POFScore: Autocorrelation not == 1")
 
         #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
@@ -191,6 +194,7 @@ class pytom_ScoreTest(unittest.TestCase):
 
         #Check auto-correlation coefficient
         c = sc.scoringCoefficient(s, s)
+        print("mcfScore_np autocorrelation is, ", c)
         self.assertAlmostEqual(first=c, second=1, places=2, msg= "POFScore: Autocorrelation not == 1")
 
         #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
@@ -215,8 +219,8 @@ class pytom_ScoreTest(unittest.TestCase):
         #Data test
         s = read("./testData/ribo.em")
         #s = vol2npy(self.s).copy()
-        # v = vol2npy(self.v).copy()
-        # s = np.zeros((32, 32, 32))
+        #v = vol2npy(self.v).copy()
+        #s = np.zeros((32, 32, 32))
         # s[12:18,12:18,12:18]=1
 
         #Run GPU tm
@@ -232,6 +236,7 @@ class pytom_ScoreTest(unittest.TestCase):
 
         #Get the highest peak and compare with == 1
         c=c.max()
+        print("pof_gpu autocorrelation is, ", c)
         self.assertAlmostEqual(first=c, second=1, places=4, msg= "POF in GPU Autocorrelation not == 1")
 
     def test_mcf_gpu(self):
@@ -264,8 +269,41 @@ class pytom_ScoreTest(unittest.TestCase):
 
         #Get the highest peak and compare with == 1
         c=c.max()
+        print("mcf_gpu autocorrelation is, ", c)
         self.assertAlmostEqual(first=c, second=1, places=4, msg= "MCF in GPU Autocorrelation not == 1")
 
+    def test_flcf_gpu(self):
+        """
+        Test POF function in gpu
+        @author: Maria Cristina Trueba Sanchez
+        """
+
+        from pytom_numpy import vol2npy
+        from pytom.localization.extractPeaks import templateMatchingGPU
+        from pytom.basic.structures import Wedge, Mask
+        from pytom.tompy.correlation import FLCF as sFunc
+        from pytom.tompy.io import read
+
+        #Data test
+        v = vol2npy(self.v).copy()
+        s = read("./testData/ribo.em")
+        #s = vol2npy(self.s).copy()
+
+        #Run GPU tm
+        w = Wedge(self.wedge)
+        m = Mask("./testData/ribo_mask.em")
+        #m = self.mask
+        m = m.getVolume()
+        m = vol2npy(m).copy()
+
+        result = templateMatchingGPU(volume=s, reference=s, rotations=[[0, 0, 0]], scoreFnc=sFunc, mask=m,
+                                     maskIsSphere=True, wedgeInfo=w, padding=True, jobid=0, gpuID=1)
+        c, a, n, k = result
+
+        #Get the highest peak and compare with == 1
+        c=c.max()
+        print("flcf_gpu autocorrelation is, ", c)
+        self.assertAlmostEqual(first=c, second=1, places=4, msg= "MCF in GPU Autocorrelation not == 1")
 
     def RScore_Test(self):
         """

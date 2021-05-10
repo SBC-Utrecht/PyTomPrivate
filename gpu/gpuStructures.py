@@ -49,22 +49,26 @@ class TemplateMatchingPlan():
             self.volume_fft2 = cp.fft.fftn(self.volume)
 
             if scoreFunc == "POF":
-                #from pytom.tompy.io import write
-                ampli = cp.real(cp.abs(self.volume_fft2))
-                self.volume_fft2[ampli < 0.00001] = 0
-                ampli[ampli == 0] = 1
-                self.volume_fft2 /= ampli
+
+                size = self.volume_fft2.shape
+
+                a = cp.abs(self.volume_fft2)
+                new_a = cp.zeros_like(a)
+                new_a[a>0.00001] = 1
+                phase = cp.angle(self.volume_fft2)
+                
+                self.volume_fft2 = new_a * cp.exp(1j * phase)
                 self.volume = cp.fft.ifftn(self.volume_fft2).real
-                #write("/home/ctsanchez/Desktop/volume_pof.mrc", self.volume)
 
                 calc_stdV(self)
                 cp.cuda.stream.get_current_stream().synchronize()
 
             if scoreFunc == "MCF":
-                ampli = cp.sqrt(cp.real(cp.abs(self.volume_fft2)))
-                self.volume_fft2[ampli<0.00001]=0
-                ampli[ampli==0] = 1
-                self.volume_fft2 /= ampli
+
+                ampli = cp.sqrt(cp.abs(self.volume_fft2))
+                phase = cp.angle(self.volume_fft2)
+
+                self.volume_fft2 = ampli * cp.exp(1j * phase)
                 self.volume = cp.fft.ifftn(self.volume_fft2).real
 
                 calc_stdV(self)
@@ -181,26 +185,39 @@ class TemplateMatchingGPU(threading.Thread):
             self.plan.template = self.irfftn(self.rfftn(self.plan.template) * self.plan.wedge, s=self.plan.template.shape)
             #Normalize template based on correlation function
             if self.plan.scoreFunc == "POF":
-                #from pytom.tompy.io import write
-                ftemplate = xp.fft.fftn(self.plan.template)
-                ampli = xp.real(xp.abs(ftemplate))
-                ftemplate[ampli < 0.00001] = 0
-                ampli[ampli == 0] = 1
-                ftemplate = ftemplate / ampli
-                self.plan.template = xp.fft.ifftn(ftemplate).real
-                #write("/home/ctsanchez/Desktop/template_pof.mrc", self.plan.template)
-            elif self.plan.scoreFunc == "MCF":
-                #from pytom.tompy.io import write
-                ftemplate = xp.fft.fftn(self.plan.template)
-                ampli = xp.sqrt(xp.real(xp.abs(ftemplate)))
-                ftemplate[ampli <0.00001] = 0
-                ampli[ampli==0] = 1
-                ftemplate = ftemplate / ampli
-                self.plan.template = xp.fft.ifftn(ftemplate).real
-                #write("/home/ctsanchez/Desktop/template_mcf.mrc", self.plan.template)
-            elif self.plan.scoreFunc == "FLCF":
-                self.plan.template = self.plan.template
 
+                from pytom.tompy.io import write
+                ftemplate = xp.fft.fftn(self.plan.template)
+
+                size = ftemplate.shape
+                a = xp.abs(ftemplate)
+                new_a = xp.zeros_like(a)
+                new_a[a > 0.00001] = 1
+                phase = xp.angle(ftemplate)
+
+                ftemplate = new_a * xp.exp(1j * phase)
+
+                self.plan.template = xp.fft.ifftn(ftemplate).real
+                write("/home/ctsanchez/Desktop/template_pof_2.mrc", self.plan.template)
+
+            elif self.plan.scoreFunc == "MCF":
+
+                from pytom.tompy.io import write
+
+                ftemplate = xp.fft.fftn(self.plan.template)
+
+                size = ftemplate.shape
+                ampli = xp.sqrt(xp.abs(ftemplate))
+                phase = xp.angle(ftemplate)
+                ftemplate = ampli * xp.exp(1j * phase)
+
+                self.plan.template = xp.fft.ifftn(ftemplate).real
+                write("/home/ctsanchez/Desktop/template_mcf_2.mrc", self.plan.template)
+
+            elif self.plan.scoreFunc == "FLCF":
+                from pytom.tompy.io import write
+                self.plan.template = self.plan.template
+                write("/home/ctsanchez/Desktop/template_flcf.mrc", self.plan.template)
             # Normalize template
             meanT = self.meanUnderMask(self.plan.template, self.plan.mask, p=self.plan.p)
             stdT = self.stdUnderMask(self.plan.template, self.plan.mask, meanT, p=self.plan.p)
@@ -212,7 +229,6 @@ class TemplateMatchingGPU(threading.Thread):
             # Cross-correlate and normalize by stdV
             #print(self.plan.stdV.sum(), self.plan.templatePadded.sum(), self.plan.stdV.dtype, self.plan.templatePadded.dtype, self.plan.volume_fft2.dtype, self.plan.p)
             self.plan.ccc_map = self.normalized_cross_correlation(self.plan.volume_fft2, self.plan.templatePadded, self.plan.stdV, self.plan.p, plan=self.plan.fftplan)
-            print(self.plan.ccc_map.sum(), self.plan.ccc_map.max())
             # Update the scores and angles
             self.updateResFromIdx(self.plan.scores, self.plan.angles, self.plan.ccc_map, angleId, self.plan.scores, self.plan.angles)
 
