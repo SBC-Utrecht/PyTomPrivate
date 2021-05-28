@@ -1018,7 +1018,7 @@ def dev(volume, template, mask=None, volumeIsNormalized=False):
 
     return deviat
 
-def POF(volume, template, mask=None, stdV=None):
+def POF(volume, template, mask=None, stdV=None, wedge=None):
     """
     POF: Phase only filter correlation function
     @param volume: The search volume
@@ -1119,7 +1119,7 @@ def FPOF(volume, template, mask=None, stdV=None):
 
     return FLCF(amp1_volume, amp1_template)
 
-def MCF(volume, template, mask=None, stdV=None):
+def MCF(volume, template, mask=None, stdV=None, wedge=None):
     """
     POF: Mutual correlation function
     @param volume: The search volume
