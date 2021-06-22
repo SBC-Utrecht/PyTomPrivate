@@ -190,15 +190,16 @@ class TemplateMatchingGPU(threading.Thread):
                 ftemplate = xp.fft.fftn(self.plan.template)
 
                 size = ftemplate.shape
+                epsilon = 1e-4
                 a = xp.abs(ftemplate)
                 new_a = xp.zeros_like(a)
-                new_a[a > 0.00001] = 1
+                new_a[a > epsilon] = 1
                 phase = xp.angle(ftemplate)
 
                 ftemplate = new_a * xp.exp(1j * phase)
 
                 self.plan.template = xp.fft.ifftn(ftemplate).real
-                write("/home/ctsanchez/Desktop/template_pof_2.mrc", self.plan.template)
+                write("/home/ctsanchez/Desktop/template_pof_gpu.mrc", self.plan.template)
 
             elif self.plan.scoreFunc == "MCF":
 
@@ -212,18 +213,23 @@ class TemplateMatchingGPU(threading.Thread):
                 ftemplate = ampli * xp.exp(1j * phase)
 
                 self.plan.template = xp.fft.ifftn(ftemplate).real
-                write("/home/ctsanchez/Desktop/template_mcf_2.mrc", self.plan.template)
+                write("/home/ctsanchez/Desktop/template_mcf_gpu.mrc", self.plan.template)
 
             elif self.plan.scoreFunc == "FLCF":
                 from pytom.tompy.io import write
                 self.plan.template = self.plan.template
-                write("/home/ctsanchez/Desktop/template_flcf.mrc", self.plan.template)
+                write("/home/ctsanchez/Desktop/template_flcf_gpu.mrc", self.plan.template)
             # Normalize template
             meanT = self.meanUnderMask(self.plan.template, self.plan.mask, p=self.plan.p)
             stdT = self.stdUnderMask(self.plan.template, self.plan.mask, meanT, p=self.plan.p)
 
             self.plan.template = ((self.plan.template - meanT) / stdT) * self.plan.mask
-
+            # if self.plan.scoreFunc == "POF":
+            #     write("/home/ctsanchez/Desktop/template_pof_gpu_norm.mrc", self.plan.template)
+            # elif self.plan.scoreFunc == "MCF":
+            #     write("/home/ctsanchez/Desktop/template_mcf_gpu_norm.mrc", self.plan.template)
+            # elif self.plan.scoreFunc == "FLCF":
+            #     write("/home/ctsanchez/Desktop/template_flcf_gpu_norm.mrc", self.plan.template)
             # Paste in center
             self.plan.templatePadded[CX-cx:CX+cx+mx, CY-cy:CY+cy+my,CZ-cz:CZ+cz+mz] = self.plan.template
             # Cross-correlate and normalize by stdV

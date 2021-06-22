@@ -337,6 +337,8 @@ def FLCF(volume, template, mask=None, stdV=None, wedge=1):
     
     # calculate the non-zeros
     p = sum(mask)
+    from pytom.tompy.io import write
+    write("/home/ctsanchez/Desktop/template_flcf_cpu.mrc", template)
 
     # normalize the template under mask
     meanT = meanValueUnderMask(template, mask, p)
@@ -344,6 +346,8 @@ def FLCF(volume, template, mask=None, stdV=None, wedge=1):
 
     temp = (template - meanT)/stdT
     temp = temp * mask
+
+    write("/home/ctsanchez/Desktop/template_flcf_cpu_norm.mrc", temp)
 
     # construct both the template and the mask which has the same size as target volume
     tempV = temp
@@ -1058,9 +1062,18 @@ def POF(volume, template, mask=None, stdV=None, wedge=None):
     p = sum(mask)
     size = volume.numelem()
 
+
     # Normalize template with ampli =1
+    epsilon = 1e-4
     ftemplate = fft(template)
-    template = ifft(complexDiv(ftemplate, real(abs(ftemplate))))
+    ampliT = real(abs(ftemplate))
+    limit(ampliT, epsilon, 1, 0, 0, True, False)
+    template = ifft(complexDiv(ftemplate, ampliT))
+    template.shiftscale(0, 1 / template.numelem())
+    
+
+    from pytom.tompy.io import write
+    write("/home/ctsanchez/Desktop/template_pof_cpu.mrc", template)
 
     # normalize the template under mask
     meanT = meanValueUnderMask(template, mask, p)
@@ -1068,7 +1081,7 @@ def POF(volume, template, mask=None, stdV=None, wedge=None):
 
     temp = (template - meanT) / stdT
     temp = temp * mask
-
+    write("/home/ctsanchez/Desktop/template_pof_cpu_norm.mrc", temp)
     # construct both the template and the mask which has the same size as target volume
     tempV = temp
     if volume.sizeX() != temp.sizeX() or volume.sizeY() != temp.sizeY() or volume.sizeZ() != temp.sizeZ():
@@ -1084,7 +1097,9 @@ def POF(volume, template, mask=None, stdV=None, wedge=None):
 
     # Normalize volume with ampli = 1
     fvolume = fft(volume)
-    fvolume = complexDiv(fvolume, real(abs(fvolume)))
+    ampliV = real(abs(fvolume))
+    limit(ampliV, epsilon, 1, 0, 0, True, False)
+    fvolume = complexDiv(fvolume, ampliV)
 
     # calculate the mean and std of volume
     if stdV.__class__ != vol:
@@ -1105,19 +1120,6 @@ def POF(volume, template, mask=None, stdV=None, wedge=None):
     result.shiftscale(0, 1 / (size * p))
 
     return result
-
-def FPOF(volume, template, mask=None, stdV=None):
-    import pytom_volume
-    from pytom_volume import vol, pasteCenter, conjugate, sum, real, abs, complexDiv
-    from pytom.basic.fourier import fft, ifft, iftshift
-
-    fvolume = fft(volume)
-    ftemplate = fft(template)
-
-    amp1_volume = iftshift(ifft(fvolume/abs(fvolume)))
-    amp1_template = iftshift(ifft(ftemplate/abs(ftemplate)))
-
-    return FLCF(amp1_volume, amp1_template)
 
 def MCF(volume, template, mask=None, stdV=None, wedge=None):
     """
@@ -1160,11 +1162,14 @@ def MCF(volume, template, mask=None, stdV=None, wedge=None):
     size = volume.numelem()
 
 
-    # Normalize template with ampli =1
+    # Normalize template with square root of ampli
     ftemplate = fft(template)
     amp_template = real(abs(ftemplate))
     power(amp_template, 0.5)
     template = ifft(complexDiv(ftemplate, amp_template))
+
+    from pytom.tompy.io import write
+    write("/home/ctsanchez/Desktop/template_mcf_cpu.mrc", template)
 
     # normalize the template under mask
     meanT = meanValueUnderMask(template, mask, p)
@@ -1172,6 +1177,7 @@ def MCF(volume, template, mask=None, stdV=None, wedge=None):
 
     temp = (template - meanT) / stdT
     temp = temp * mask
+    write("/home/ctsanchez/Desktop/template_mcf_cpu_norm.mrc", temp)
 
     # construct both the template and the mask which has the same size as target volume
     tempV = temp
