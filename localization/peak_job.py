@@ -332,7 +332,7 @@ class JobInfo():
 if __name__ == '__main__':
     from pytom.basic.structures import Mask, Reference, WedgeInfo
     from pytom.localization.structures import Volume
-    from pytom.score.score import FLCFScore, xcfScore
+    from pytom.score.score import FLCFScore, xcfScore, MCFScore, POFScore
     from pytom.localization.peak_job import PeakJob
     
     v = Volume('/fs/pool/pool-foerster/apps/src/molmatch/test/testvol.em')
@@ -340,7 +340,8 @@ if __name__ == '__main__':
     m = Mask('/fs/pool/pool-foerster/apps/src/molmatch/test/mask_15.em', True)
 
     w = WedgeInfo(0)
-    s = FLCFScore()
+    s = FLCFScore() 
+    #This can also be set to POFScore or MCFScore
     
     from pytom.angles.globalSampling import GlobalSampling
     r = GlobalSampling('/fs/home/ychen/develop/pytom/trunk/pytom/pytomc/libs/libtomc/data/common_data/angles_90_26.em')

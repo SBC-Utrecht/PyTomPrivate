@@ -99,6 +99,10 @@ def fromXML(xmlObj):
         score = nxcfScore()
     elif type == 'FLCFScore':
         score = FLCFScore()
+    elif type == "POFScore":
+        score = POFScore()
+    elif type == "MCFScore":
+        score = MCFScore()
     # make FLCF default score
     elif type == 'undefined':
         score = FLCFScore()
@@ -765,26 +769,58 @@ class SOCScore(Score):
     def getWorstValue(self):
         return -10000000000.0
     
-class MFCScore(Score):
+class MCFScore(Score):
     """
-    MFCScore : Uses the Mutual Correlation Function for scoring
-    @todo: Implementation
-    @author: Thomas Hrabe
+    MCFScore : Uses the Mutual Correlation Function for scoring
+    @author: Thomas Hrabe & Maria Cristina Trueba
     """
-    coefFnc = peakCoef
+    coefFnc = peakCoef 
     
+    def __init__(self, value=None):
+
+        """
+        __init__: assigns the MCF as scoringFunction, peakCoef as scoringCoefficient and Vol_G_Val as scoringCriterion
+        :param value: Current value of score
+        """
+
+        from pytom.basic.correlation import MCF
+        self.ctor(MCF, self.coefFnc, Vol_G_Val)
+        self._type  = "MCFScore"
+
+        # if value and (isinstance(value, (int, long)) or value.__class__ == float):
+        if value and (value.__class__ == int or value.__class__ == int or value.__class__ == float):
+            self.setValue(value)
+        else:
+            self.setValue(self.getWorstValue())
+            
     def getWorstValue(self):
         return -10000000000
+
     
 class POFScore(Score):
     """
     POFScore : Uses the Phase Only Correlation Function for scoring
-    @todo: Implementation
-    @author: Thomas Hrabe
+    @author: Thomas Hrabe & Maria Cristina Trueba
     """
     coefFnc = peakCoef
-    
+
+    def __init__(self, value=None):
+
+        """
+        __init__: assigns the POF as scoringFunction, peakCoef as scoringCoefficient and Vol_G_Val as scoringCriterion
+        :param value: Current value of score
+        """
+
+        from pytom.basic.correlation import POF
+        self.ctor(POF, self.coefFnc, Vol_G_Val)
+        self._type  = "POFScore"
+
+        # if value and (isinstance(value, (int, long)) or value.__class__ == float):
+        if value and (value.__class__ == int or value.__class__ == int or value.__class__ == float):
+            self.setValue(value)
+        else:
+            self.setValue(self.getWorstValue())
     
     def getWorstValue(self):
         return -10000000000
-    
+

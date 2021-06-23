@@ -2,14 +2,17 @@ import threading
 import importlib
 from pytom.tompy.io import read, write
 from pytom.gpu.initialize import device, xp
+import cupy as xp
+
 
 class TemplateMatchingPlan():
-    def __init__(self, volume, template, mask, wedge, cp, vt, calc_stdV, pad, get_fft_plan, deviceid):
-        from pytom.tompy.io import read
-        from pytom.basic.files import read as readC
-        import pytom.voltools as vt
+    def __init__(self, volume, template, mask, wedge, cp, vt, calc_stdV, pad, get_fft_plan, deviceid, scoreFunc):
 
+        import pytom.voltools as vt
+        print(f"Template matching uses {scoreFunc} for calculatng correlation.")
         cp.cuda.Device(deviceid).use()
+
+        self.scoreFunc = scoreFunc
 
         self.volume = cp.asarray(volume,dtype=cp.float32,order='C')
 
@@ -21,18 +24,18 @@ class TemplateMatchingPlan():
         pad(self.mask, self.maskPadded, self.sPad, self.sOrg)
 
         self.templateOrig = cp.asarray(template, dtype=cp.float32,order='C')
-
-        write('te.em', template)
-        self.templateVol = readC('te.em')
-        self.where = 'gpu'
         self.template = cp.asarray(template, dtype=cp.float32,order='C')
         self.texture = vt.StaticVolume(self.template, interpolation='filt_bspline', device=f'gpu:{deviceid}')
         self.templatePadded = cp.zeros_like(self.volume)
 
         self.wedge = cp.asarray(wedge,order='C')
+        self.threshold = 0.001
         #self.volume_fft = cp.fft.rfftn(self.volume) #* cp.array(wedgeVolume,dtype=cp.float32)
-        calc_stdV(self)
-        cp.cuda.stream.get_current_stream().synchronize()
+
+        if scoreFunc in ("FLCF"):
+            calc_stdV(self)
+            cp.cuda.stream.get_current_stream().synchronize()
+
         # del self.volume_fft
 
         self.ccc_map = cp.zeros_like(self.volume)
@@ -42,7 +45,35 @@ class TemplateMatchingPlan():
         self.p = self.mask.sum()
 
         if not get_fft_plan is None:
+
             self.volume_fft2 = cp.fft.fftn(self.volume)
+
+            if scoreFunc == "POF":
+
+                size = self.volume_fft2.shape
+
+                a = cp.abs(self.volume_fft2)
+                new_a = cp.zeros_like(a)
+                new_a[a>0.00001] = 1
+                phase = cp.angle(self.volume_fft2)
+
+                self.volume_fft2 = new_a * cp.exp(1j * phase)
+                self.volume = cp.fft.ifftn(self.volume_fft2).real
+
+                calc_stdV(self)
+                cp.cuda.stream.get_current_stream().synchronize()
+
+            if scoreFunc == "MCF":
+
+                ampli = cp.sqrt(cp.abs(self.volume_fft2))
+                phase = cp.angle(self.volume_fft2)
+
+                self.volume_fft2 = ampli * cp.exp(1j * phase)
+                self.volume = cp.fft.ifftn(self.volume_fft2).real
+
+                calc_stdV(self)
+                cp.cuda.stream.get_current_stream().synchronize()
+
             self.fftplan = get_fft_plan(self.volume.astype(cp.complex64))
         else:
             self.fftplan = None
@@ -62,7 +93,6 @@ class TemplateMatchingGPU(threading.Thread):
         from cupy.fft import fftshift, rfftn, irfftn, ifftn, fftn
         import pytom.voltools as vt
         from cupyx.scipy.ndimage import map_coordinates
-
 
         if 1:
             from cupyx.scipy.fftpack.fft import get_fft_plan
@@ -116,7 +146,10 @@ class TemplateMatchingGPU(threading.Thread):
             'if (scores < ccc_map) {out = ccc_map; out2 = angleId;}',
             'updateResFromIdx')
 
-        self.plan = TemplateMatchingPlan(input[0], input[1], input[2], input[3], cp, vt, self.calc_stdV, self.pad, get_fft_plan, deviceid)
+        self.angles = input[5]
+        self.shape = input[6]
+
+        self.plan = TemplateMatchingPlan(input[0], input[1], input[2], input[3], cp, vt, self.calc_stdV, self.pad, get_fft_plan, deviceid, scoreFunc=input[4])
 
         print("Initialized job_{:03d} on device {:d}".format(self.jobid, self.deviceid))
 
@@ -124,17 +157,17 @@ class TemplateMatchingGPU(threading.Thread):
         print("RUN")
         self.Device(self.deviceid).use()
         if 1:
-            self.template_matching_gpu(self.input[4], self.input[5])
+            self.template_matching_gpu(self.angles, self.shape)
             self.completed = True
         else:
             self.completed = False
         self.active = False
 
     def template_matching_gpu(self, angle_list, dims, isSphere=True, verbose=True):
-        from pytom_numpy import vol2npy
-        from pytom_volume import rotateSpline as rotate, vol
-        import time
-        ref = vol(self.plan.templateVol.sizeX(), self.plan.templateVol.sizeY(), self.plan.templateVol.sizeZ())
+        from pytom.gpu.gpuFunctions import POF, MCF
+        #from pytom.tompy.correlation import POF
+
+
         self.Device(self.deviceid).use()
 
         sx, sy, sz = self.plan.template.shape
@@ -146,39 +179,66 @@ class TemplateMatchingGPU(threading.Thread):
         for angleId, angles in enumerate(angle_list):
             # Rotate
             #self.plan.template = self.rotate3d(self.plan.templateOrig, phi=phi,the=the,psi=psi)
-
-            if self.plan.where  == 'gpu':
-                self.plan.texture.transform(rotation=(angles[0], angles[2], angles[1]), rotation_order='rzxz', output=self.plan.template)
-                #self.plan.template *= self.plan.mask
-            else:
-                #ref.setAll(0.)
-                rotate(self.plan.templateVol, ref, angles[0], angles[1], angles[2])
-                self.plan.template = xp.array(vol2npy(ref).copy(),dtype=xp.float32)
+            self.plan.texture.transform(rotation=(angles[0], angles[2], angles[1]), rotation_order='rzxz', output=self.plan.template)
 
             # Add wedge
             self.plan.template = self.irfftn(self.rfftn(self.plan.template) * self.plan.wedge, s=self.plan.template.shape)
+            #Normalize template based on correlation function
+            if self.plan.scoreFunc == "POF":
 
+                from pytom.tompy.io import write
+                ftemplate = xp.fft.fftn(self.plan.template)
+
+                size = ftemplate.shape
+                epsilon = 1e-4
+                a = xp.abs(ftemplate)
+                new_a = xp.zeros_like(a)
+                new_a[a > epsilon] = 1
+                phase = xp.angle(ftemplate)
+
+                ftemplate = new_a * xp.exp(1j * phase)
+
+                self.plan.template = xp.fft.ifftn(ftemplate).real
+                write("/home/ctsanchez/Desktop/template_pof_gpu.mrc", self.plan.template)
+
+            elif self.plan.scoreFunc == "MCF":
+
+                from pytom.tompy.io import write
+
+                ftemplate = xp.fft.fftn(self.plan.template)
+
+                size = ftemplate.shape
+                ampli = xp.sqrt(xp.abs(ftemplate))
+                phase = xp.angle(ftemplate)
+                ftemplate = ampli * xp.exp(1j * phase)
+
+                self.plan.template = xp.fft.ifftn(ftemplate).real
+                write("/home/ctsanchez/Desktop/template_mcf_gpu.mrc", self.plan.template)
+
+            elif self.plan.scoreFunc == "FLCF":
+                from pytom.tompy.io import write
+                self.plan.template = self.plan.template
+                write("/home/ctsanchez/Desktop/template_flcf_gpu.mrc", self.plan.template)
             # Normalize template
             meanT = self.meanUnderMask(self.plan.template, self.plan.mask, p=self.plan.p)
             stdT = self.stdUnderMask(self.plan.template, self.plan.mask, meanT, p=self.plan.p)
 
             self.plan.template = ((self.plan.template - meanT) / stdT) * self.plan.mask
-
+            # if self.plan.scoreFunc == "POF":
+            #     write("/home/ctsanchez/Desktop/template_pof_gpu_norm.mrc", self.plan.template)
+            # elif self.plan.scoreFunc == "MCF":
+            #     write("/home/ctsanchez/Desktop/template_mcf_gpu_norm.mrc", self.plan.template)
+            # elif self.plan.scoreFunc == "FLCF":
+            #     write("/home/ctsanchez/Desktop/template_flcf_gpu_norm.mrc", self.plan.template)
             # Paste in center
             self.plan.templatePadded[CX-cx:CX+cx+mx, CY-cy:CY+cy+my,CZ-cz:CZ+cz+mz] = self.plan.template
-
-            # write('volume_gpu.em', self.ifftnP(self.plan.volume_fft2, plan=self.plan.fftplan).real)
-            # write('template_gpu.em', self.plan.templatePadded)
-            # write('m_gpu.em', self.plan.maskPadded)
-            # write('stdV_gpu.em', self.plan.stdV)
-
             # Cross-correlate and normalize by stdV
+            #print(self.plan.stdV.sum(), self.plan.templatePadded.sum(), self.plan.stdV.dtype, self.plan.templatePadded.dtype, self.plan.volume_fft2.dtype, self.plan.p)
             self.plan.ccc_map = self.normalized_cross_correlation(self.plan.volume_fft2, self.plan.templatePadded, self.plan.stdV, self.plan.p, plan=self.plan.fftplan)
-
             # Update the scores and angles
             self.updateResFromIdx(self.plan.scores, self.plan.angles, self.plan.ccc_map, angleId, self.plan.scores, self.plan.angles)
-            #self.cp.cuda.stream.get_current_stream().synchronize()
 
+            #self.cp.cuda.stream.get_current_stream().synchronize()
 
     def is_alive(self):
         return self.active
@@ -323,7 +383,7 @@ class GLocalAlignmentPlan():
         from cupyx.scipy.fftpack.fft import ifftn as ifftnP
         from pytom.tompy.io import read_size, write
         from pytom.gpu.kernels import argmax_text, meanStdv_text
-        from pytom.tompy.filter import bandpass
+
 
         # Allocate volume and volume_fft
         self.volume        = cp.zeros(read_size(particle.getFilename()), dtype=cp.float32)
@@ -346,7 +406,7 @@ class GLocalAlignmentPlan():
         self.wedgeAngles   = wedge.getWedgeAngle()
         wedgePart          = wedge.returnWedgeVolume(*self.volume.shape,humanUnderstandable=True).get()
         self.rotatedWedge  = cp.array(wedgePart, dtype=cp.float32)
-        self.wedgePart     = cp.fft.fftshift(wedgePart).astype(cp.float32)
+        self.wedgePart     = cp.fft.fftshift(wedgePart)
         self.wedgeTex      = StaticVolume(self.rotatedWedge.copy(), device=self.device, interpolation=interpolation)
         del wedgePart
 
@@ -1364,10 +1424,8 @@ void normalize( float* volume, const float* mask, float mean, float stdV, int n 
         if not volumesSameSize(volume, template):
             raise RuntimeError('Volume and template must have same size!')
 
-
-        volume = self.normaliseUnderMask(volume)
-        template = self.normaliseUnderMask(template)
-
+        self.normaliseUnderMask(volume)
+        self.normaliseUnderMask(template)
 
         self.fast_sum_mean *= 0.
         self.sumKernel((self.nblocks, 1, 1), (self.num_threads,),
@@ -1400,15 +1458,7 @@ void normalize( float* volume, const float* mask, float mean, float stdV, int n 
         meanT = self.fast_sum_mean.sum() / self.p
         stdT = self.cp.sqrt(self.fast_sum_stdv.sum() / self.p - meanT * meanT)
 
-
-        return ((volume - meanT)/ stdT) * self.mask
-
-
-        self.normalize((int(self.cp.ceil(volume.size / self.num_threads)),1,1),(self.num_threads,1,1), (volume, self.mask, meanT, stdT, volume.size))
-
-        return volume
-
-        print(volume.sum())
+        self.normalize((int(self.cp.ceil(self.volume.size / self.num_threads)),1,1),(self.num_threads,1,1), (volume, self.mask, meanT, stdT, volume.size))
 
     def store_particle(self, id, filename, profile=True, binning=1):
         from pytom.tompy.transform import resize, fourier_reduced2full, resizeFourier, fourier_full2reduced
@@ -1438,16 +1488,15 @@ void normalize( float* volume, const float* mask, float mean, float stdV, int n 
 
 class NonUniformFFTPlan():
     def __init__(self):
-        from pytom.gpu.kernels import spmvh_kernel_text, spmv_kernel_text, sum_weighted_norm_complex_array_text, sum_norm_complex_array_text, cTensorCopy_text, cTensorMultiply_text, sum_text
+        from pytom.gpu.kernels import spmv_kernel_text, sum_weighted_norm_complex_array_text, sum_norm_complex_array_text, cTensorCopy_text, cTensorMultiply_text, sum_text
 
         #kernels
-        self.spmvh = xp.RawKernel(spmvh_kernel_text, 'spmvh')
-        self.spmv = xp.RawKernel(spmv_kernel_text, 'spmv')
-        self.sum_weighted_norm_complex_array = xp.RawKernel(sum_weighted_norm_complex_array_text, 'sum_weighted_norm_complex_array')
-        self.sum_norm_complex_array = xp.RawKernel(sum_norm_complex_array_text, 'sum_norm_complex_array')
+        self.spmvh = xp.RawKernel(spmv_kernel_text, 'spmvh')
+        self.sum_weighted_norm_complex_array = xp.RawKernel(sum_weighted_norm_complex_array_text, 'sum_weighted_complex_array')
+        self.sum_norm_complex_array = xp.RawKernel(sum_norm_complex_array_text, 'sum_complex_array')
         self.sum = xp.RawKernel(sum_text, 'sum')
         self.cTensorCopy = xp.RawKernel(cTensorCopy_text, 'cTensorCopy')
-        self.cTensorMultiply = xp.RawKernel(cTensorMultiply_text, 'cTensorMultiply')
+        self.cTensorCopy = xp.RawKernel(cTensorMultiply_text, 'cTensorMultiply')
 
         self.num_threads = 1024
 
@@ -1657,10 +1706,7 @@ class NonUniformFFT():
         # if coil_profile.shape == self.Nd + (self.batch, ):
 
     def to_device(self, image, shape=None):
-        import numpy
-        print(str(image.dtype))
-        ddict = {'complex64' : xp.complex64, 'float32': xp.float32, 'uint32': xp.uint32, 'int32': xp.int32, 'complex128': xp.complex128}
-        g_image = xp.array(image, dtype=ddict[str(image.dtype)])
+        g_image = xp.array(image, dtype=xp.float32)
         return g_image
 
     def x2xx(self, x):
@@ -1682,7 +1728,7 @@ class NonUniformFFT():
 
         return xx
 
-    def q2y(self, q):
+    def q2y(self, k):
         """
         Private: interpolation by the Sparse Matrix-Vector Multiplication
         """
@@ -1691,11 +1737,9 @@ class NonUniformFFT():
         nthreads = min(self.plan.num_threads, xp.ceil(self.pELL['nRow'] * self.wavefront))
 
         y = xp.zeros(self.multi_M, dtype=xp.complex64)
-        print(q.max(), q.dtype)
-        self.plan.spmv((nblocks, 1, 1),(nthreads,1,1), (self.batch, self.pELL['nRow'],self.pELL['prodJd'],self.pELL['sumJd'], self.pELL['dim'],
-                                 self.pELL['Jd'], self.pELL['meshindex'],self.pELL['kindx'], self.pELL['udata'], q, y),shared_mem=8 * nthreads)
+        self.plan.spmvh((nblocks, 1, 1),(nthreads,1,1), (self.batch, self.pELL['nRow'],self.pELL['prodJd'],self.pELL['sumJd'], self.pELL['dim'],
+                                 self.pELL['Jd'], self.pELL['meshindex'],self.pELL['kindx'], self.pELL['udata'], k, y))
                                  # local_size=int(self.wavefront), global_size=int(self.pELL['nRow'] * self.batch * self.wavefront))
-
 
         return y
 
@@ -1706,7 +1750,7 @@ class NonUniformFFT():
         """
         import matplotlib
         matplotlib.use('Qt5Agg')
-        from pylab import imshow, show, plot
+        from pylab import imshow, show
 
         k   = xp.zeros(self.multi_Kd, dtype=xp.complex64)
         res = xp.zeros(self.multi_Kd, dtype=xp.complex64) # array which saves the residue of two sum
@@ -1714,17 +1758,11 @@ class NonUniformFFT():
         nblocks = int(xp.ceil(self.pELL['nRow'] / self.plan.num_threads))
         nthreads = min(self.pELL['nRow'], self.plan.num_threads)
 
-
-        # print(self.pELL['udata'].shape)
-        # for kk in range(4):
-        #     plot(abs(self.pELL['udata'][kk]).get())
-        #     show()
-
-
+        print(self.pELL['udata'].__class__)
 
         self.plan.spmvh((nblocks,1,1),(nthreads, 1, 1),
-                                   ((self.batch), (self.pELL['nRow']), (self.pELL['prodJd']), (self.pELL['sumJd']),
-                                    (self.pELL['dim']),self.pELL['Jd'], self.pELL['meshindex'], self.pELL['kindx'],
+                                   (self.batch, self.pELL['nRow'], self.pELL['prodJd'], self.pELL['sumJd'],
+                                    self.pELL['dim'],self.pELL['Jd'], self.pELL['meshindex'], self.pELL['kindx'],
                                     self.pELL['udata'], k, res, y))
 
         #     local_size=None,
@@ -1732,10 +1770,10 @@ class NonUniformFFT():
         #     #                                             int(self.pELL['prodJd']) * int(self.batch))
         # )
 
-        # imshow(abs(y.get())**2,norm=matplotlib.colors.LogNorm())
-        # show()
+        imshow(abs(y.get())**2,norm=matplotlib.colors.LogNorm())
+        show()
+        print(k.shape, res.shape, k.dtype, res.dtype)
         rr = k + res
-        print(rr.imag.max())
         return rr
 
     def q2xx(self, k):
@@ -1743,9 +1781,8 @@ class NonUniformFFT():
         Private: the inverse FFT and image cropping (which is the reverse of
         _xx2k() method)
         """
-        import numpy
-        print('k', k.shape)
-        x = xp.fft.fftshift( xp.fft.ifftn(xp.fft.fftshift(k)))
+
+        x = xp.fft.fftshift( xp.fft.ifft(xp.fft.fftshift(k)))
         xx = xp.zeros(self.multi_Nd, dtype=self.dtype)
 
         nblocks = int(xp.ceil(self.Ndprod / self.plan.num_threads))
@@ -1767,7 +1804,6 @@ class NonUniformFFT():
     def sum_weighted_norm_complex_array(self, volume, weights):
         nblocks = int(xp.ceil(volume.size / self.plan.num_threads / 2))
         fast_sum_mean = xp.zeros((nblocks), dtype=xp.float32)
-        print(fast_sum_mean.sum(), weights.shape, volume.shape)
         self.plan.sum_weighted_norm_complex_array((nblocks, 1,), (self.plan.num_threads, 1, 1),
                                      (volume, weights, fast_sum_mean, volume.size),
                                      shared_mem=8 * self.plan.num_threads)
@@ -1813,33 +1849,30 @@ class NonUniformFFT():
         """
 
         gy = self.to_device(gy)
+
+        damping = 1 if not 'damping' in kwargs.keys() else kwargs['damping']
+        weights = 1 if not 'weights' in kwargs.keys() else kwargs['weights']
+
         q_hat_iter = self.y2q(gy)
-
-        damping = xp.ones_like(q_hat_iter,dtype=xp.float32) if not 'damping' in kwargs.keys() else kwargs['damping']
-        weights = xp.ones_like(gy,dtype=xp.float32) if not 'weights' in kwargs.keys() else kwargs['weights']
-
-        epsilon = 1E-6
-
         r_iter = self.q2y(q_hat_iter)
-
         r_iter -= gy
 
         z_hat_iter = self.y2q(weights * r_iter)
         p_hat_iter = z_hat_iter.copy()
 
-        rsold = self.sum_weighted_norm_complex_array(r_iter, weights)
-        zsold = self.sum_weighted_norm_complex_array(z_hat_iter, damping)
+        rsold = self.sum_weighted_array(r_iter, weights)
+        zsold = self.sum_weighted_array(z_hat_iter, damping)
 
-        for pp in range(0, kwargs['maxiter']):
+        for pp in range(0, maxiter):
             q_hat = damping * p_hat_iter
             y_iter = self.q2y(q_hat)
-            rsnew = self.sum_weighted_norm_complex_array(y_iter, weights)
+            rsnew = self.sum_weighted_array(y_iter, weights)
             alpha = rsold / rsnew
             rsold = rsnew
             q_hat_iter += alpha * damping * p_hat_iter
             r_iter -= alpha * weights * y_iter
             z_hat_iter = self.y2q(weights * r_iter)
-            zsnew = self.sum_weighted_norm_complex_array(z_hat_iter, damping)
+            zsnew = self.sum_weighted_array(z_hat_iter, damping)
             beta = zsnew / zsold
             zsold = zsnew
             p_hat_iter = beta * p_hat_iter + z_hat_iter
@@ -1847,22 +1880,21 @@ class NonUniformFFT():
             if rsnew < epsilon:
                 break
 
-        x2 = xp.fft.fftshift(self.q2xx(q_hat_iter))  # or is it f_hat?
-        print(x2.shape, x2.dtype, self.Ndprod)
+        x2 = q2xx_device(q_hat_iter)  # or is it f_hat?
+
         try:
             x2 /= self.volume['SnGPUArray']
         except:
-            import numpy
-            nblocks = int(numpy.ceil(self.Ndprod / self.plan.num_threads))
 
-            self.plan.cTensorMultiply((nblocks,1,1), (self.plan.num_threads,1,1), (numpy.uint32(self.batch),
-                                      numpy.uint32(self.tSN['Tdims']),
-                                      self.tSN['Td'],
-                                      self.tSN['Td_elements'],
-                                      self.tSN['invTd_elements'],
-                                      self.tSN['tensor_sn'],
+            self.cTensorMultiply(numpy.uint32(nufft.batch),
+                                      numpy.uint32(nufft.tSN['Tdims']),
+                                      nufft.tSN['Td'],
+                                      nufft.tSN['Td_elements'],
+                                      nufft.tSN['invTd_elements'],
+                                      nufft.tSN['tensor_sn'],
                                       x2,
-                                      numpy.uint32(1)))
+                                      numpy.uint32(1),  # division, 1 is true
+                                      local_size=None, global_size=int(nufft.batch * nufft.Ndprod))
 
         return x2
 

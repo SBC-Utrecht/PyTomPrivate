@@ -111,6 +111,8 @@ class PeakWorker(object):
             v, ref, m = [vol2npy(vol).copy() for vol in (v, ref, m)]
             g = gpuID[self.mpi_id]
 
+
+
         if verbose==True:
             print(self.name + ': starting to calculate %d rotations' % rot.numberRotations() )
         [resV, orientV, sumV, sqrV] = extractPeaks(v, ref, rot, scoreFnc, m, mIsSphere, wedg, nodeName=self.name,

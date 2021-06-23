@@ -432,6 +432,113 @@ def dev(volume, template, mask=None, volumeIsNormalized=False):
 
     return deviat
 
+def POF(volume, template, mask=None, stdV=None, gpu=False, mempool=None, pinned_mempool=None):
+    """
+    Phase only filter correlation function
+
+    @param volume: target volume
+    @param template: template to be searched. It can be smaller than target volume
+    @param mask: template mask. If not given, default sphere mask will be used
+    @param stdV: standard deviation of the target volume under mask, which do not need to be calculated again when the mask is identical.
+
+    @return: Phase only filter correlation function
+
+    @author: Maria Cristina Trueba Sanchez
+    """
+
+    #Generate the mask
+    if mask is None:
+        from pytom.tompy.tools import create_circle, create_sphere
+        if len(volume.shape) == 2:
+            mask = create_circle(volume.shape, volume.shape[0]//2-3, 3)
+        elif len(volume.shape) == 3:
+            mask = create_sphere(volume.shape, volume.shape[0]//2-3, 3)
+
+    #Calculate non-zeros and size
+    p = mask.sum()
+
+    #Normalize template with ampli = 1
+    ftemplate = xp.fft.fftn(template)
+    template = xp.fft.ifftn(ftemplate / (xp.real(xp.abs(ftemplate))))
+
+    #Normalize template under mask
+    meanT = meanUnderMask(template, mask, p=p)
+    stdT = stdUnderMask(template, mask, meanT, p=p)
+
+    temp = (template - meanT) / stdT
+    temp = temp * mask
+
+    #Normalize volume with ampli = 1.
+    fvolume = xp.fft.fftn(volume)
+    fvolume = fvolume / xp.real(xp.abs(fvolume))
+
+    #Calculate mean and stdV of volume:
+    fMask = xp.fft.fftn(mask)
+    xp.conj(fMask)
+    meanV = xp.fft.fftshift(xp.fft.ifftn(fMask*fvolume))/ p
+
+    volume = xp.fft.ifftn(fvolume)
+    stdV = stdVolUnderMask(volume, mask, meanV)
+
+    fT = xp.fft.fftn(temp)
+    fT = xp.conj(fT)
+    result = xp.fft.fftshift(xp.fft.ifftn(fT*fvolume)).real /stdV / p
+
+    return result
+
+def MCF(volume, template, mask=None, stdV=None, gpu=False, mempool=None, pinned_mempool=None):
+    """
+    Mutual correlation function
+
+    @param volume: target volume
+    @param template: template to be searched. It can be smaller than target volume
+    @param mask: template mask. If not given, default sphere mask will be used
+    @param stdV: standard deviation of the target volume under mask, which do not need to be calculated again when the mask is identical.
+
+    @return: Mutual correlation function
+
+    @author: Maria Cristina Trueba Sanchez
+    """
+
+    #Generate the mask
+    if mask is None:
+        from pytom.tompy.tools import create_circle, create_sphere
+        if len(volume.shape) == 2:
+            mask = create_circle(volume.shape, volume.shape[0]//2-3, 3)
+        elif len(volume.shape) == 3:
+            mask = create_sphere(volume.shape, volume.shape[0]//2-3, 3)
+
+    #Calculate non-zeros and size
+    p = mask.sum()
+
+    #Normalize template with ampli = 1
+    ftemplate = xp.fft.fftn(template)
+    template = xp.fft.ifftn(ftemplate / xp.sqrt(xp.real(xp.abs(ftemplate))))
+
+    #Normalize template under mask
+    meanT = meanUnderMask(template, mask, p=p)
+    stdT = stdUnderMask(template, mask, meanT, p=p)
+
+    temp = (template - meanT) / stdT
+    temp = temp * mask
+
+    #Normalize volume with ampli = 1.
+    fvolume = xp.fft.fftn(volume)
+    fvolume = fvolume / xp.sqrt(xp.real(xp.abs(fvolume)))
+
+    #Calculate mean and stdV of volume:
+    fMask = xp.fft.fftn(mask)
+    xp.conj(fMask)
+    meanV = xp.fft.fftshift(xp.fft.ifftn(fMask*fvolume))/ p
+
+    volume = xp.fft.ifftn(fvolume)
+    stdV = stdVolUnderMask(volume, mask, meanV)
+
+    fT = xp.fft.fftn(temp)
+    fT = xp.conj(fT)
+    result = xp.fft.fftshift(xp.fft.ifftn(fT*fvolume)).real /stdV / p
+
+    return result
 
 # Band correlation
 
@@ -946,11 +1053,6 @@ def subPixelPeak(scoreVolume, coordinates, cubeLength=8, interpolation='Spline',
                                                              verbose=verbose)
         return [peakValue, peakCoordinates]
 
-    if gpu:
-        import cupy as xp
-    else:
-        import numpy as xp
-
     from pytom_volume import vol, subvolume, rescaleSpline, peak
     from pytom.basic.transformations import resize
 
@@ -958,9 +1060,9 @@ def subPixelPeak(scoreVolume, coordinates, cubeLength=8, interpolation='Spline',
     twoD = (scoreVolume.shape) == 2
 
     cubeStart = cubeLength // 2
-    sizeX = scoreVolume.sizeX()
-    sizeY = scoreVolume.sizeY()
-    sizeZ = scoreVolume.sizeZ()
+    sizeX = scoreVolume.shape[0]
+    sizeY = scoreVolume.shape[1]
+    sizeZ = scoreVolume.shape[2]
 
     if twoD:
         if (coordinates[0] - cubeStart < 1 or coordinates[1] - cubeStart < 1) or \
@@ -1019,7 +1121,7 @@ def subPixelPeak(scoreVolume, coordinates, cubeLength=8, interpolation='Spline',
 
     return [peakValue, peakCoordinates]
 
-def subPixelMax3D(volume, k=.01, ignore_border=50, interpolation='filt_bspline', plan=None, profile=True,
+def subPixelMax3D(volume, k=.01, ignore_border=50, interpolation='filt_bspline', plan=None, profile=False,
                   num_threads=1024, zoomed=None, fast_sum=None, max_id=None):
     """
     Function to find the highest point in a 3D array, with subpixel accuracy using cubic spline interpolation.
@@ -1035,10 +1137,7 @@ def subPixelMax3D(volume, k=.01, ignore_border=50, interpolation='filt_bspline',
 
     from pytom.voltools import transform
     from pytom.tompy.io import write
-
-
-
-
+    from pytom.gpu.initialize import device
 
     ox,oy,oz = volume.shape
     ib = ignore_border
@@ -1069,7 +1168,7 @@ def subPixelMax3D(volume, k=.01, ignore_border=50, interpolation='filt_bspline',
     zx,zy,zz = volume.shape
     out = volume[b:zx-b,b:zy-b,b:zz-b]
 
-
+    print(out.shape)
     transform(out, output=zoomed, scale=(k,k,k), device=device, translation=translation, interpolation=interpolation)
 
     if profile:
@@ -1080,10 +1179,13 @@ def subPixelMax3D(volume, k=.01, ignore_border=50, interpolation='filt_bspline',
         print(f'transform finished in \t{time_took:.3f}ms')
         t_start = stream.record()
 
-
     nblocks = int(xp.ceil(zoomed.size / num_threads / 2))
-    argmax((nblocks, 1,), (num_threads, 1, 1), (zoomed, fast_sum, max_id, zoomed.size), shared_mem=8*num_threads)
-    x2,y2,z2 = xp.unravel_index(max_id[fast_sum.argmax()], zoomed.shape)
+
+    if "gpu" in device:
+        argmax((nblocks, 1,), (num_threads, 1, 1), (zoomed, fast_sum, max_id, zoomed.size), shared_mem=8*num_threads)
+        x2, y2, z2 = xp.unravel_index(max_id[fast_sum.argmax()], zoomed.shape)
+    else:
+        x2, y2, z2 = xp.unravel_index(zoomed.argmax(), zoomed.shape)
 
     peakValue = zoomed[x2][y2][z2]
     peakShift = [x + (x2-zoomed.shape[0]//2)*k - volume.shape[0]//2,
@@ -1103,32 +1205,32 @@ def subPixelMax3D(volume, k=.01, ignore_border=50, interpolation='filt_bspline',
 
 if 'gpu' in device:
     argmax = xp.RawKernel(r'''
-    
+
         extern "C"  __device__ void warpReduce(volatile float* sdata, volatile int* maxid, int tid, int blockSize) {
-            if (blockSize >= 64 && sdata[tid] < sdata[tid + 32]){ sdata[tid] = sdata[tid + 32]; maxid[tid] = maxid[tid+32];} 
+            if (blockSize >= 64 && sdata[tid] < sdata[tid + 32]){ sdata[tid] = sdata[tid + 32]; maxid[tid] = maxid[tid+32];}
             if (blockSize >= 32 && sdata[tid] < sdata[tid + 16]){ sdata[tid] = sdata[tid + 16]; maxid[tid] = maxid[tid+16];}
             if (blockSize >= 16 && sdata[tid] < sdata[tid +  8]){ sdata[tid] = sdata[tid +  8]; maxid[tid] = maxid[tid+ 8];}
             if (blockSize >=  8 && sdata[tid] < sdata[tid +  4]){ sdata[tid] = sdata[tid +  4]; maxid[tid] = maxid[tid+ 4];}
             if (blockSize >=  4 && sdata[tid] < sdata[tid +  2]){ sdata[tid] = sdata[tid +  2]; maxid[tid] = maxid[tid+ 2];}
             if (blockSize >=  2 && sdata[tid] < sdata[tid +  1]){ sdata[tid] = sdata[tid +  1]; maxid[tid] = maxid[tid+ 1];}
         }
-    
-        extern "C" __global__ 
+
+        extern "C" __global__
         void argmax(float *g_idata, float *g_odata, int *g_mdata, int n) {
-            __shared__ float sdata[1024]; 
+            __shared__ float sdata[1024];
             __shared__ int maxid[1024];
-            /* 
-            for (int i=0; i < 1024; i++){ 
+            /*
+            for (int i=0; i < 1024; i++){
                 sdata[i] = 0;
                 maxid[i] = 0;}
-                
-            __syncthreads();                                                                                                                              
+
+            __syncthreads();
             */
-            int blockSize = blockDim.x;                                                                                                                                                   
-            unsigned int tid = threadIdx.x;                                                                                                                                        
-            int i = blockIdx.x*(blockSize)*2 + tid;                                                                                                                       
-            int gridSize = blockSize*gridDim.x*2;                                                                                                                         
-            
+            int blockSize = blockDim.x;
+            unsigned int tid = threadIdx.x;
+            int i = blockIdx.x*(blockSize)*2 + tid;
+            int gridSize = blockSize*gridDim.x*2;
+
             while (i < n) {
                 //if (sdata[tid] < g_idata[i]){
                     sdata[tid] = g_idata[i];
@@ -1136,20 +1238,20 @@ if 'gpu' in device:
                 //}
                 if (sdata[tid] < g_idata[i+blockSize]){
                     sdata[tid] = g_idata[i+blockSize];
-                    maxid[tid] = i + blockSize; 
+                    maxid[tid] = i + blockSize;
                 }
-                i += gridSize; 
+                i += gridSize;
             };
-             __syncthreads();                                                                                                                                                       
-            
+             __syncthreads();
+
             if (blockSize >= 1024){ if (tid < 512 && sdata[tid] < sdata[tid + 512]){ sdata[tid] = sdata[tid + 512]; maxid[tid] = maxid[tid+512]; } __syncthreads(); }
             if (blockSize >=  512){ if (tid < 256 && sdata[tid] < sdata[tid + 256]){ sdata[tid] = sdata[tid + 256]; maxid[tid] = maxid[tid+256]; } __syncthreads(); }
             if (blockSize >=  256){ if (tid < 128 && sdata[tid] < sdata[tid + 128]){ sdata[tid] = sdata[tid + 128]; maxid[tid] = maxid[tid+128]; } __syncthreads(); }
             if (blockSize >=  128){ if (tid <  64 && sdata[tid] < sdata[tid +  64]){ sdata[tid] = sdata[tid +  64]; maxid[tid] = maxid[tid+ 64]; } __syncthreads(); }
-            if (tid < 32){ warpReduce(sdata, maxid, tid, blockSize);}                                                                                                                                                                      
-            if (tid == 0) {g_odata[blockIdx.x] = sdata[0]; g_mdata[blockIdx.x] = maxid[0];} 
-            
-    
+            if (tid < 32){ warpReduce(sdata, maxid, tid, blockSize);}
+            if (tid == 0) {g_odata[blockIdx.x] = sdata[0]; g_mdata[blockIdx.x] = maxid[0];}
+
+
         }''', 'argmax')
 else:
     argmax = xp.argmax

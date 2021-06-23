@@ -12,6 +12,7 @@ def simpleSimulation(volume,rotation,shiftV,wedgeInfo=None,SNR=0.1,mask=None):
     """
     from pytom_volume import vol,rotate,shift,initSphere
     from pytom.simulation.support import add_white_noise
+
     
     if not rotation == [0,0,0]:
         #print '---ROTATE---'

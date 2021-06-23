@@ -55,7 +55,7 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
     if moreInfo not in [True, False]:
         moreInfo = False
     
-    from pytom.basic.correlation import FLCF
+    from pytom.basic.correlation import FLCF, POF, MCF
     from pytom.basic.structures import WedgeInfo, Wedge
     from pytom_volume import vol, pasteCenter
     from pytom_volume import rotateSpline as rotate # for more accuracy
@@ -66,7 +66,8 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
         scoreFnc = FLCF
     
     # only FLCF needs mask
-    if scoreFnc == FLCF:
+    #if scoreFnc in [FLCF, POF, MCF]:
+    if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF:
         if mask.__class__ != vol: # construct a sphere mask by default
             from pytom_volume import initSphere;
             mask = vol(reference.sizeX(), reference.sizeY(), reference.sizeZ());
@@ -116,7 +117,7 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
             ref = wedgeInfo.apply(ref)
 
         # rotate the mask if it is asymmetric
-        if scoreFnc == FLCF:
+        if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF:
             if maskIsSphere == False: # if mask is not a sphere, then rotate it
                 m = vol(mask.sizeX(),mask.sizeY(),mask.sizeZ())
                 rotate(mask, m, currentRotation[0], currentRotation[1], currentRotation[2])
@@ -125,7 +126,7 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
         
         # compute the score
         # if mask is sphere and it is the first run, compute the standard deviation of the volume under mask for late use
-        if scoreFnc == FLCF and index == 0 and maskIsSphere == True:
+        if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF and index == 0 and maskIsSphere == True:
             # compute standard deviation of the volume under mask
             maskV = m
             if volume.sizeX() != m.sizeX() or volume.sizeY() != m.sizeY() or volume.sizeZ() != m.sizeZ():
@@ -138,11 +139,9 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
             meanV = meanUnderMask(volume, maskV, p);
             stdV = stdUnderMask(volume, maskV, p, meanV);
 
+        # ref.write('template_cpu.em')
 
-
-
-
-        if scoreFnc == FLCF:
+        if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF:
             if maskIsSphere == True:
                 score = scoreFnc(volume, ref, m, stdV, wedge=1)
             else:
@@ -228,7 +227,7 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
     import numpy as np
     from pytom.gpu.initialize import xp
 
-    if not kwargs['gpuID'] is None:
+    if not kwargs["gpuID"] is None:
         import cupy as xp
 
     xp.cuda.Device(kwargs['gpuID']).use()
@@ -239,8 +238,6 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
     sx,sy,sz = reference.shape
     angle = wedgeInfo.getWedgeAngle()
 
-    # reference -= reference.max()
-    print('\n\nWEDGEANGLE', angle)
     if angle.__class__ != list:
         w1 = angle
         w2 = angle
@@ -248,24 +245,22 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
         w1, w2 = angle
 
     if w1 > 1E-3 or w2 > 1E-3:
-        cutoff = wedgeInfo._wedgeObject._cutoffRadius if wedgeInfo._wedgeObject._cutoffRadius > 1E-3 else sx//2-1
-        smooth = wedgeInfo._wedgeObject._smooth
-        wedge = create_wedge(w1, w2, cutoff, sx, sy, sz, smooth).astype(np.complex64).get()
-
-        wedgeVolume = create_wedge(w1, w2, (SX//2)-1, SX, SY, SZ, smooth).astype(np.float32)
-        #wedgeVolume2 = create_structured_wedge(xp.arange(-w2,w1,2), w2, (SX//2)-2, SX, SY, SZ, smooth).astype(np.float32)
-
-        #write('/data/gijsvds/Benchmark/Images/ww.mrc', wedgeVolume2)
-        volume = np.real(np.fft.irfftn(np.fft.rfftn(volume)* wedgeVolume.get()))
-        del wedgeVolume
-        #del wedgeVolume2
         print('Wedge applied to volume')
+        cutoff = wedgeInfo._wedgeObject._cutoffRadius if wedgeInfo._wedgeObject._cutoffRadius > 1E-3 else sx//2
+        smooth = wedgeInfo._wedgeObject._smooth
+        wedge = create_wedge(w1, w2, cutoff, sx, sy, sz, smooth).astype(np.complex64)
+        wedgeVolume = create_wedge(w1, w2, (SX//2)-1, SX, SY, SZ, smooth).astype(np.float32)
+        try:
+            wedge = wedge.get()
+            wedgeVolume = wedgeVolume.get()
+        except:
+            pass
+
+        volume = np.real(np.fft.irfftn(np.fft.rfftn(volume)* wedgeVolume ))
+
+        del wedgeVolume
     else:
         wedge = np.ones((sx,sy,sz//2+1),dtype='float32')
-
-    scrs = np.zeros_like(volume,dtype=np.float32)
-
-    padding=False
 
     if padding:
         dimx, dimy, dimz = volume.shape
@@ -274,22 +269,24 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
         cy = max(reference.shape[1], calc_fast_gpu_dimensions(dimy - 2, 4000)[0])
         cz = max(reference.shape[2], calc_fast_gpu_dimensions(dimz - 2, 4000)[0])
         voluNDAs = np.zeros([cx, cy, cz], dtype=np.float32)
-        voluNDAs[:min(cx, dimx), :min(cy, dimy), :min(cz, dimz)] = volume[:min(cx, dimx), :min(cy, dimy),:min(cz, dimz)]
+        voluNDAs[:min(cx, dimx), :min(cy, dimy), :min(cz, dimz)] = volume[:min(cx, dimx), :min(cy, dimy),
+                                                                   :min(cz, dimz)]
+
+        scrs = np.zeros_like(volume,dtype=np.float32)
+
+
         volume = voluNDAs
+        print(f'dimensions of volume: {reference.shape} {mask.shape} ')
 
 
 
-
-    print(f'dimensions of template and mask: {reference.shape} {mask.shape} ')
-
-
-    input = (volume, reference, mask, wedge, angles, volume.shape)
+    input = (volume, reference, mask, wedge, scoreFnc.__name__, angles, volume.shape)
 
     tm_process = TemplateMatchingGPU(jobid, kwargs['gpuID'], input=input)
     tm_process.start()
 
     import time
-    sleep_time, max_sleep_time = 0, 3600
+    sleep_time, max_sleep_time = 0, 1800
     while tm_process.is_alive() and sleep_time < max_sleep_time:
         time.sleep(1)
         sleep_time += 1
