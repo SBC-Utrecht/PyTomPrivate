@@ -24,17 +24,17 @@ class pytom_ScoreTest(unittest.TestCase):
         initSphere(self.v,10,2,0,15,15,15)
         # there is a slight inconsistency when smoothing > 0 -
         # cleaner implementation would be multipliction with sqrt(mask) in corr function
-        initSphere(self.mask,13,0,0,16,16,16)
-        self.wi = WedgeInfo(wedgeAngle=self.wedge, rotation=[10.0,20.0,30.0],
+        initSphere(self.mask,16,0,0,16,16,16)
+        self.wi = WedgeInfo(wedgeAngle=self.wedge,
               cutoffRadius=0.0)
-        self.wi_zero = WedgeInfo(wedgeAngle=self.wedge_zero, rotation=[10.0,20.0,30.0],
+        self.wi_zero = WedgeInfo(wedgeAngle=self.wedge_zero,
               cutoffRadius=0.0)
         self.s_cpu = simpleSimulation( volume=self.v, rotation=self.rotation,
                                        shiftV=self.shift, wedgeInfo=self.wi, SNR=10.)
         self.s_gpu = simpleSimulation( volume=self.v, rotation=self.rotation,
                                        shiftV=self.shift, wedgeInfo=self.wi_zero, SNR=10)
 
-        write_em("/home/ctsanchez/Desktop/template_random_test.mrc", self.s_gpu)
+        #write_em("/home/ctsanchez/Desktop/template_random_test.mrc", self.s_gpu)
 
         #Ribo template settings
         self.s_ribo = read("./testData/ribo.em")
@@ -43,7 +43,7 @@ class pytom_ScoreTest(unittest.TestCase):
         self.ribo_gpu = simpleSimulation(volume=self.s_ribo, rotation=self.rotation, shiftV=self.shift, wedgeInfo=self.wi_zero,
                             SNR=10)
 
-        write_em("/home/ctsanchez/Desktop/template_ribo_test.mrc", self.ribo_cpu)
+        #write_em("/home/ctsanchez/Desktop/template_ribo_test.mrc", self.ribo_cpu)
     """
     def test_xcfScore(self):
         from pytom.score.score import xcfScore as score
@@ -97,7 +97,7 @@ class pytom_ScoreTest(unittest.TestCase):
         pval = cf.getV(p[0],p[1],p[2])
     """
 
-    def test_flcfScore_random(self):
+    def test_00_flcfScore_random(self):
         """
         test FLCF score with random generated sphere
         """
@@ -158,7 +158,7 @@ class pytom_ScoreTest(unittest.TestCase):
         self.assertAlmostEqual( first=c, second=cf.getV(p[0],p[1],p[2]), places=1, 
             msg='Scoring coefficient and scoring function SOC inconsistent')
     """
-    def test_pofScore_random(self):
+    def test_01_pofScore_random(self):
         """
         Test Phase Only Filter correlation function
         @author: Maria Cristina Trueba
@@ -170,12 +170,16 @@ class pytom_ScoreTest(unittest.TestCase):
         sc = score()
         #Check auto-correlation coefficient
         c = sc.scoringCoefficient(self.s_cpu, self.s_cpu)
+        print(c)
         print("POF CPU random sphere score is, ", c)
         self.assertAlmostEqual(first=c, second=1, places=1, msg="POFScore: Autocorrelation random sphere not == 1")
         #consistency of scoring coefficient and scoring function - difference due to sub-pixel accuracy for score
-        c = sc.scoringCoefficient(self.s_cpu, self.v)
-        cf = sc.scoringFunction(self.s_cpu, self.v)
+
+        ref = self.wi.apply(self.v)
+        c = sc.scoringCoefficient(self.s_cpu, ref)
+        cf = sc.scoringFunction(self.s_cpu, ref)
         p = peak(cf)
+        print(c)
         self.assertAlmostEqual( first = c, second = cf.getV(p[0], p[1], p[2]), places=2, msg = "Scoring coefficient and scoring funtion POF inconsistent")
 
     # def test_pofScore_ribo(self):
@@ -197,7 +201,7 @@ class pytom_ScoreTest(unittest.TestCase):
     #     # p = peak(cf)
     #     # self.assertAlmostEqual(first=c, second=cf.getV(p[0], p[1], p[2]), places=2,
     #     #                        msg='Scoring coefficient and scoring function POF inconsistent')
-    def test_mcfScore_random(self):
+    def test_02_mcfScore_random(self):
         """
         Test Mutual correlation function for random generated object
         @author: Maria Cristina Trueba
@@ -284,7 +288,7 @@ class pytom_ScoreTest(unittest.TestCase):
         p = cf.max()
         self.assertAlmostEqual( first = c, second = p, places=1, msg = "Scoring coefficient and scoring funtion POF inconsistent")
     """
-    def test_pof_gpu_random(self):
+    def test_05_pof_gpu_random(self):
         """
         Test POF function in gpu
         @author: Maria Cristina Trueba Sanchez
@@ -297,13 +301,14 @@ class pytom_ScoreTest(unittest.TestCase):
         import numpy as np
         from pytom.tompy.io import read
 
-        w = Wedge(self.wedge)
-
-        #Random object autocorrelation
-        s = vol2npy(self.s_gpu)
+        # Random object autocorrelation
+        s = vol2npy(self.s_cpu)
         m = vol2npy(self.mask)
 
-        result = templateMatchingGPU(volume=s, reference=s, rotations=[[0, 0, 0]], scoreFnc=sFunc, mask=m,
+        w = Wedge(self.wedge)
+
+
+        result = templateMatchingGPU(volume=s, reference=s.copy(), rotations=[[0, 0, 0]], scoreFnc=sFunc, mask=m,
                                      maskIsSphere=True, wedgeInfo=w, padding=True, jobid=0, gpuID=1)
         c, a, n, k = result
         #Get the highest peak and compare with == 1
@@ -337,7 +342,14 @@ class pytom_ScoreTest(unittest.TestCase):
     #     print("GPU POF ribo score is, ", c)
     #     self.assertAlmostEqual(first=c, second=1, places=1, msg="POF in GPU Autocorrelation ribosome not == 1")
 
-    def test_mcf_gpu_random(self):
+        result = templateMatchingGPU(volume=s, reference=vol2npy(self.v).copy(), rotations=[[0, 0, 0]], scoreFnc=sFunc, mask=m,
+                                     maskIsSphere=True, wedgeInfo=w, padding=True, jobid=0, gpuID=1)[0]
+
+        print(result.max())
+
+
+
+    def test_06_mcf_gpu_random(self):
         """
         Test POF function in gpu
         @author: Maria Cristina Trueba Sanchez
@@ -389,7 +401,7 @@ class pytom_ScoreTest(unittest.TestCase):
     #     print("GPU MCF ribo score is, ", c)
     #     self.assertAlmostEqual(first=c, second=1, places=1, msg="MCF in GPU Autocorrelation ribosome not == 1")
 
-    def test_flcf_gpu_random(self):
+    def test_04_flcf_gpu_random(self):
         """
         Test POF function in gpu
         @author: Maria Cristina Trueba Sanchez

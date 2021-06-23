@@ -8,11 +8,15 @@ import cupy as xp
 class TemplateMatchingPlan():
     def __init__(self, volume, template, mask, wedge, cp, vt, calc_stdV, pad, get_fft_plan, deviceid, scoreFunc):
 
+        from pytom.basic.files import read as readC
         import pytom.voltools as vt
+        import os
+
         print(f"Template matching uses {scoreFunc} for calculatng correlation.")
         cp.cuda.Device(deviceid).use()
 
         self.scoreFunc = scoreFunc
+        self.epsilon = 1e-4
 
         self.volume = cp.asarray(volume,dtype=cp.float32,order='C')
 
@@ -23,13 +27,19 @@ class TemplateMatchingPlan():
         self.sOrg = mask.shape
         pad(self.mask, self.maskPadded, self.sPad, self.sOrg)
 
+        write('te.em', template)
+        self.templateVol = readC('te.em')
+
+        self.where = 'cpu'
+
         self.templateOrig = cp.asarray(template, dtype=cp.float32,order='C')
         self.template = cp.asarray(template, dtype=cp.float32,order='C')
+        self.template0 = self.template.copy()
         self.texture = vt.StaticVolume(self.template, interpolation='filt_bspline', device=f'gpu:{deviceid}')
         self.templatePadded = cp.zeros_like(self.volume)
 
         self.wedge = cp.asarray(wedge,order='C')
-        self.threshold = 0.001
+
         #self.volume_fft = cp.fft.rfftn(self.volume) #* cp.array(wedgeVolume,dtype=cp.float32)
 
         if scoreFunc in ("FLCF"):
@@ -50,14 +60,10 @@ class TemplateMatchingPlan():
 
             if scoreFunc == "POF":
 
-                size = self.volume_fft2.shape
-
                 a = cp.abs(self.volume_fft2)
-                new_a = cp.zeros_like(a)
-                new_a[a>0.00001] = 1
-                phase = cp.angle(self.volume_fft2)
+                a[a < self.epsilon] = 1
 
-                self.volume_fft2 = new_a * cp.exp(1j * phase)
+                self.volume_fft2 /= a
                 self.volume = cp.fft.ifftn(self.volume_fft2).real
 
                 calc_stdV(self)
@@ -166,7 +172,11 @@ class TemplateMatchingGPU(threading.Thread):
     def template_matching_gpu(self, angle_list, dims, isSphere=True, verbose=True):
         from pytom.gpu.gpuFunctions import POF, MCF
         #from pytom.tompy.correlation import POF
-
+        from pytom.tompy.io import write, read
+        from pytom_numpy import vol2npy
+        from pytom_volume import rotateSpline as rotate, vol
+        import time
+        ref = vol(self.plan.templateVol.sizeX(), self.plan.templateVol.sizeY(), self.plan.templateVol.sizeZ())
 
         self.Device(self.deviceid).use()
 
@@ -179,27 +189,33 @@ class TemplateMatchingGPU(threading.Thread):
         for angleId, angles in enumerate(angle_list):
             # Rotate
             #self.plan.template = self.rotate3d(self.plan.templateOrig, phi=phi,the=the,psi=psi)
-            self.plan.texture.transform(rotation=(angles[0], angles[2], angles[1]), rotation_order='rzxz', output=self.plan.template)
+            # if (abs(angles[0]) + abs(angles[1]) + abs(angles[2])) > 1E-4:
+            #     print(angles)
+            #     self.plan.texture.transform(rotation=(angles[0], angles[2], angles[1]), rotation_order='rzxz', output=self.plan.template)
+            # else:
+            #     self.plan.template = self.plan.template0.copy()
+
+            if self.plan.where == 'gpu':
+                self.plan.texture.transform(rotation=(angles[0], angles[2], angles[1]), rotation_order='rzxz',
+                                            output=self.plan.template)
+                # self.plan.template *= self.plan.mask
+            else:
+                ref.setAll(0.)
+                print('cpu')
+                rotate(self.plan.templateVol, ref, angles[0], angles[1], angles[2])
+                self.plan.template = xp.array(vol2npy(ref).copy(), dtype=xp.float32)
 
             # Add wedge
-            self.plan.template = self.irfftn(self.rfftn(self.plan.template) * self.plan.wedge, s=self.plan.template.shape)
-            #Normalize template based on correlation function
+            self.plan.template = self.irfftn(self.rfftn(self.plan.template)*self.plan.wedge, s=self.plan.template.shape)
+
+            #Filter frequencies of template depending on chosen correlation function
             if self.plan.scoreFunc == "POF":
-
-                from pytom.tompy.io import write
                 ftemplate = xp.fft.fftn(self.plan.template)
-
-                size = ftemplate.shape
-                epsilon = 1e-4
                 a = xp.abs(ftemplate)
-                new_a = xp.zeros_like(a)
-                new_a[a > epsilon] = 1
-                phase = xp.angle(ftemplate)
-
-                ftemplate = new_a * xp.exp(1j * phase)
-
+                a[a < self.plan.epsilon] = 1
+                ftemplate /= a
                 self.plan.template = xp.fft.ifftn(ftemplate).real
-                write("/home/ctsanchez/Desktop/template_pof_gpu.mrc", self.plan.template)
+                #write("/home/ctsanchez/Desktop/template_pof_gpu.mrc", self.plan.template)
 
             elif self.plan.scoreFunc == "MCF":
 
@@ -213,28 +229,20 @@ class TemplateMatchingGPU(threading.Thread):
                 ftemplate = ampli * xp.exp(1j * phase)
 
                 self.plan.template = xp.fft.ifftn(ftemplate).real
-                write("/home/ctsanchez/Desktop/template_mcf_gpu.mrc", self.plan.template)
+                #write("/home/ctsanchez/Desktop/template_mcf_gpu.mrc", self.plan.template)
 
-            elif self.plan.scoreFunc == "FLCF":
-                from pytom.tompy.io import write
-                self.plan.template = self.plan.template
-                write("/home/ctsanchez/Desktop/template_flcf_gpu.mrc", self.plan.template)
             # Normalize template
             meanT = self.meanUnderMask(self.plan.template, self.plan.mask, p=self.plan.p)
             stdT = self.stdUnderMask(self.plan.template, self.plan.mask, meanT, p=self.plan.p)
 
             self.plan.template = ((self.plan.template - meanT) / stdT) * self.plan.mask
-            # if self.plan.scoreFunc == "POF":
-            #     write("/home/ctsanchez/Desktop/template_pof_gpu_norm.mrc", self.plan.template)
-            # elif self.plan.scoreFunc == "MCF":
-            #     write("/home/ctsanchez/Desktop/template_mcf_gpu_norm.mrc", self.plan.template)
-            # elif self.plan.scoreFunc == "FLCF":
-            #     write("/home/ctsanchez/Desktop/template_flcf_gpu_norm.mrc", self.plan.template)
+
             # Paste in center
             self.plan.templatePadded[CX-cx:CX+cx+mx, CY-cy:CY+cy+my,CZ-cz:CZ+cz+mz] = self.plan.template
+
             # Cross-correlate and normalize by stdV
-            #print(self.plan.stdV.sum(), self.plan.templatePadded.sum(), self.plan.stdV.dtype, self.plan.templatePadded.dtype, self.plan.volume_fft2.dtype, self.plan.p)
             self.plan.ccc_map = self.normalized_cross_correlation(self.plan.volume_fft2, self.plan.templatePadded, self.plan.stdV, self.plan.p, plan=self.plan.fftplan)
+
             # Update the scores and angles
             self.updateResFromIdx(self.plan.scores, self.plan.angles, self.plan.ccc_map, angleId, self.plan.scores, self.plan.angles)
 
@@ -248,6 +256,7 @@ class TemplateMatchingGPU(threading.Thread):
         stdV = self.meanVolUnderMask2(plan.volume**2, plan) - self.meanVolUnderMask2(plan.volume, plan)**2
         stdV[stdV < self.float32(1e-09)] = 1
         plan.stdV = self.sqrt(stdV)
+
 
     def meanVolUnderMask2(self, volume, plan):
         self.Device(self.deviceid).use()

@@ -115,6 +115,8 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
         # apply wedge
         if wedgeInfo.__class__ == WedgeInfo or wedgeInfo.__class__ == Wedge:
             ref = wedgeInfo.apply(ref)
+            print('Wedge Applied to ref')
+
 
         # rotate the mask if it is asymmetric
         if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF:
@@ -138,7 +140,6 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
             from pytom.basic.correlation import meanUnderMask, stdUnderMask
             meanV = meanUnderMask(volume, maskV, p);
             stdV = stdUnderMask(volume, maskV, p, meanV);
-
         # ref.write('template_cpu.em')
 
         if scoreFnc == FLCF or scoreFnc == POF or scoreFnc == MCF:
@@ -245,11 +246,16 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
         w1, w2 = angle
 
     if w1 > 1E-3 or w2 > 1E-3:
+        from pytom_numpy import vol2npy
         print('Wedge applied to volume')
         cutoff = wedgeInfo._wedgeObject._cutoffRadius if wedgeInfo._wedgeObject._cutoffRadius > 1E-3 else sx//2
         smooth = wedgeInfo._wedgeObject._smooth
-        wedge = create_wedge(w1, w2, cutoff, sx, sy, sz, smooth).astype(np.complex64)
-        wedgeVolume = create_wedge(w1, w2, (SX//2)-1, SX, SY, SZ, smooth).astype(np.float32)
+        wedgea = create_wedge(w1, w2, cutoff, sx, sy, sz, smooth).astype(np.complex64)
+        wedge = vol2npy(wedgeInfo.returnWedgeVolume(sx, sx, sz)).copy().astype(np.complex64)
+        wedgeVolumea = create_wedge(w1, w2, (SX//2), SX, SY, SZ, smooth).astype(np.float32)
+        wedgeVolume = vol2npy(wedgeInfo.returnWedgeVolume(SX, SY, SZ)).copy()
+        write('w1.mrc', wedgea)
+        write('w2.mrc', wedge)
         try:
             wedge = wedge.get()
             wedgeVolume = wedgeVolume.get()
@@ -262,6 +268,7 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
     else:
         wedge = np.ones((sx,sy,sz//2+1),dtype='float32')
 
+    padding = 0
     if padding:
         dimx, dimy, dimz = volume.shape
 
