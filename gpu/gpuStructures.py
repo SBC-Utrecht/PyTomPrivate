@@ -60,10 +60,10 @@ class TemplateMatchingPlan():
 
             if scoreFunc == "POF":
 
-                a = cp.abs(self.volume_fft2)
-                a[a < self.epsilon] = 1
+                ampli = cp.abs(self.volume_fft2)
+                ampli[ampli < self.epsilon] = 1
 
-                self.volume_fft2 /= a
+                self.volume_fft2 /= ampli
                 self.volume = cp.fft.ifftn(self.volume_fft2).real
 
                 calc_stdV(self)
@@ -72,9 +72,12 @@ class TemplateMatchingPlan():
             if scoreFunc == "MCF":
 
                 ampli = cp.sqrt(cp.abs(self.volume_fft2))
-                phase = cp.angle(self.volume_fft2)
+                ampli[ampli < self.epsilon] = 1
+                self.volume_fft2 /= ampli
 
-                self.volume_fft2 = ampli * cp.exp(1j * phase)
+                # phase = cp.angle(self.volume_fft2)
+                #self.volume_fft2 = ampli * cp.exp(1j * phase)
+
                 self.volume = cp.fft.ifftn(self.volume_fft2).real
 
                 calc_stdV(self)
@@ -211,10 +214,12 @@ class TemplateMatchingGPU(threading.Thread):
             #Filter frequencies of template depending on chosen correlation function
             if self.plan.scoreFunc == "POF":
                 ftemplate = xp.fft.fftn(self.plan.template)
-                a = xp.abs(ftemplate)
-                a[a < self.plan.epsilon] = 1
-                ftemplate /= a
+
+                ampli = xp.abs(ftemplate)
+                ampli[ampli < self.plan.epsilon] = 1
+                ftemplate /= ampli
                 self.plan.template = xp.fft.ifftn(ftemplate).real
+
                 #write("/home/ctsanchez/Desktop/template_pof_gpu.mrc", self.plan.template)
 
             elif self.plan.scoreFunc == "MCF":
@@ -223,10 +228,12 @@ class TemplateMatchingGPU(threading.Thread):
 
                 ftemplate = xp.fft.fftn(self.plan.template)
 
-                size = ftemplate.shape
                 ampli = xp.sqrt(xp.abs(ftemplate))
-                phase = xp.angle(ftemplate)
-                ftemplate = ampli * xp.exp(1j * phase)
+                ampli[ampli < self.plan.epsilon] = 1
+                ftemplate /= ampli
+
+                #phase = xp.angle(ftemplate)
+                #ftemplate = ampli * xp.exp(1j * phase)
 
                 self.plan.template = xp.fft.ifftn(ftemplate).real
                 #write("/home/ctsanchez/Desktop/template_mcf_gpu.mrc", self.plan.template)

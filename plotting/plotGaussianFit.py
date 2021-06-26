@@ -90,8 +90,9 @@ if __name__ == '__main__':
     # plot the Gaussian fitting
     from math import exp
     gaussian_fnc = lambda x: a*exp(-(x-mu)**2/(2*sigma**2))
-    plt.plot(x[1:],list(map(gaussian_fnc, x[1:])),'g--')
-    
+    plt.plot(x[1:],list(map(gaussian_fnc, x[1:])),'g--', label="Particle population")
+
+
     # print the estimation of number of true positives
     x.reverse()
     while True:
