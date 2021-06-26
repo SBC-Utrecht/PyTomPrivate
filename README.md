@@ -53,7 +53,7 @@ To install PyTom, please clone the most recent version by executing the followin
 git clone --recursive https://github.com/FridoF/PyTomPrivate.git pytom
 ```
 
-After a succesful clone enter the new directory and go to pytomc
+After a successful clone enter the new directory and go to pytomc
 ```
 cd pytom/pytomc
 ```

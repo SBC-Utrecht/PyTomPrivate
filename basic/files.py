@@ -1,8 +1,19 @@
-'''
+"""
 Created on Dec 7, 2010
 
 @author: hrabe
-'''
+"""
+
+
+def get_install_folder():
+    """
+    Get path to pytom install folder.
+
+    @return: full path
+    @rtype:  L{str}
+    """
+    import os
+    return os.path.dirname(os.path.dirname(os.popen('which pytom').read()[:-1]))
 
 
 def readProxy(fileName, subregion1=0, subregion2=0, subregion3=0,
@@ -52,9 +63,9 @@ def read(file, subregion=[0, 0, 0, 0, 0, 0], sampling=[0, 0, 0], binning=[0, 0, 
                  subregion[4], subregion[5], sampling[0], sampling[1], sampling[2],
                  binning[0], binning[1], binning[2])
         return f
-    except (RuntimeError, errorNumber, errorString):
+    except Exception as e:
         # redundant to code above, but just in case it goes through
-        if "Wrong file format or file doesn't exist!" in errorString:
+        if "Wrong file format or file doesn't exist!" in e:
             raise IOError('File not found or path is wrong: ' + file)
         else:
             raise
