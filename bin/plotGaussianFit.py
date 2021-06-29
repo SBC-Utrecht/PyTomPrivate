@@ -290,7 +290,7 @@ if __name__ == '__main__':
         #     print('CCC value position: %f, number of estimation: %f' % (ccc_value, estimate))
 
         # Generate a ROC curve
-        roc_steps = 50
+        roc_steps = 200
         x_roc = np.flip(np.linspace(x[0], x[-1], roc_steps))
         # find ratio of hist step vs roc step
         hist_step = (x_hist[-1] - x_hist[0]) / num_bins
