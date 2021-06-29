@@ -204,7 +204,7 @@ class TemplateMatchingGPU(threading.Thread):
                 # self.plan.template *= self.plan.mask
             else:
                 ref.setAll(0.)
-                print('cpu')
+                #print('cpu')
                 rotate(self.plan.templateVol, ref, angles[0], angles[1], angles[2])
                 self.plan.template = xp.array(vol2npy(ref).copy(), dtype=xp.float32)
 

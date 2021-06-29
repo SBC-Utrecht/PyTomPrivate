@@ -253,7 +253,9 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
         wedgea = create_wedge(w1, w2, cutoff, sx, sy, sz, smooth).astype(np.complex64)
         wedge = vol2npy(wedgeInfo.returnWedgeVolume(sx, sx, sz)).copy().astype(np.complex64)
         wedgeVolumea = create_wedge(w1, w2, (SX//2), SX, SY, SZ, smooth).astype(np.float32)
-        wedgeVolume = vol2npy(wedgeInfo.returnWedgeVolume(SX, SY, SZ)).copy()
+        wedge_v_temp = wedgeInfo.returnWedgeVolume(SX, SY, SZ)
+        wedgeVolume = vol2npy(wedge_v_temp).copy()
+        #wedgeVolume = vol2npy(wedgeInfo.returnWedgeVolume(SX, SY, SZ)).copy()
         write('w1.mrc', wedgea)
         write('w2.mrc', wedge)
         try:
@@ -261,13 +263,10 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
             wedgeVolume = wedgeVolume.get()
         except:
             pass
-
         volume = np.real(np.fft.irfftn(np.fft.rfftn(volume)* wedgeVolume ))
-
-        del wedgeVolume
+        del wedgeVolume, wedge_v_temp, wedgeVolumea
     else:
         wedge = np.ones((sx,sy,sz//2+1),dtype='float32')
-
     padding = 0
     if padding:
         dimx, dimy, dimz = volume.shape

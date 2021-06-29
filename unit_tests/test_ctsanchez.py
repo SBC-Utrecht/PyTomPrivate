@@ -199,6 +199,7 @@ class pytom_ScoreTest(unittest.TestCase):
         print("CPU POF ribo score is ", c)
         self.assertAlmostEqual(first=c, second=1., places=1,
                                msg='POFScore: Auto-correlation ribosome not == 1')
+        
         # c = sc.scoringCoefficient(self.s_ribo, self.ribo_cpu)
         # cf = sc.scoringFunction(self.s_ribo, self.ribo_cpu)
         # p = peak(cf)
