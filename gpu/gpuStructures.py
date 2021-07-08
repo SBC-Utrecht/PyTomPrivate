@@ -75,9 +75,6 @@ class TemplateMatchingPlan():
                 ampli[ampli < self.epsilon] = 1
                 self.volume_fft2 /= ampli
 
-                # phase = cp.angle(self.volume_fft2)
-                #self.volume_fft2 = ampli * cp.exp(1j * phase)
-
                 self.volume = cp.fft.ifftn(self.volume_fft2).real
 
                 calc_stdV(self)
@@ -212,7 +209,9 @@ class TemplateMatchingGPU(threading.Thread):
             self.plan.template = self.irfftn(self.rfftn(self.plan.template)*self.plan.wedge, s=self.plan.template.shape)
 
             #Filter frequencies of template depending on chosen correlation function
+            #write("/data2/ctsanchez/Final_Results_Tables/objects/template_flcf_gpu.mrc", self.plan.template)
             if self.plan.scoreFunc == "POF":
+                from pytom.tompy.io import write
                 ftemplate = xp.fft.fftn(self.plan.template)
 
                 ampli = xp.abs(ftemplate)
@@ -220,23 +219,19 @@ class TemplateMatchingGPU(threading.Thread):
                 ftemplate /= ampli
                 self.plan.template = xp.fft.ifftn(ftemplate).real
 
-                #write("/home/ctsanchez/Desktop/template_pof_gpu.mrc", self.plan.template)
+                #write("/data2/ctsanchez/Final_Results_Tables/objects/template_pof_gpu.mrc", self.plan.template)
 
             elif self.plan.scoreFunc == "MCF":
 
                 from pytom.tompy.io import write
-
                 ftemplate = xp.fft.fftn(self.plan.template)
 
                 ampli = xp.sqrt(xp.abs(ftemplate))
                 ampli[ampli < self.plan.epsilon] = 1
                 ftemplate /= ampli
 
-                #phase = xp.angle(ftemplate)
-                #ftemplate = ampli * xp.exp(1j * phase)
-
                 self.plan.template = xp.fft.ifftn(ftemplate).real
-                #write("/home/ctsanchez/Desktop/template_mcf_gpu.mrc", self.plan.template)
+                #write("/data2/ctsanchez/Final_Results_Tables/objects/template_mcf_gpu.mrc", self.plan.template)
 
             # Normalize template
             meanT = self.meanUnderMask(self.plan.template, self.plan.mask, p=self.plan.p)
