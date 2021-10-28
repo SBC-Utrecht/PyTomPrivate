@@ -53,7 +53,7 @@ def bandpass_circle(image, low=0, high=-1, sigma=0, ff=1):
 
     return res
 
-def bandpass(volume, low=0, high=-1, sigma=0, returnMask=False, mask=None, fourierOnly=False):
+def bandpass(volume, low=0, high=-1, sigma=0, returnMask=False, mask=None, fourierOnly=False, center=None):
     """Do a bandpass filter on a given volume.
 
     @param volume: input volume.
@@ -72,12 +72,7 @@ def bandpass(volume, low=0, high=-1, sigma=0, returnMask=False, mask=None, fouri
     assert low < high, "upper bandpass must be > than lower limit"
 
     if mask is None:
-        if low == 0:
-            mask = create_sphere(volume.shape, high, sigma)
-        else:
-            # BUG! TODO
-            # the sigma
-            mask = create_sphere(volume.shape, high, sigma) - create_sphere(volume.shape, max(0,low-sigma*2), sigma)
+        mask = create_sphere(volume.shape, high, sigma, center=center, lowfreq=low)
 
     from pytom.agnostic.transform import fourier_filter
     if fourierOnly:
@@ -95,6 +90,7 @@ def bandpass(volume, low=0, high=-1, sigma=0, returnMask=False, mask=None, fouri
 
     else:
         res = fourier_filter(volume, mask, True)
+
     if returnMask:
         return res, mask
     else:
@@ -575,6 +571,7 @@ def create_symmetric_wedge(angle1, angle2, cutoffRadius, sizeX, sizeY, sizeZ, sm
     @type smooth: float
     @return: 3D array determining the wedge object.
     @rtype: ndarray of np.float64'''
+    print(sizeZ, sizeY, sizeX)
     wedge = xp.zeros((sizeX, sizeY, sizeZ // 2 + 1), dtype=xp.float64)
     if rotation is None:
         z, y, x = xp.meshgrid(xp.abs(xp.arange(-sizeY // 2 + sizeY % 2, sizeY // 2 + sizeY % 2, 1.)),
@@ -626,7 +623,6 @@ def create_symmetric_wedge(angle1, angle2, cutoffRadius, sizeX, sizeY, sizeZ, sm
 
     r = xp.sqrt((x*sizeZ/sizeZ) ** 2 + (y) ** 2 + (z*sizeY/sizeY) ** 2)
     if angle1 > 1E-3:
-        range_angle1Smooth = smooth / xp.sin(angle1 * xp.pi / 180.)
 
         with np.errstate(all='ignore'):
             wedge[xp.tan(xp.float32(angle1) * xp.pi / xp.float32(180.)) <= y / x] = 1
@@ -641,6 +637,8 @@ def create_symmetric_wedge(angle1, angle2, cutoffRadius, sizeX, sizeY, sizeZ, sm
 
 
         if smooth:
+            range_angle1Smooth = smooth / xp.sin(angle1 * xp.pi / 180.)
+
             area = xp.abs(x - (y / xp.tan(angle1 * xp.pi / 180))) < range_angle1Smooth
             strip = 1 - ((xp.abs((x) - ((y) / xp.tan(angle1 * xp.pi / 180.)))) * xp.sin(angle1 * xp.pi / 180.) / smooth)
             wedge += (strip * area * (1 - wedge))
@@ -648,6 +646,9 @@ def create_symmetric_wedge(angle1, angle2, cutoffRadius, sizeX, sizeY, sizeZ, sm
     else:
         wedge += 1
     wedge[r > cutoffRadius] = 0
+
+
+
     return xp.fft.fftshift(wedge, axes=(0, 1))
 
 def create_asymmetric_wedge(angle1, angle2, cutoffRadius, sizeX, sizeY, sizeZ, smooth, rotation=None):
@@ -986,8 +987,14 @@ def filter_volume_by_profile(volume, profile):
     outvol = convolute(volume, kernel)
     return outvol
 
-def applyFourierFilter(particle, filter):
-    return xp.fft.irfftn(xp.fft.rfftn(particle) * filter).real.astype(xp.float32)
+def applyFourierFilter(particle, filter, verbose=True):
+    from pytom_volume import vol
+    p = particle.squeeze()
+
+    if isinstance(p, vol) or p.dtype == xp.float32:
+        p = xp.fft.rfftn(p)
+
+    return xp.abs(xp.fft.irfftn(p * filter.squeeze())).astype(xp.float32)
 
 def applyFourierFilterFull(particle, filter):
     return xp.fft.ifftn(xp.fft.fftn(particle) * filter).real.astype(xp.float32)

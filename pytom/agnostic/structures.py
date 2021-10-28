@@ -1,5 +1,5 @@
 from pytom.gpu.initialize import xp, device
-
+import numpy as np
 
 class PyTomClassError(Exception):
 
@@ -4028,7 +4028,7 @@ class Shift(PyTomClass):
         @return: rotated shift (note: shift itself remains unaltered)
         @rtype: L{pytom.agnostic.structures.Shift}
         """
-        assert isinstance(object=rot, class_or_type_or_tuple=Rotation), "rot must be of type Rotation"
+        assert isinstance(rot, Rotation), "rot must be of type Rotation"
         m = rot.toMatrix(fourByfour=True) * self.toMatrix()
         return Shift(x=m.getColumn(3)[0], y=m.getColumn(3)[1], z=m.getColumn(3)[2])
 
@@ -4862,36 +4862,119 @@ class BandPassFilter(PyTomClass):
 
 
 class Weight():
-    def __init__(self, wedgeAngle1=0, wedgeAngle2=0, cutOffRadius=0, sizeX=0, sizeY=0, sizeZ=0, smooth=0, rotation=None):
-        self.wedgeAngle1 = wedgeAngle1
-        self.wedgeAngle2 = wedgeAngle2
-        self.cutOffRadius = cutOffRadius
-        self.sizeX = sizeX
-        self.sizeY = sizeY
-        self.sizeZ = sizeZ
-        self.smooth=smooth
-        self.rotation = rotation
+    def __init__(self, *args, **kwargs):#wedgeAngle1=0, wedgeAngle2=0, cutOffRadius=0, sizeX=0, sizeY=0, sizeZ=0, smooth=0, rotation=None):
+        from pytom_volume import vol, vol_comp
+
+        self.cutOffRadius = 10000
+
+        if len(args) == 6:
+            self.low = args[0]
+            self.cutOffRadius = args[1] if args[1] > 0 else 10000
+            self.sizeX = int(np.round(args[2]))
+            self.sizeY = int(np.round(args[3]))
+            self.sizeZ = int(np.round(args[4]))
+            self.smooth= args[5]
+            self.rotation = kwargs['rotation'] if 'rotation' in kwargs.keys() else None
+            self.type = 'bandpass'
+
+        elif len(args) == 5:
+            self.low = args[0]
+            self.cutOffRadius = args[1] if args[1] > 0 else 10000
+            self.sizeX = int(np.round(args[2]))
+            self.sizeY = int(np.round(args[3]))
+            self.sizeZ = int(np.round(args[4]))
+            self.smooth = kwargs['smooth'] if 'smooth' in kwargs.keys() else 0.
+            self.type='bandpass'
+
+        elif len(args) > 6:
+            self.wedgeAngle1 = args[0]
+            self.wedgeAngle2 = args[1]
+            self.cutOffRadius = args[2] if args[1] > 0 else 10000
+            self.sizeX = int(np.round(args[3]))
+            self.sizeY = int(np.round(args[4]))
+            self.sizeZ = int(np.round(args[5]))
+            self.smooth= args[6]
+            self.rotation = args[7] if len(args) == 8 else (kwargs['rotation'] if 'rotation' in kwargs.keys() else None)
+            self.type = 'wedge'
+
+
+        elif len(args) == 1 and isinstance(args[0], (vol, vol_comp, xp.ndarray)):
+            self.sizeX, self.sizeY, self.sizeZ = args[0].shape
+            self.wedge = args[0]
+            self.type='predefined'
+
+        else:
+            self.wedgeAngle1 = kwargs['wedgeAngle1'] if 'wedgeAngle1' in kwargs.keys() else 0.
+            self.wedgeAngle2 = kwargs['wedgeAngle2'] if 'wedgeAngle2' in kwargs.keys() else 0.
+            self.cutOffRadius = kwargs['cutOffRadius'] if 'cutOffRadius' in kwargs.keys() else 0.
+            self.sizeX = kwargs['sizeX'] if 'sizeX' in kwargs.keys() else 0
+            self.sizeY = kwargs['sizeY'] if 'sizeY' in kwargs.keys() else 0
+            self.sizeZ = kwargs['sizeZ'] if 'sizeZ' in kwargs.keys() else 0
+            self.smooth = kwargs['smooth'] if 'smooth' in kwargs.keys() else 0.
+            self.rotation = kwargs['rotation'] if 'rotation' in kwargs.keys() else None
+            self.type = 'wedge'
 
     def rotate(self, phi, psi, theta):
         self.rotation = [phi, theta, psi]
 
-    def apply(self, volume):
+    def apply(self, volume, verbose=False):
         from pytom.agnostic.filter import applyFourierFilter
+        from pytom_volume import vol_comp
 
-        wedge = self.getWeightVolume()
+        filter = self.getWeightVolume( verbose=verbose)
 
-        return applyFourierFilter(volume, wedge)
+        if isinstance(volume, vol_comp):
+            volume[:] = volume[:]*filter
+        else:
+            return applyFourierFilter(volume, wedge)
 
-    def getWeightVolume(self, reducedComplex=True):
-        from pytom.agnostic.filter import create_wedge
+    def getWeightVolume(self, reducedComplex=True, verbose=False):
+        from pytom.agnostic.filter import create_wedge, bandpass, bandpass_circle
         from pytom.agnostic.transform import fourier_reduced2full
+        from pytom.agnostic.tools import create_sphere
+        from pytom_volume import vol
 
-        wedge = create_wedge(self.wedgeAngle1, self.wedgeAngle2, self.cutOffRadius, self.sizeX, self.sizeY, self.sizeZ, self.smooth, self.rotation)
+        if self.type == 'predefined':
+            if verbose: print('predefined')
 
-        if reducedComplex == False:
-            wedge = fourier_reduced2full(wedge)
+            return self.wedge
 
-        return wedge
+        elif self.type == 'wedge':
+            if verbose: print('wedge')
+
+            wedge = create_wedge(self.wedgeAngle1, self.wedgeAngle2, self.cutOffRadius, self.sizeX, self.sizeY, self.sizeZ, self.smooth, self.rotation)
+            if reducedComplex == False:
+                wedge = fourier_reduced2full(wedge, isodd=self.sizeZ%2)
+            self.wedge = wedge
+            return wedge
+
+        elif self.type== 'bandpass':
+            if verbose: print('bandpass')
+            shape = (self.sizeX, self.sizeY, self.sizeZ)
+            if self.sizeZ == 1:
+                center = (self.sizeX//2, 0, 0)
+            else:
+                center = (self.sizeX//2, self.sizeY//2, 0)
+
+            bp = vol(*shape)
+            bp = bandpass(bp, low=self.low, high=self.cutOffRadius,sigma=self.smooth, returnMask=True, center=center)[1]
+            #
+            # if self.low == 0:
+            #     mask = create_sphere(shape, self.cutOffRadius, self.smooth, center=center)
+            # else:
+            #     mask = create_sphere(shape, self.cutOffRadius, self.smooth, center=center, num_sigma=3, lowfreq=self.low)
+            #     #mask -= create_sphere(shape, max(0, self.low - self.smooth * 2), self.smooth, num_sigma=3, center=center)
+
+            if self.sizeZ == 1:
+                bp = np.fft.fftshift(bp,axes=(0))
+            else:
+                bp = np.fft.fftshift(bp,axes=(0,1))
+
+            if reducedComplex == False:
+                bp = fourier_reduced2full(bp)
+            self.wedge= bp
+
+            return vol(bp)
 
 
 import scipy.optimize

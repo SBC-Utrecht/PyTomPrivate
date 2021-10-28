@@ -8,12 +8,14 @@ from numpy.random import standard_normal
 
 from pytom.agnostic.transform import resize as RESIZE
 
-def create_sphere(size, radius=-1, sigma=0, num_sigma=2, center=None, gpu=False):
+def create_sphere(size, radius=-1, sigma=0, num_sigma=3, center=None, lowfreq=0):
     """Create a 3D sphere volume.
     @param size: size of the resulting volume.
     @param radius: radius of the sphere inside the volume.
     @param sigma: sigma of the Gaussian.
     @param center: center of the sphere.
+    @param lowfreq: lowest frequency of filling the sphere. Below this threshold drop-off similar to drop-off above radius.
+
     @return: sphere inside a volume.
     """
 
@@ -32,18 +34,24 @@ def create_sphere(size, radius=-1, sigma=0, num_sigma=2, center=None, gpu=False)
     sphere[r<=radius] = 1
 
     if sigma > 0:
+        if lowfreq > 0:
+            ind = xp.logical_and(r<lowfreq, r>lowfreq-num_sigma*sigma)
+            sphere[ind] = xp.exp(-((r[ind] - lowfreq)/sigma)**2/2)
+            sphere[r<=lowfreq-num_sigma*sigma] = 0
+
         ind = xp.logical_and(r>radius, r<radius+num_sigma*sigma)
         sphere[ind] = xp.exp(-((r[ind] - radius)/sigma)**2/2)
 
     return sphere
 
-def create_circle(size, radius=-1, sigma=0, num_sigma=3, center=None):
-    """Create a 3D sphere volume.
+def create_circle(size, radius=-1, sigma=0, num_sigma=3, center=None, lowfreq=0):
+    """Create a 2D volume.
 
     @param size: size of the resulting volume.
     @param radius: radius of the sphere inside the volume.
     @param sigma: sigma of the Gaussian.
     @param center: center of the sphere.
+    @param lowfreq: lowest frequency of filling the circle. Below this threshold drop-off similar to drop-off above radius.
 
     @return: sphere inside a volume.
     """
@@ -64,6 +72,12 @@ def create_circle(size, radius=-1, sigma=0, num_sigma=3, center=None):
     circle[r<=radius] = 1
 
     if sigma > 0:
+
+        if lowfreq > 0:
+            ind = xp.logical_and(r<lowfreq, r>lowfreq-num_sigma*sigma)
+            circle[ind] = xp.exp(-((r[ind] - lowfreq)/sigma)**2/2)
+            circle[r<=lowfreq-num_sigma*sigma] = 0
+
         ind = xp.logical_and(r>radius, r<radius+num_sigma*sigma)
         circle[ind] = xp.exp(-((r[ind] - radius)/sigma)**2/2)
 
@@ -113,33 +127,95 @@ def add_noise(data, snr=0.1, m=0):
     t = data + noise
     return t
 
-def paste_in_center(volume, volume2, gpu=False):
-    if 0:
-        pass#raise Exception('pasteCenter not defined for gpu yet.')
-    else:
-        l,l2 = len(volume.shape), len(volume.shape)
-        assert l == l2
-        for i in range(l):
-            assert volume.shape[i] <= volume2.shape[i]
+def paste_in_center(v1, v2, gpu=False):
+    from pytom_volume import vol2npy
 
-        if len(volume.shape) == 3:
-            sx,sy,sz = volume.shape
-            SX, SY, SZ = volume2.shape
-            if SX <= sx:
-                volume2[:,:,:] = volume[sx//2-SX//2:sx//2+SX//2+SX%2,
-                                        sy//2-SY//2:sy//2+SY//2+SY%2,
-                                        sz//2-SZ//2:sz//2+SZ//2+SZ%2 ]
-            else:
-                volume2[SX//2-sx//2:SX//2+sx//2+sx%2,
-                        SY//2-sy//2:SY//2+sy//2+sy%2,
-                        SZ//2-sz//2:SZ//2+sz//2+sz%2 ] = volume
-            return volume2
+    volume = v1.squeeze()
+    volume2 = v2.squeeze()
+    l,l2 = len(v1.shape), len(v2.shape)
 
-        if len(volume.shape) == 2:
-            sx,sy = volume.shape
-            SX, SY = volume2.shape
-            volume2[SX//2-sx//2:SX//2+sx//2+sx%2,SY//2-sy//2:SY//2+sy//2+sy%2] = volume
-            return volume2
+    assert l == l2
+    # for i in range(l):
+    #     assert volume.shape[i] <= volume2.shape[i]
+
+    if len(volume.shape) == 3:
+        sx,sy,sz = volume.shape
+        SX, SY, SZ = volume2.shape
+        if SX <= sx and SY <= sy and SZ <= sz:
+            volume2[:] = volume[sx//2-SX//2:sx//2+SX//2+SX%2,
+                                    sy//2-SY//2:sy//2+SY//2+SY%2,
+                                    sz//2-SZ//2:sz//2+SZ//2+SZ%2 ]
+        else:
+            volume2[SX//2-sx//2:SX//2+sx//2+sx%2,
+                    SY//2-sy//2:SY//2+sy//2+sy%2,
+                    SZ//2-sz//2:SZ//2+sz//2+sz%2 ] = volume[:]
+
+
+        # volume2[max(0,SX//2-sx//2):min(SX, SX//2+sx//2+sx%2),
+        #         max(0,SY//2-sy//2):min(SY, SY//2+sy//2+sy%2),
+        #         max(0,SZ//2-sz//2):min(SZ, SZ//2+sz//2+sz%2)] = volume[max(0, sx//2-SX//2):min(sx, sx//2+SX//2+SX%2),
+        #                                                                max(0, sy//2-SY//2):min(sy, sy//2+SY//2+SY%2),
+        #                                                                max(0, sz//2-SZ//2):min(sz, sz//2+SZ//2+SZ%2)]
+
+    elif len(volume.shape) == 2:
+        sx,sy = volume.shape
+        SX, SY = volume2.shape
+
+        if SX <= sx and SY <= sy:
+            volume2[:] = volume[sx//2-SX//2:sx//2+SX//2+SX%2,sy//2-SY//2:sy//2+SY//2+SY%2]
+        else:
+            volume2[SX//2-sx//2:SX//2+sx//2+sx%2,SY//2-sy//2:SY//2+sy//2+sy%2] = volume[:]
+
+        # volume2[max(0,SX//2-sx//2):min(SX, SX//2+sx//2+sx%2),
+        #         max(0,SY//2-sy//2):min(SY, SY//2+sy//2+sy%2)] = volume[max(0, sx//2-SX//2):min(sx, sx//2+SX//2+SX%2),
+        #                                                                max(0, sy//2-SY//2):min(sy, sy//2+SY//2+SY%2)]
+
+    elif len(volume.shape) == 1:
+        sx = volume.shape
+        SX = volume2.shape
+        if SX <= sx:
+            volume2[:] = volume[sx//2-SX//2:sx//2+SX//2+SX%2]
+        else:
+            volume2[SX//2-sx//2:SX//2+sx//2+sx%2] = volume[:]
+
+        # volume2[max(0,SX//2-sx//2):min(SX, SX//2+sx//2+sx%2)] = volume[max(0, sx//2-SX//2):min(sx, sx//2+SX//2+SX%2)]
+
+
+        #
+        # if SX <= sx:
+        #     volume2[:] = volume[sx//2-SX//2:sx//2+SX//2+SX%2,
+        #                             sy//2-SY//2:sy//2+SY//2+SY%2,
+        #                             sz//2-SZ//2:sz//2+SZ//2+SZ%2 ]
+        # else:
+        #     volume2[SX//2-sx//2:SX//2+sx//2+sx%2,
+        #             SY//2-sy//2:SY//2+sy//2+sy%2,
+        #             SZ//2-sz//2:SZ//2+sz//2+sz%2 ] = volume[:]
+
+    # elif len(volume.shape) == 2:
+    #     sx,sy = volume.shape
+    #     SX, SY = volume2.shape
+    #     if SX <= sx:
+    #         volume2[:] = volume[sx//2-SX//2:sx//2+SX//2+SX%2,sy//2-SY//2:sy//2+SY//2+SY%2]
+    #     else:
+    #         volume2[SX//2-sx//2:SX//2+sx//2+sx%2,SY//2-sy//2:SY//2+sy//2+sy%2] = volume[:]
+    #
+    # elif len(volume.shape) == 1:
+    #     sx = volume.shape
+    #     SX = volume2.shape
+    #     if SX <= sx:
+    #         volume2[:] = volume[sx//2-SX//2:sx//2+SX//2+SX%2]
+    #     else:
+    #         volume2[SX//2-sx//2:SX//2+sx//2+sx%2] = volume[:]
+
+
+    if l2 == 3:
+        v2[:] = xp.atleast_3d(volume2)
+    elif l2 == 2:
+        v2[:] = xp.atleast_2d(volume2)
+    elif l2 == 1:
+        v2[:] =  volume2[:]
+
+    return v2
 
 def rotation_matrix_x(angle):
     """Return the 3x3 rotation matrix around x axis.
@@ -401,8 +477,8 @@ def alignVolumesAndFilterByFSC(vol1, vol2, mask=None, nband=None, iniRot=None, i
     from pytom.agnostic.correlation import nxcc
     from pytom.voltools import transform
 
-    assert isinstance(object=vol1, class_or_type_or_tuple=vol), "alignVolumesAndFilterByFSC: vol1 must be of type vol"
-    assert isinstance(object=vol2, class_or_type_or_tuple=vol), "alignVolumesAndFilterByFSC: vol2 must be of type vol"
+    assert isinstance(vol1, vol), "alignVolumesAndFilterByFSC: vol1 must be of type vol"
+    assert isinstance(vol2, vol), "alignVolumesAndFilterByFSC: vol2 must be of type vol"
     # filter volumes prior to alignment according to SNR
     fsc = FSC(volume1=vol1, volume2=vol2, numberBands=nband)
     fil = design_fsc_filter(fsc=fsc, fildim=int(vol2.shape[2]//2))

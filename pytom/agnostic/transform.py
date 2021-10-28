@@ -281,6 +281,7 @@ def resize(volume, factor, interpolation='Fourier'):
     @author: FF
     """
     import numpy
+    from pytom_volume import npy2vol
     ss = len(volume.shape)
     org_shape = volume.shape
     org_size = volume.size
@@ -294,13 +295,11 @@ def resize(volume, factor, interpolation='Fourier'):
         newfvol = resizeFourier(fvol=fvol, factor=factor, isodd=volume.shape[-1]%2)
 
         newvol = xp.fft.irfftn(newfvol, s=outsize)
-
         if ss != len(newvol.shape):
             newvol = xp.expand_dims(newvol,2)
 
         newvol *=  newvol.size/org_size
-
-        return newvol
+        return npy2vol(newvol)
 
 def resizeFourier(fvol, factor, isodd=False):
     """
@@ -604,6 +603,7 @@ def fourier_reduced2full(data, isodd=False):
         sz = (data.shape[2]-1)*2+1
     else:
         sz = (data.shape[2]-1)*2
+        sz = max(1,sz)
 
     res = xp.zeros((sx, sy, sz), dtype=data.dtype)
     res[:, :, 0:data.shape[2]] = data
