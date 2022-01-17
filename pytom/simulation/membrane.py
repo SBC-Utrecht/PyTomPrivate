@@ -9,14 +9,15 @@ Author: Marten Chaillet
 # essential
 import numpy as np
 import pytom.simulation.physics as physics
-from numba import jit
+# from numba import jit
+
 
 class Vector:
     # Class can be used as both a 3d coordinate, and a vector
     def __init__(self, coordinates):
         assert len(coordinates) == 3, 'Invalid axis list for a 3d vector, input does not contain 3 coordinates.'
         self._axis = np.array(coordinates)
-        self._zero_vector = np.all(self._axis==0)
+        self._zero_vector = np.all(self._axis == 0)
 
     def get(self):
         return self._axis
@@ -39,6 +40,9 @@ class Vector:
         # return the dot product of vectors v1 and v2, of form (x,y,z)
         # dot product of two vectors is zero if they are perpendicular
         return self._axis[0] * other._axis[0] + self._axis[1] * other._axis[1] + self._axis[2] * other._axis[2]
+
+    def average(self, other):
+        return Vector((self._axis + other._axis) / 2)
 
     def magnitude(self):
         # calculate the magnitude (length) of vector p
@@ -174,7 +178,7 @@ def random_point_ellipsoid(a, b, c):
     return get_point_ellipsoid(a, b, c, theta, phi)
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def get_root_ellipse(r0, z0, z1, g, maxiter=20):
     # use bisection method to find root ellipse
     n0 = r0 * z0
@@ -195,7 +199,7 @@ def get_root_ellipse(r0, z0, z1, g, maxiter=20):
     return s
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def get_root_ellipsoid(r0, r1, z0, z1, z2, g, maxiter=20):
     # use bisection method to find root ellipsoid
     n0, n1 = r0 * z0, r1 * z1
@@ -216,7 +220,7 @@ def get_root_ellipsoid(r0, r1, z0, z1, z2, g, maxiter=20):
     return s
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def distance_point_ellipse_quadrant(e0, e1, y0, y1, maxiter=20, epsilon=0):
     """
     from https://www.geometrictools.com/Documentation/DistancePointEllipseEllipsoid.pdf
@@ -257,7 +261,7 @@ def distance_point_ellipse_quadrant(e0, e1, y0, y1, maxiter=20, epsilon=0):
     return x0, x1, distance  # return point, distance
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def distance_point_ellipsoid_octant(e0, e1, e2, y0, y1, y2, maxiter=20, epsilon=0):
     """
     from https://www.geometrictools.com/Documentation/DistancePointEllipseEllipsoid.pdf
