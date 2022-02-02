@@ -196,15 +196,15 @@ def get_edge_vector(edge, faces, verts):
 
 
 def find_variation(triangle_normals, vert_normal):
-    vectors = []
-    vectors.append(vert_normal.get())
+    diff_angles = []
     for n in triangle_normals:
-        vectors.append(n.get())
-    vectors = np.array(vectors)
-    return vectors.mean(axis=0), vectors.std(axis=0)
+        diff_angles.append(vert_normal.angle(n, degrees=True))
+    diff_angles = np.array(diff_angles)
+    return diff_angles.mean(), diff_angles.std(axis=0)
 
 
-def find_orientations(plist, segmentation, cutoff, mesh_detail, reference_normal, verbose=False):
+def find_orientations(plist, segmentation, cutoff, mesh_detail, reference_normal, verbose=False,
+                      improved_precision=True):
     from pytom.voltools.utils import rotation_matrix
 
     # get the triangular mesh
@@ -214,8 +214,9 @@ def find_orientations(plist, segmentation, cutoff, mesh_detail, reference_normal
     unit_vector = Vector(reference_normal)
     unit_vector.normalize()
 
-    distances, orientations = [], []
+    distances, orientations, angle_stds = [], [], []
     particle_arrows, membrane_arrows = [], []
+    exclusion_count = 0
     for p in plist:
         # get rotation matrix and convert to axis-angle
         rotation = p.getRotation().toVector()  # z1, z2, x
@@ -255,48 +256,57 @@ def find_orientations(plist, segmentation, cutoff, mesh_detail, reference_normal
         # visualize(segmentation, cutoff, mesh_detail, [(c, v.get()) for c, v in zip(triangle_projection_points,
         #                                                                       triangle_normals)],
         #           [(coordinates, particle_normal.get())], precalc=(verts, faces_subset))
+
+        # compare vertex normal with triangle normals
+        # visualize(segmentation, cutoff, mesh_detail, [(c, v.get()) for c, v in zip(triangle_projection_points,
+        #                                                                            triangle_normals)],
+        #           [(verts[min_distance_idx], normals[min_distance_idx])], precalc=(verts, faces_subset))
+
+        mean, std = find_variation(triangle_normals, particle_normal)
         if verbose:
-            mean, std = find_variation(triangle_normals, Vector(normals[min_distance_idx]))
-            print('Average and standard deviation of membrane normals: ', mean, std)
+            print('average and standard deviation of membrane normals: ', mean, std)
 
         # select triangle if applicable, otherwise select edge
-        if sum(point_on_triangle_surface) == 1:  # this is the easy case, just above a single triangle
-            if verbose: print('particle above triangle')
-            id = point_on_triangle_surface.index(True)
-            membrane_normal, membrane_point = triangle_normals[id], triangle_projection_points[id]
-        elif sum(point_on_triangle_surface) > 1:  # above two or more, select triangle with shortest distance
-            if verbose: print('particle above two or more triangles')
-            ids = [i for i, t in enumerate(point_on_triangle_surface) if t]
-            dists = [distance.euclidean(triangle_projection_points[i], coordinates) for i in ids]
-            id = ids[dists.index(min(dists))]
-            membrane_normal, membrane_point = triangle_normals[id], triangle_projection_points[id]
-        else:  # not above any triangle, it is either above an edge or above a point
-            # first select all possible edges
-            edges = faces_to_edges(faces_subset, min_distance_idx)
-            line_projection_points, point_on_line, line_normals = [], [], []
-            for edge in edges:
-                line_projection, lies_on_line = point_3d_in_line(coordinates, verts[edge[0]], verts[edge[1]])
-                line_projection_points.append(line_projection)
-                point_on_line.append(lies_on_line)
-                line_normals.append(get_edge_vector(edge, faces_subset, verts))
-
-            # select edge if applicable, otherwise select vertex
-            if sum(point_on_line) == 1:
-                if verbose: print('particle above edge')
-                id = point_on_line.index(True)
-                membrane_normal, membrane_point = line_normals[id], line_projection_points[id]
-            elif sum(point_on_line) > 1:
-                if verbose: print('particle above two or more edges')
-                ids = [i for i, t in enumerate(point_on_line)]
-                dists = [distance.euclidean(line_projection_points[i], coordinates) for i in ids]
+        if improved_precision:
+            if sum(point_on_triangle_surface) == 1:  # this is the easy case, just above a single triangle
+                if verbose: print('particle above triangle')
+                id = point_on_triangle_surface.index(True)
+                membrane_normal, membrane_point = triangle_normals[id], triangle_projection_points[id]
+            elif sum(point_on_triangle_surface) > 1:  # above two or more, select triangle with shortest distance
+                if verbose: print('particle above two or more triangles')
+                ids = [i for i, t in enumerate(point_on_triangle_surface) if t]
+                dists = [distance.euclidean(triangle_projection_points[i], coordinates) for i in ids]
                 id = ids[dists.index(min(dists))]
-                membrane_normal, membrane_point = line_normals[id], line_projection_points[id]
-            else:  # finally, if not above anything else, select the vertex
-                if verbose: print('particle above vertex')
-                membrane_normal = Vector(normals[min_distance_idx])
-                membrane_point = verts[min_distance_idx]
+                membrane_normal, membrane_point = triangle_normals[id], triangle_projection_points[id]
+            else:  # not above any triangle, it is either above an edge or above a point
+                # first select all possible edges
+                edges = faces_to_edges(faces_subset, min_distance_idx)
+                line_projection_points, point_on_line, line_normals = [], [], []
+                for edge in edges:
+                    line_projection, lies_on_line = point_3d_in_line(coordinates, verts[edge[0]], verts[edge[1]])
+                    line_projection_points.append(line_projection)
+                    point_on_line.append(lies_on_line)
+                    line_normals.append(get_edge_vector(edge, faces_subset, verts))
 
-        # print(particle_normal.get(), membrane_normal.get())
+                # select edge if applicable, otherwise select vertex
+                if sum(point_on_line) == 1:
+                    if verbose: print('particle above edge')
+                    id = point_on_line.index(True)
+                    membrane_normal, membrane_point = line_normals[id], line_projection_points[id]
+                elif sum(point_on_line) > 1:
+                    if verbose: print('particle above two or more edges')
+                    ids = [i for i, t in enumerate(point_on_line)]
+                    dists = [distance.euclidean(line_projection_points[i], coordinates) for i in ids]
+                    id = ids[dists.index(min(dists))]
+                    membrane_normal, membrane_point = line_normals[id], line_projection_points[id]
+                else:  # finally, if not above anything else, select the vertex
+                    if verbose: print('particle above vertex')
+                    membrane_normal = Vector(normals[min_distance_idx])
+                    membrane_point = verts[min_distance_idx]
+        else:
+            membrane_normal = Vector(np.array([n.get() for n in triangle_normals]).sum(axis=0) / len(triangle_normals))
+            membrane_point = verts[min_distance_idx]
+
         # get the difference angle
         difference_angle = particle_normal.angle(membrane_normal, degrees=True)
         orientations.append(difference_angle)
@@ -304,14 +314,19 @@ def find_orientations(plist, segmentation, cutoff, mesh_detail, reference_normal
         # get the distance
         distances.append(distance.euclidean(membrane_point, coordinates))
 
+        # append the variation
+        angle_stds.append(std)
+
         # create arrows for bild file
         particle_arrows.append((coordinates, particle_normal.get()))
         membrane_arrows.append((membrane_point, membrane_normal.get()))
 
-    return distances, orientations, particle_arrows, membrane_arrows
+    return distances, orientations, angle_stds, particle_arrows, membrane_arrows
 
 
-def write_arrow_bild(p_arrows, m_arrows, outlier_filter, filename):
+def write_arrow_bild(p_arrows, m_arrows, filename, outlier_filter=None):
+    if outlier_filter is None:
+        outlier_filter = [True] * len(p_arrows)
     with open(filename, 'w') as stream:
         for (arrow, normal), inlier in zip(p_arrows, outlier_filter):
             if inlier:
@@ -363,24 +378,34 @@ if __name__ == '__main__':
                                                             'angular difference with the template.',
                           'float,float,float', 'optional', [.0, .0, 1.]),
             ScriptOption2(['-f', '--filter_nstd'], 'Number of standard deviations to filter outliers based on '
-                                                   'distance to membrane mesh.', 'int', 'optional', 3),
+                                                   'distance to membrane mesh and variation of angles under the '
+                                                   'ribosome.', 'int',
+                          'optional', 3),
             ScriptOption2(['-r', '--distance_range'], 'Min and max distance from closest membrane point to consider, '
                                                       'min distance can for example be set to the radius of the '
                                                       'particle (if the current coordinate is in the center',
                           'float,float', 'optional'),
+            ScriptOption2(['-a', '--angle_std_cutoff'], 'Set a threshold for removing orientations that are likely '
+                                                        'imprecise due to inaccurate patches of membrane. Cutoff is '
+                                                        'relative to std of triangles directly under membrane. So a '
+                                                        'value of 15 degrees implies the std cannot be larger than 15 '
+                                                        'for the membrane patch.',
+                          'float', 'optional'),
+            ScriptOption2(['-n', '--bins'], 'Number of bins for histogram.',
+                          'int', 'optional', 30),
             ScriptOption2(['--verbose'], 'Be verbose.', 'no arguments', 'optional')])
 
     options = parse_script_options2(sys.argv[1:], helper)
 
     input_file, segmentation_file, output_file, voxel_size, cutoff, mesh_detail, template_normal, nstd, \
-        distance_range, verbose = options
+        distance_range, angle_std_cutoff, nbins, verbose = options
 
     _, ext = os.path.splitext(input_file)
     if ext == '.xml':
         segmentation = read(segmentation_file)
         particle_list = ParticleList()
         particle_list.fromXMLFile(input_file)
-        distances, orientations, p_arrows, m_arrows = find_orientations(particle_list, segmentation, cutoff,
+        distances, orientations, stds, p_arrows, m_arrows = find_orientations(particle_list, segmentation, cutoff,
                                                                         mesh_detail,
                                                                         template_normal, verbose=verbose)
     elif ext == '.txt':
@@ -388,30 +413,45 @@ if __name__ == '__main__':
                                     skip_header=1)
         segmentation_files = linker_data['segmentation']
         particle_list_files = linker_data['particle_list']
-        distances, orientations = [], []
+        distances, orientations, stds = [], [], []
         for s, p in zip(segmentation_files, particle_list_files):
             print(f'Run on segmentation {s} with plist {p}')
+            name = os.path.splitext(os.path.split(s)[1])[0]
             segmentation = read(s)
             particle_list = ParticleList()
             particle_list.fromXMLFile(p)
-            d, o, p_arrows, m_arrows = find_orientations(particle_list, segmentation, cutoff, mesh_detail,
+            d, o, std, p_arrows, m_arrows = find_orientations(particle_list, segmentation, cutoff, mesh_detail,
                                                          template_normal, verbose=verbose)
             distances += d
             orientations += o
+            stds += std
+            write_arrow_bild(p_arrows, m_arrows, name + '.bild')
     else:
         print('Invalid input extension.')
         sys.exit(0)
 
-    # visualize(segmentation, cutoff, mesh_detail, p_arrows, m_arrows)
+    # total number of particles
+    n_pre_filter = len(orientations)
 
+    # conver to numpy arrays for calculation
     distances = np.array(distances)
+    distances *= voxel_size if voxel_size is not None else 1
     orientations = np.array(orientations)
+    stds = np.array(stds)
 
-    outlier_filter = find_outliers(distances, nstd, minmaxdistance=distance_range)
+    # filter large distances and angles
+    distance_outlier_filter = find_outliers(distances, nstd, minmaxdistance=distance_range)
+    angle_outlier_filter = (stds < angle_std_cutoff) if angle_std_cutoff is not None else (stds < 180)
+    outlier_filter = np.logical_and(distance_outlier_filter, angle_outlier_filter)
     distances = distances[outlier_filter]
     orientations = orientations[outlier_filter]
+    n = len(orientations)
 
-    # ======== create plot
+    # output number of particle excluded due to filtering
+    total_outliers = (outlier_filter == False).sum()
+    print(f'Filtered {total_outliers} from total of {n_pre_filter} particles')
+
+    # ============================== create plots
     try:
         import matplotlib.pyplot as plt
     except Exception as e:
@@ -424,27 +464,85 @@ if __name__ == '__main__':
 
     # do some plotting
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    ax[0].hist(distances, bins=nbins, color='black', histtype='stepfilled', alpha=0.5)
+    ax[0].hist(distances, bins=nbins, color='black', histtype='step')
     if voxel_size is not None:
-        ax[0].hist(distances * voxel_size, bins=30)
-        # ax[0].set_label('distance')
         ax[0].set_xlabel(r'Distance ($\AA$)')
     else:
-        ax[0].hist(distances, bins=30)
-        # ax[0].set_label('distance')
         ax[0].set_xlabel('Distance (voxels)')
     ax[0].set_ylabel('Number of particles')
-    ax[1].hist(orientations, bins=30)
-    # ax[1].set_label('orientation')
+    ax[1].hist(orientations, bins=nbins, color='black', histtype='stepfilled', alpha=0.5)
+    ax[1].hist(orientations, bins=nbins, color='black', histtype='step')
     ax[1].set_xlabel('Angle (degrees)')
+
+    # information about number of particles
+    textstr = f'N={n}'
+    # these are matplotlib.patch.Patch properties
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.7)
+    # place a text box in upper left in axes coords
+    ax[1].text(0.05, 0.95, textstr, transform=ax[1].transAxes, fontsize=14,
+               verticalalignment='top', bbox=props)
 
     plt.tight_layout()
 
     if output_file is not None:
-        plt.savefig(output_file + '.png', dpi=200, format='png')
+        plt.savefig(output_file + '.png', dpi=300, format='png', transparent=True)
         print(f"wrote {output_file + '.png'}")
         if ext == '.xml':
-            write_arrow_bild(p_arrows, m_arrows, outlier_filter, output_file + '_vectors.bild')
+            write_arrow_bild(p_arrows, m_arrows, output_file + '_vectors.bild', outlier_filter=outlier_filter)
             print(f"wrote {output_file + '_vectors.bild'}")
     else:
         plt.show()
 
+    # ==================== create plot of distance vs. angles
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax.scatter(distances, orientations, alpha=0.7, color='gray')
+    if voxel_size is not None:
+        ax.set_xlabel(r'Distance ($\AA$)')
+    else:
+        ax.set_xlabel('Distance (voxels)')
+    ax.set_ylabel('Angle (degrees)')
+
+    # information about number of particles
+    textstr = f'N={n}'
+    # these are matplotlib.patch.Patch properties
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.7)
+    # place a text box in upper left in axes coords
+    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+               verticalalignment='top', bbox=props)
+
+    plt.tight_layout()
+
+    if output_file is not None:
+        plt.savefig(output_file + '_scatter.png', dpi=300, format='png', transparent=True)
+        print(f"wrote {output_file + '_scatter.png'}")
+    else:
+        plt.show()
+
+    # ==================== plot histogram of stds
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    bins, _, _ = ax.hist(stds, bins=nbins, color='black', histtype='stepfilled', alpha=0.5)
+    bins, _, _ = ax.hist(stds, bins=nbins, color='black', histtype='step')
+    if angle_std_cutoff is not None:
+        ax.vlines(angle_std_cutoff, 0, max(bins), label='cutoff', color='orange', linestyles='dashed', linewidth=3)
+        ax.legend()
+    ax.set_xlabel('Std (degrees)')
+    ax.set_ylabel('Frequency')
+
+    # information about number of particles
+    textstr = f'N={n_pre_filter}'
+    # these are matplotlib.patch.Patch properties
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.7)
+    # place a text box in upper left in axes coords
+    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+            verticalalignment='top', bbox=props)
+
+    plt.tight_layout()
+
+    if output_file is not None:
+        plt.savefig(output_file + '_std.png', dpi=300, format='png', transparent=True)
+        print(f"wrote {output_file + '_std.png'}")
+    else:
+        plt.show()
