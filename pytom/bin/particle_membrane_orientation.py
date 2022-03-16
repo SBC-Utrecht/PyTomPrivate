@@ -10,6 +10,7 @@ import sys
 import os
 from scipy.spatial import distance
 from pytom.simulation.membrane import Vector
+from pytom.basic.structures import ParticleList
 
 
 def convert_to_mesh(volume, cutoff=0.2, mesh_detail=2, display=False):
@@ -94,14 +95,6 @@ def visualize(volume, cutoff, mesh_detail, particle_vecs, membrane_vecs, precalc
 
     plt.tight_layout()
     plt.show()
-
-
-def find_outliers(distances, nstd=3, minmaxdistance=None):
-    if minmaxdistance is not None:
-        return np.logical_and(distances >= minmaxdistance[0], distances <= minmaxdistance[1])
-    else:
-        norm_distances = (distances - distances.mean()) / distances.std()
-        return np.logical_and(norm_distances >= -nstd, norm_distances <= nstd)
 
 
 def point_3d_in_triangle(point, v1, v2, v3):
@@ -342,16 +335,46 @@ def write_arrow_bild(p_arrows, m_arrows, filename, outlier_filter=None):
                              f'{arrow[0] + 15 * normal[0]:.2f} '
                              f'{arrow[1] + 15 * normal[1]:.2f} '
                              f'{arrow[2] + 15 * normal[2]:.2f}\n')
-    # except :
-    #     print('Unable to write error file.')
-    #     return
+
+
+def write_split_particle_lists(orientations_per_particle_list, distance_range, angle_outlier_filter,
+                               split_lists_angle, voxel_size, output_name):
+
+    for data in orientations_per_particle_list:
+        d_filter = np.logical_and(np.array(data['distances']) * voxel_size >= distance_range[0],
+                                  np.array(data['distances']) * voxel_size <= distance_range[1])
+        o_filter = (np.array(data['stds']) < angle_outlier_filter)
+
+        c_filter = np.logical_and(d_filter, o_filter)
+        set_1_filter = np.logical_and(np.array(data['orientations']) <= split_lists_angle, c_filter)  # include cutoff
+        set_2_filter = np.logical_and(np.array(data['orientations']) > split_lists_angle, c_filter)  # above without
+
+        # apply filter to particle list and write to correct destination
+        set_1, set_2 = ParticleList(), ParticleList()
+        for s1, s2, part in zip(set_1_filter, set_2_filter, data['particle_list']):
+            if s1:
+                set_1.append(part)
+            elif s2:
+                set_2.append(part)
+
+        print('particles in set1 and set2 after splitting angles: ', len(set_1), len(set_2))
+
+        # output file names
+        set_1_file_name = os.path.join(output_name,
+                                       os.path.splitext(os.path.split(data['segmentation_file'])[1])[0] + \
+                                       f'_<{split_lists_angle}deg.xml')
+        set_2_file_name = os.path.join(output_name,
+                                       os.path.splitext(os.path.split(data['segmentation_file'])[1])[0] + \
+                                       f'_>{split_lists_angle}deg.xml')
+        # write the sets
+        set_1.toXMLFile(set_1_file_name)
+        set_2.toXMLFile(set_2_file_name)
 
 
 if __name__ == '__main__':
     from pytom.tools.script_helper import ScriptHelper2, ScriptOption2
     from pytom.tools.parse_script_options import parse_script_options2
     from pytom.agnostic.io import read
-    from pytom.basic.structures import ParticleList
 
     helper = ScriptHelper2(
         sys.argv[0].split('/')[-1],  # script name
@@ -364,7 +387,7 @@ if __name__ == '__main__':
                                                   'segmentation and particle lists.', 'file', 'required'),
             ScriptOption2(['-s', '--segmentation_file'], 'Membrane map in mrc/em/rec format.', 'file',
                           'optional'),
-            ScriptOption2(['-o', '--output_name'], 'Histogram plot output name. If not provided plot to screen.',
+            ScriptOption2(['-o', '--output_name'], 'Folder where the output report is stored',
                           'string', 'optional'),
             ScriptOption2(['-v', '--voxel_size'], 'Voxel size of segmentation model.',
                           'float', 'optional'),
@@ -391,14 +414,22 @@ if __name__ == '__main__':
                                                         'value of 15 degrees implies the std cannot be larger than 15 '
                                                         'for the membrane patch.',
                           'float', 'optional'),
+            ScriptOption2(['--axis_limit_distance'], 'Specify up to what value distances should be plotted. Distances '
+                                                     'of particles can become huge, which decreases plot '
+                                                     'visibility. Default 500A. ', 'float', 'optional', 500),
             ScriptOption2(['-n', '--bins'], 'Number of bins for histogram.',
                           'int', 'optional', 30),
+            ScriptOption2(['--write_split_particle_lists'], 'Write .xml particle lists split on specified angle.',
+                          'float', 'optional'),
             ScriptOption2(['--verbose'], 'Be verbose.', 'no arguments', 'optional')])
 
     options = parse_script_options2(sys.argv[1:], helper)
 
-    input_file, segmentation_file, output_file, voxel_size, cutoff, mesh_detail, template_normal, nstd, \
-        distance_range, angle_std_cutoff, nbins, verbose = options
+    input_file, segmentation_file, output_name, voxel_size, cutoff, mesh_detail, template_normal, nstd, \
+        distance_range, angle_std_cutoff, axis_distance_limit, nbins, split_lists_angle, verbose = options
+
+    if output_name is not None and not os.path.exists(output_name):
+        os.mkdir(output_name)
 
     _, ext = os.path.splitext(input_file)
     if ext == '.xml':
@@ -408,12 +439,20 @@ if __name__ == '__main__':
         distances, orientations, stds, p_arrows, m_arrows = find_orientations(particle_list, segmentation, cutoff,
                                                                         mesh_detail,
                                                                         template_normal, verbose=verbose)
+        # create dict with information per list
+        orientations_per_particle_list = [{'particle_list': particle_list,
+                                                   'segmentation_file': segmentation_file,
+                                                   'particle_list_file': input_file,
+                                                   'distances': distances,
+                                                   'orientations': orientations,
+                                                   'stds': stds}]
     elif ext == '.txt':
         linker_data = np.genfromtxt(input_file, dtype=[('segmentation', 'U1000'), ('particle_list', 'U1000')],
                                     skip_header=1)
         segmentation_files = linker_data['segmentation']
         particle_list_files = linker_data['particle_list']
         distances, orientations, stds = [], [], []
+        orientations_per_particle_list = []
         for s, p in zip(segmentation_files, particle_list_files):
             print(f'Run on segmentation {s} with plist {p}')
             name = os.path.splitext(os.path.split(s)[1])[0]
@@ -426,6 +465,14 @@ if __name__ == '__main__':
             orientations += o
             stds += std
             write_arrow_bild(p_arrows, m_arrows, name + '.bild')
+
+            # add a dict that stores information per list
+            orientations_per_particle_list.append({'particle_list': particle_list,
+                                                   'segmentation_file': s,
+                                                   'particle_list_file': p,
+                                                   'distances': d,
+                                                   'orientations': o,
+                                                   'stds': std})
     else:
         print('Invalid input extension.')
         sys.exit(0)
@@ -439,11 +486,20 @@ if __name__ == '__main__':
     orientations = np.array(orientations)
     stds = np.array(stds)
 
-    # filter large distances and angles
-    distance_outlier_filter = find_outliers(distances, nstd, minmaxdistance=distance_range)
-    angle_outlier_filter = (stds < angle_std_cutoff) if angle_std_cutoff is not None else (stds < 180)
+    # find distance cutoff  and angle cutoff if not specified
+    distance_range = (distances.mean() - nstd * distances.std(), distances.mean() + nstd * distances.std()) if \
+        distance_range is None else distance_range
+    angle_std_cutoff = nstd * stds.std() + stds.mean() if angle_std_cutoff is None else angle_std_cutoff
+
+    if split_lists_angle is not None and output_name is not None:
+        write_split_particle_lists(orientations_per_particle_list, distance_range, angle_std_cutoff,
+                                   split_lists_angle, voxel_size, output_name)
+
+    # Filter the combined dataset to get better statistics of distributions for plot
+    distance_outlier_filter = np.logical_and(distances >= distance_range[0], distances <= distance_range[1])
+    angle_outlier_filter = (stds < angle_std_cutoff)
     outlier_filter = np.logical_and(distance_outlier_filter, angle_outlier_filter)
-    distances = distances[outlier_filter]
+    distances_filtered = distances[outlier_filter]
     orientations = orientations[outlier_filter]
     n = len(orientations)
 
@@ -463,41 +519,37 @@ if __name__ == '__main__':
     plt.rc('font', **font)
 
     # do some plotting
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-    ax[0].hist(distances, bins=nbins, color='black', histtype='stepfilled', alpha=0.5)
-    ax[0].hist(distances, bins=nbins, color='black', histtype='step')
-    if voxel_size is not None:
-        ax[0].set_xlabel(r'Distance ($\AA$)')
-    else:
-        ax[0].set_xlabel('Distance (voxels)')
-    ax[0].set_ylabel('Number of particles')
-    ax[1].hist(orientations, bins=nbins, color='black', histtype='stepfilled', alpha=0.5)
-    ax[1].hist(orientations, bins=nbins, color='black', histtype='step')
-    ax[1].set_xlabel('Angle (degrees)')
+    fig, ax = plt.subplots(figsize=(5, 5))
+
+    ax.hist(orientations, bins=nbins, color='black', histtype='stepfilled', alpha=0.5)
+    ax.hist(orientations, bins=nbins, color='black', histtype='step')
+    ax.set_ylabel('Number of particles')
+    ax.set_xlabel('Angle (degrees)')
 
     # information about number of particles
     textstr = f'N={n}'
     # these are matplotlib.patch.Patch properties
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.7)
     # place a text box in upper left in axes coords
-    ax[1].text(0.05, 0.95, textstr, transform=ax[1].transAxes, fontsize=14,
+    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
                verticalalignment='top', bbox=props)
 
     plt.tight_layout()
 
-    if output_file is not None:
-        plt.savefig(output_file + '.png', dpi=300, format='png', transparent=True)
-        print(f"wrote {output_file + '.png'}")
+    if output_name is not None:
+        plt.savefig(os.path.join(output_name, 'orientation_distribution.png'), dpi=300, format='png', transparent=True)
+        print(f"wrote {os.path.join(output_name, 'orientation_distribution.png')}")
         if ext == '.xml':
-            write_arrow_bild(p_arrows, m_arrows, output_file + '_vectors.bild', outlier_filter=outlier_filter)
-            print(f"wrote {output_file + '_vectors.bild'}")
+            write_arrow_bild(p_arrows, m_arrows, os.path.join(output_name, 'vectors.bild'),
+                             outlier_filter=outlier_filter)
+            print(f"wrote {os.path.join(output_name, 'vectors.bild')}")
     else:
         plt.show()
 
     # ==================== create plot of distance vs. angles
 
     fig, ax = plt.subplots(figsize=(5, 5))
-    ax.scatter(distances, orientations, alpha=0.7, color='gray')
+    ax.scatter(distances_filtered, orientations, alpha=0.7, color='gray')
     if voxel_size is not None:
         ax.set_xlabel(r'Distance ($\AA$)')
     else:
@@ -514,13 +566,37 @@ if __name__ == '__main__':
 
     plt.tight_layout()
 
-    if output_file is not None:
-        plt.savefig(output_file + '_scatter.png', dpi=300, format='png', transparent=True)
-        print(f"wrote {output_file + '_scatter.png'}")
+    if output_name is not None:
+        plt.savefig(os.path.join(output_name, 'scatter.png'), dpi=300, format='png', transparent=True)
+        print(f"wrote {os.path.join(output_name, 'scatter.png')}")
     else:
         plt.show()
 
-    # ==================== plot histogram of stds
+    # ==================== plot histogram of distances with cutoffs
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    bins, _, _ = ax.hist(distances[distances < axis_distance_limit],
+                            bins=nbins, color='black', histtype='stepfilled', alpha=0.5)
+    bins, _, _ = ax.hist(distances[distances < axis_distance_limit],
+                            bins=nbins, color='black', histtype='step')
+    if voxel_size is not None:
+        ax.set_xlabel(r'Distance ($\AA$)')
+    else:
+        ax.set_xlabel('Distance (voxels)')
+    ax.set_ylabel('Number of particles')
+    ax.vlines(distance_range[0], 0, max(bins), label='cutoff', color='orange', linestyles='dashed', linewidth=3)
+    ax.vlines(distance_range[1], 0, max(bins), color='orange', linestyles='dashed', linewidth=3)
+    ax.legend()
+
+    plt.tight_layout()
+
+    if output_name is not None:
+        plt.savefig(os.path.join(output_name, 'distances.png'), dpi=300, format='png', transparent=True)
+        print(f"wrote {os.path.join(output_name, 'distances.png')}")
+    else:
+        plt.show()
+
+    # ==================== plot histogram of angle stds with cutoffs
 
     fig, ax = plt.subplots(figsize=(5, 5))
     bins, _, _ = ax.hist(stds, bins=nbins, color='black', histtype='stepfilled', alpha=0.5)
@@ -529,7 +605,7 @@ if __name__ == '__main__':
         ax.vlines(angle_std_cutoff, 0, max(bins), label='cutoff', color='orange', linestyles='dashed', linewidth=3)
         ax.legend()
     ax.set_xlabel('Std (degrees)')
-    ax.set_ylabel('Frequency')
+    ax.set_ylabel('Number of particles')
 
     # information about number of particles
     textstr = f'N={n_pre_filter}'
@@ -541,8 +617,8 @@ if __name__ == '__main__':
 
     plt.tight_layout()
 
-    if output_file is not None:
-        plt.savefig(output_file + '_std.png', dpi=300, format='png', transparent=True)
-        print(f"wrote {output_file + '_std.png'}")
+    if output_name is not None:
+        plt.savefig(os.path.join(output_name, 'std.png'), dpi=300, format='png', transparent=True)
+        print(f"wrote {os.path.join(output_name, 'std.png')}")
     else:
         plt.show()
