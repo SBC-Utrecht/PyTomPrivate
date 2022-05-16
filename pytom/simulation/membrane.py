@@ -178,6 +178,22 @@ def random_point_ellipsoid(a, b, c):
     return get_point_ellipsoid(a, b, c, theta, phi)
 
 
+def sample_sphere(N):
+    """
+    Return N points sampled on sphere
+
+    @param N: number of points to sample
+    @type N: integer
+    @return: N points on unit sphere
+    @rtype: np.array(N, 3)
+    """
+    assert isinstance(N, int) and N > 0, "invalid number of points on sphere"
+    z = np.random.uniform(-1, 1, size=N)
+    angle = np.random.uniform(0, 2 * np.pi, size=N)
+    x, y = np.cos(angle), np.sin(angle)
+    return np.stack((x, y, z), axis=1)
+
+
 # @jit(nopython=True)
 def get_root_ellipse(r0, z0, z1, g, maxiter=20):
     # use bisection method to find root ellipse
@@ -425,6 +441,8 @@ def sample_points_ellipsoid(number, a=2, b=3, c=4, evenly=True, maxiter=10000, f
         return equilibrate_ellipsoid(points, a, b, c, maxiter=maxiter, factor=factor, display=display)
     else:
         return points
+
+
 
 
 def get_point_ellipse(a, b, theta):
