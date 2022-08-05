@@ -228,6 +228,8 @@ def find_membrane_surface(coordinates, verts, faces, normals):
     #                                                                            triangle_normals)],
     #           [(verts[min_distance_idx], normals[min_distance_idx])], precalc=(verts, faces_subset))
 
+    # TODO this is unnecessary
+
     std = find_variation(triangle_normals)
 
     # consider situations of coordinate above triangle, line, or vertex
@@ -290,24 +292,10 @@ def find_orientations(plist, segmentation, cutoff, mesh_detail, reference_normal
     rm_to_ref_bas = unit_vector.get_rotation(reference_basis)
 
     # initialize some lists
-    distances, orientations, orientations_around_axis, angle_stds = [], [], [], []
+    distances, orientations, orientations_around_axis, angle_stds, final_zxz = [], [], [], [], []
     particle_arrows, membrane_arrows = [], []
     # exclusion_count = 0
     for p in plist:
-        # get rotation matrix and convert to axis-angle
-        rotation = p.getRotation().toVector()  # z1, z2, x
-        par_rot = rotation_matrix(rotation=(rotation[0], rotation[2], rotation[1]), rotation_order='rzxz')
-        par_rot_basis = np.dot(rm_to_ref_bas.T, par_rot[:3, :3])  # matrix multiply
-
-        # rotate unit vector by rotation matrix...
-        # particle_normal = Vector(unit_vector.get())  # copy reference normal
-        # particle_normal.rotate(par_rot_basis)
-
-        # ===> check that above is the same as this >
-        # test_normal = Vector(reference_basis.get())
-        # test_normal.rotate(par_rot[:3, :3])
-        # if sum([abs(a - b) for a, b  in zip(particle_normal.get(), test_normal.get())]) > 0.001:
-        #     print(particle_normal.get(), test_normal.get())
 
         # get the coordinates of the particle
         coordinates = np.array(p.getPickPosition().toVector())
@@ -319,49 +307,72 @@ def find_orientations(plist, segmentation, cutoff, mesh_detail, reference_normal
         if verbose:
             print('average and standard deviation of membrane normals: ', angular_variation, std)
 
-        # rotation matrix of reference vector onto membrane normal
-        # rm_ref_to_membrane = membrane_normal.get_rotation(unit_vector)  # this is the rotation to membrane basis
-        rm_ref_to_membrane = membrane_normal.get_rotation(unit_vector)
-        # remove the base rotation to compare rotation in membrane frame
-        par_rot_memb_basis = np.dot(par_rot_basis, rm_ref_to_membrane.T)
-        # particle_normal.rotate(rm_ref_to_membrane.T) => same as recalculating particle normal as below
-        # print(particle_normal.get())
+        # get rotation matrix and convert to axis-angle
+        zxz_par_to_ref = p.getRotation().toVector(convention='zxz')  # z1, z2, x
+        rot_ref_to_par = rotation_matrix(rotation=zxz_par_to_ref,
+                                         rotation_order='rzxz')[:3, :3].T
+        # par_rot_basis = np.dot(rm_to_ref_bas.T, par_rot)  # matrix multiply
 
-        # membrane_normal.rotate(par_rot_basis.T)
+        rot_mem_to_ref = reference_basis.get_rotation(membrane_normal)
+        # 'subtract' reference rotation from the particle rotation
+        rot_par_to_mem = np.dot(rot_mem_to_ref, rot_ref_to_par)
 
-        # rotate unit vector with relative rotation matrix
-        particle_normal = Vector(unit_vector.get())
-        particle_normal.rotate(par_rot_memb_basis)
-        # we are now in the coordinates system of the [0, 0, 1] vector
-        difference_angle = particle_normal.angle(unit_vector, degrees=True)
+        # convert to zxz
+        zxz_in_mem = matToZXZ(np.linalg.inv(rot_par_to_mem)).toVector(convention='zxz')
 
-        # get rotation around axis
-        rm_unit_to_par = particle_normal.get_rotation(unit_vector)
-        # rot_around_axis = differenceAngleOfTwoRotations(matToZXZ(rm_unit_to_par), matToZXZ(par_rot_memb_basis))
+        # rotate unit vector by rotation matrix...
+        # particle_normal = Vector(unit_vector.get())  # copy reference normal
+        # particle_normal.rotate(par_rot_basis)
 
-        remainder = np.dot(rm_unit_to_par, par_rot_memb_basis.T)
-        matrix_test = Matrix(3, 3)
-        matrix_test[0, 0], matrix_test[0, 1], matrix_test[0, 2] = remainder[0]
-        matrix_test[1, 0], matrix_test[1, 1], matrix_test[1, 2] = remainder[1]
-        matrix_test[2, 0], matrix_test[2, 1], matrix_test[2, 2] = remainder[2]
-        angle, axis = matToAxisAngle(matrix_test)
-        sign = axis[2]
-        # print(axis, angle)
+        # ===> check that above is the same as this >
+        # test_normal = Vector(reference_basis.get())
+        # test_normal.rotate(par_rot[:3, :3])
+        # if sum([abs(a - b) for a, b  in zip(particle_normal.get(), test_normal.get())]) > 0.001:
+        #     print(particle_normal.get(), test_normal.get())
 
-        if sign < 0:
-            rot_around_axis = angle * -1 + 360
-        else:
-            rot_around_axis = angle
-
-        # get the difference angle
-        # difference_angle = particle_normal.angle(membrane_normal, degrees=True)
-        orientations.append(difference_angle)  # probability fit should correct for random angular distribution
-
-        # get axis rotation
-        # matrix_basic = particle_normal.get_rotation(unit_vector)
-        # rot_around_axis = differenceAngleOfTwoRotations(matToZXZ(matrix_basic), matToZXZ(matrix))
-        orientations_around_axis.append(rot_around_axis)
-        # difference of this angle with the plane???
+        # # rotation matrix of reference vector onto membrane normal
+        # # rm_ref_to_membrane = membrane_normal.get_rotation(unit_vector)  # this is the rotation to membrane basis
+        # rm_ref_to_membrane = membrane_normal.get_rotation(unit_vector)
+        # # remove the base rotation to compare rotation in membrane frame
+        # par_rot_memb_basis = np.dot(par_rot_basis, rm_ref_to_membrane.T)
+        # # particle_normal.rotate(rm_ref_to_membrane.T) => same as recalculating particle normal as below
+        # # print(particle_normal.get())
+        #
+        # # membrane_normal.rotate(par_rot_basis.T)
+        #
+        # # rotate unit vector with relative rotation matrix
+        # particle_normal = Vector(unit_vector.get())
+        # particle_normal.rotate(par_rot_memb_basis)
+        # # we are now in the coordinates system of the [0, 0, 1] vector
+        # difference_angle = particle_normal.angle(unit_vector, degrees=True)
+        #
+        # # get rotation around axis
+        # rm_unit_to_par = particle_normal.get_rotation(unit_vector)
+        # # rot_around_axis = differenceAngleOfTwoRotations(matToZXZ(rm_unit_to_par), matToZXZ(par_rot_memb_basis))
+        #
+        # remainder = np.dot(rm_unit_to_par, par_rot_memb_basis.T)
+        # matrix_test = Matrix(3, 3)
+        # matrix_test[0, 0], matrix_test[0, 1], matrix_test[0, 2] = remainder[0]
+        # matrix_test[1, 0], matrix_test[1, 1], matrix_test[1, 2] = remainder[1]
+        # matrix_test[2, 0], matrix_test[2, 1], matrix_test[2, 2] = remainder[2]
+        # angle, axis = matToAxisAngle(matrix_test)
+        # sign = axis[2]
+        # # print(axis, angle)
+        #
+        # if sign < 0:
+        #     rot_around_axis = angle * -1 + 360
+        # else:
+        #     rot_around_axis = angle
+        #
+        # # get the difference angle
+        # # difference_angle = particle_normal.angle(membrane_normal, degrees=True)
+        # orientations.append(difference_angle)  # probability fit should correct for random angular distribution
+        #
+        # # get axis rotation
+        # # matrix_basic = particle_normal.get_rotation(unit_vector)
+        # # rot_around_axis = differenceAngleOfTwoRotations(matToZXZ(matrix_basic), matToZXZ(matrix))
+        # orientations_around_axis.append(rot_around_axis)
+        # # difference of this angle with the plane???
 
         # get the distance
         distances.append(distance.euclidean(membrane_point, coordinates))
@@ -370,12 +381,15 @@ def find_orientations(plist, segmentation, cutoff, mesh_detail, reference_normal
         angle_stds.append(angular_variation)
 
         # create arrows for bild file
+        orientations.append(0)
+        orientations_around_axis.append(0)
         vector_for_bild = unit_vector.copy()
-        vector_for_bild.rotate(par_rot_basis)
+        # vector_for_bild.rotate(par_rot_basis)
         particle_arrows.append((coordinates, vector_for_bild.get()))
         membrane_arrows.append((membrane_point, membrane_normal.get()))
+        final_zxz.append(zxz_in_mem)
 
-    return distances, orientations, orientations_around_axis, angle_stds, particle_arrows, membrane_arrows
+    return distances, orientations, orientations_around_axis, angle_stds, particle_arrows, membrane_arrows, final_zxz
 
 
 def write_arrow_bild(p_arrows, m_arrows, filename, outlier_filter=None):
@@ -499,7 +513,8 @@ if __name__ == '__main__':
         segmentation = read(segmentation_file)
         particle_list = ParticleList()
         particle_list.fromXMLFile(input_file)
-        distances, orientations, orientations_around_axis, stds, p_arrows, m_arrows = find_orientations(particle_list,
+        distances, orientations, orientations_around_axis, stds, p_arrows, m_arrows, zxzs = find_orientations(
+            particle_list,
                                                                                            segmentation, cutoff,
                                                                         mesh_detail,
                                                                         template_normal, verbose=verbose)
@@ -515,7 +530,7 @@ if __name__ == '__main__':
                                     skip_header=1)
         segmentation_files = linker_data['segmentation']
         particle_list_files = linker_data['particle_list']
-        distances, orientations, orientations_around_axis, stds = [], [], [], []
+        distances, orientations, orientations_around_axis, stds, zxzs = [], [], [], [], []
         orientations_per_particle_list = []
         membrane_arrow_test = []
         for s, p in zip(segmentation_files, particle_list_files):
@@ -524,12 +539,14 @@ if __name__ == '__main__':
             segmentation = read(s)
             particle_list = ParticleList()
             particle_list.fromXMLFile(p)
-            d, o, oaa, std, p_arrows, m_arrows = find_orientations(particle_list, segmentation, cutoff, mesh_detail,
+            d, o, oaa, std, p_arrows, m_arrows, zxz = find_orientations(particle_list, segmentation, cutoff,
+                                                                        mesh_detail,
                                                          template_normal, verbose=verbose)
             distances += d
             orientations += o
             orientations_around_axis += oaa
             stds += std
+            zxzs += zxz
             # membrane_arrow_test += m_arrows
             write_arrow_bild(p_arrows, m_arrows, os.path.join(output_name, name + '.bild'))
 
@@ -553,6 +570,10 @@ if __name__ == '__main__':
     orientations = np.array(orientations)
     orientations_around_axis = np.array(orientations_around_axis)
     stds = np.array(stds)
+    zxzs = np.array(zxzs)
+    print('shape of zxzs: ', zxzs.shape)
+    x_angles = zxzs[:, 1]
+    z2_angles = zxzs[:, 2]
 
     # find distance cutoff  and angle cutoff if not specified
     distance_range = (distances.mean() - nstd * distances.std(), distances.mean() + nstd * distances.std()) if \
@@ -570,6 +591,7 @@ if __name__ == '__main__':
     distances_filtered = distances[outlier_filter]
     orientations = orientations[outlier_filter]
     orientations_around_axis = orientations_around_axis[outlier_filter]
+    x_angles, z2_angles = x_angles[outlier_filter], z2_angles[outlier_filter]
     n = len(orientations)
 
     # output number of particle excluded due to filtering
@@ -601,6 +623,8 @@ if __name__ == '__main__':
 
     font = {'size': 16}
     plt.rc('font', **font)
+
+
 
     # do some plotting
     fig, ax = plt.subplots(figsize=(5, 5))
@@ -780,11 +804,16 @@ if __name__ == '__main__':
     # => scipy.stats.gaussian_kde
     # could do a 2d kde on the data and then correct the density for random angular distribution of the vector angle
 
+    plt.hist(x_angles)
+    plt.show()
+    plt.hist(z2_angles)
+    plt.show()
+
     fig, ax = plt.subplots(figsize=(6, 5))
-    h = ax.hist2d(orientations, orientations_around_axis, bins=15)
+    h = ax.hist2d(x_angles, z2_angles, bins=15)
     plt.colorbar(h[3], ax=ax)
-    ax.set_xlabel('vector angle (deg)')
-    ax.set_ylabel('rotation around vector (deg)')
+    ax.set_xlabel('euler X')
+    ax.set_ylabel('euler Z2')
     plt.tight_layout()
     if output_name is not None:
         plt.savefig(os.path.join(output_name, '2d_rot_density.png'), dpi=300, format='png', transparent=True)
@@ -793,12 +822,15 @@ if __name__ == '__main__':
     else:
         plt.show()
 
+    print(x_angles.min(), x_angles.max())
+    print(z2_angles.min(), z2_angles.max())
+
     fig, ax = plt.subplots(figsize=(5.5, 5))
-    ax.scatter(orientations, orientations_around_axis, alpha=0.7, color='black', s=4)
+    ax.scatter(x_angles, z2_angles, alpha=0.7, color='black', s=4)
     ax.set_xlim(0, 180)
-    ax.set_xlabel('vector angle (deg)')
+    ax.set_xlabel('euler X')
     ax.set_ylim(0, 360)
-    ax.set_ylabel('rotation around vector (deg)')
+    ax.set_ylabel('euler Z2')
     plt.tight_layout()
     if output_name is not None:
         plt.savefig(os.path.join(output_name, '2d_rot_scatter.png'), dpi=300, format='png', transparent=True)

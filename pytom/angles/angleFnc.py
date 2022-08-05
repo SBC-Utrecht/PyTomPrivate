@@ -123,18 +123,17 @@ def matToZXZ(rotMatrix,inRad=False):
     @author: Friedrich Forster
     """
     from pytom_volume import vol
-
-    if rotMatrix.__class__ == vol and not (rotMatrix.getSizeX() == 3 and rotMatrix.getSizeY() == 3):
-        raise RuntimeError('Input matrix must have a shape of (3x3).')
-
     import math
     from pytom.basic.structures import Rotation
-    from pytom.angles.angle import rad2deg
     from numpy import sign
-    #from pytom.tools.maths import epsilon
+
+    if rotMatrix.__class__ == vol:
+        if not (rotMatrix.getSizeX() == 3 and rotMatrix.getSizeY() == 3):
+            raise RuntimeError('Input matrix must have a shape of (3x3).')
+        if rotMatrix.isIdentity():
+            return Rotation(0,0,0)
+
     epsilon = .001
-    if (rotMatrix.__class__ == vol and rotMatrix.isIdentity()):
-        return Rotation(0,0,0)
 
     # determine X-rotation angle
     cosX = rotMatrix[2,2]
@@ -146,26 +145,7 @@ def matToZXZ(rotMatrix,inRad=False):
         x = math.acos(rotMatrix[2,2])
     sinX = math.sin(x)
     if abs(sinX) >= epsilon:
-        cosZ1 = rotMatrix[2,1]/sinX
-        if cosZ1 > 1:
-            cosZ1 = 1.
-        elif cosZ1 < -1.:
-            cosZ1 = -1.
-        sinZ1 = rotMatrix[2,0]/sinX
-        #z1    = math.acos(cosZ1)
-        #if sinZ1 < 0.:
-        #    z1 = 2*math.pi - z1
-        #now z2
         z1    =  arctan(sign(sinX)*rotMatrix[2,0], sign(sinX)*rotMatrix[2,1])
-        cosZ2 = -rotMatrix[1,2]/sinX
-        sinZ2 = rotMatrix[0,2]/sinX
-        if cosZ2 > 1:
-            cosZ2 = 1.
-        elif cosZ2 < -1.:
-            cosZ2 = -1.
-        #z2    = math.acos(cosZ2)
-        #if sinZ2 < 0.:
-        #    z2 = 2*math.pi - z2
         z2    =  arctan(sign(sinX)*rotMatrix[0,2], -sign(sinX)*rotMatrix[1,2])
     else:
         # set z1=0
