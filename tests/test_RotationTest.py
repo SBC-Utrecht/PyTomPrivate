@@ -8,7 +8,8 @@ import unittest
 from pytom.basic.structures import Rotation
 from pytom.angles.angleFnc import matToZXZ
 from math import modf
-
+from pytom.voltools.utils import rotation_matrix
+from pytom_numpy import vol2npy
 
 class pytom_RotationTest(unittest.TestCase):
 
@@ -112,7 +113,6 @@ class pytom_RotationTest(unittest.TestCase):
         self.assertTrue( abs(modf((nz2 - nz1 + 360.)/360.)[0]*360 - 
             modf((z2 -z1 + 360.)/360.)[0]*360) < 0.00001, 
             'Pole Test 2 failed: z2 z1 not correct')
-
         
     def multiplicationTest(self):
         """
@@ -120,7 +120,7 @@ class pytom_RotationTest(unittest.TestCase):
         multa1a2=self.ang2*self.ang1
 
 
-    def eval(self):
+    def runTest(self):
         """
         """
         self.multiplicationTest()
@@ -130,10 +130,7 @@ class pytom_RotationTest(unittest.TestCase):
         self.matTestQ4()
         self.matPoleTest1()
         self.matPoleTest2()
-
-        
-    def runTest(self):
-        self.eval()
+        self.voltools_pytom_test()
 
 if __name__ == '__main__':
     unittest.main()

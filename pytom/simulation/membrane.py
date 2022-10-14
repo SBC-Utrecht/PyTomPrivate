@@ -14,10 +14,12 @@ import pytom.simulation.physics as physics
 
 class Vector:
     # Class can be used as both a 3d coordinate, and a vector
-    def __init__(self, coordinates):
+    def __init__(self, coordinates, normalize=False):
         assert len(coordinates) == 3, 'Invalid axis list for a 3d vector, input does not contain 3 coordinates.'
         self._axis = np.array(coordinates)
         self._zero_vector = np.all(self._axis == 0)
+        if normalize:
+            self.normalize()
 
     def get(self):
         return self._axis
@@ -29,7 +31,7 @@ class Vector:
         return Vector(self.get())
 
     def inverse(self):
-        self._axis *= -1
+        return Vector(self._axis * -1)
 
     def cross(self, other):
         return Vector([self._axis[1] * other._axis[2] - self._axis[2] * other._axis[1],
@@ -64,7 +66,7 @@ class Vector:
             return angle
 
     def rotate(self, rotation_matrix):
-        self._axis = np.dot(self._axis, rotation_matrix)
+        return Vector(np.dot(self._axis, rotation_matrix))
 
     def _get_orthogonal_unit_vector(self):
         # A vector orthogonal to (a, b, c) is (-b, a, 0), or (-c, 0, a) or (0, -c, b).
@@ -348,9 +350,9 @@ def place_back_to_ellipsoid(point, a, b, c, maxiter=20):
 
     # find rotation of ellipsoid parameters so that a >= b >= c > 0 holds
     x, y, z, _ = distance_point_ellipsoid_octant(a, b, c, *v2.get(), maxiter=maxiter)
-    intersection = Vector([x, y, z])
-    intersection.rotate(octant_rotation_matrix)
-    return intersection.get()
+
+    # return the intersection rotated to right octant
+    return Vector([x, y, z]).rotate(octant_rotation_matrix).get()
 
 
 def test_place_back_to_ellipsoid(size=11, a=10, b=3, c=1, iterations=20):
