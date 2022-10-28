@@ -8,301 +8,23 @@ Author: Marten Chaillet
 import numpy as np
 import sys
 import os
+import matplotlib as mpl
 import matplotlib.pyplot as plt
-import sklearn.cluster as cluster
 import hdbscan
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from scipy.spatial import distance
+import pytom.voltools.transforms as vt
 from pytom.simulation.membrane import Vector
+from pytom.tools.script_helper import ScriptHelper2, ScriptOption2
+from pytom.tools.parse_script_options import parse_script_options2
 from pytom.basic.structures import ParticleList
-from skimage import measure
 from pytom.voltools.utils import rotation_matrix
 from pytom.angles.angleFnc import matToZXZ
+from pytom.agnostic.io import read, write
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from scipy.spatial import distance, transform
+from skimage import measure
 from numba import njit, prange
 
 epsilon = 0.0000005
-
-
-# ==================================CONTAINED IN MEMBRANE MESH CLASS ===================================================
-def convert_to_mesh(volume, cutoff=0.2, mesh_detail=2, display=False):
-
-    verts, faces, normals, values = measure.marching_cubes(volume, level=cutoff, step_size=mesh_detail)
-
-    if display:
-        try:
-            import matplotlib.pyplot as plt
-        except Exception as e:
-            import matplotlib
-            matplotlib.use('Qt5Agg')
-            import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
-        # Display resulting triangular mesh using Matplotlib. This can also be done
-        # with mayavi (see skimage.measure.marching_cubes_lewiner docstring).
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111, projection='3d')
-
-        # Fancy indexing: `verts[faces]` to generate a collection of triangles
-        mesh = Poly3DCollection(verts[faces])
-        mesh.set_edgecolor('k')
-        ax.add_collection3d(mesh)
-
-        ax.set_xlabel(f"x-axis: {volume.shape[0]}")
-        ax.set_ylabel(f"y-axis: {volume.shape[1]}")
-        ax.set_zlabel(f"z-axis: {volume.shape[2]}")
-
-        ax.set_xlim(0, volume.shape[0])
-        ax.set_ylim(0, volume.shape[1])
-        ax.set_zlim(0, volume.shape[2])
-
-        plt.tight_layout()
-        plt.show()
-
-    # invert normals because they point inwards
-    return verts, faces, normals, values
-
-
-def visualize(volume, cutoff, mesh_detail, particle_vecs, membrane_vecs, precalc=None):
-    from skimage import measure
-    if precalc is not None:
-        verts, faces = precalc
-    else:
-        verts, faces, normals, values = measure.marching_cubes(volume, level=cutoff, step_size=mesh_detail)
-
-    try:
-        import matplotlib.pyplot as plt
-    except Exception as e:
-        import matplotlib
-        matplotlib.use('Qt5Agg')
-        import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
-    # Display resulting triangular mesh using Matplotlib. This can also be done
-    # with mayavi (see skimage.measure.marching_cubes_lewiner docstring).
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(111, projection='3d')
-
-    # Fancy indexing: `verts[faces]` to generate a collection of triangles
-    mesh = Poly3DCollection(verts[faces])
-    mesh.set_edgecolor('k')
-    ax.add_collection3d(mesh)
-
-    pdata = np.array([list(c) + list(p) for c, p in particle_vecs])
-    X, Y, Z, U, V, W = zip(*pdata)
-    ax.quiver(X, Y, Z, [10 * u for u in U], [10 * u for u in V], [10 * u for u in W], color='red')
-
-    mdata = np.array([list(c) + list(p) for c, p in membrane_vecs])
-    X, Y, Z, U, V, W = zip(*mdata)
-    ax.quiver(X, Y, Z, [10 * u for u in U], [10 * u for u in V], [10 * u for u in W], color='blue')
-
-    ax.set_xlabel(f"x-axis: {volume.shape[0]}")
-    ax.set_ylabel(f"y-axis: {volume.shape[1]}")
-    ax.set_zlabel(f"z-axis: {volume.shape[2]}")
-
-    ax.set_xlim(0, volume.shape[0])
-    ax.set_ylim(0, volume.shape[1])
-    ax.set_zlim(0, volume.shape[2])
-
-    plt.tight_layout()
-    plt.show()
-
-
-def find_membrane_surface(coordinates, verts, faces, normals):
-    # distance to each vertex in the triangle mesh
-    distance_vector = np.sqrt(np.sum(np.subtract(verts, coordinates) ** 2, axis=1))
-    # min_distance = np.min(distance)  # this is no longer needed?
-    min_distance_idx = np.argmin(distance_vector)
-
-    # try to find if the particle is directly above a triangle of the closest point
-    face_idx = np.any(faces == min_distance_idx, axis=1)
-    faces_subset = faces[face_idx]
-    triangle_projection_points, point_on_triangle_surface, triangle_normals = [], [], []
-    for face in faces_subset:
-        # get triangle vertices
-        v1, v2, v3 = verts[face[0]], verts[face[1]], verts[face[2]]
-
-        # get particle coordinate projected on triangle face and bool telling whether its in the triangle
-        triangle_projection, lies_in_triangle = point_3d_in_triangle(coordinates, v1, v2, v3)
-        triangle_projection_points.append(triangle_projection)
-        point_on_triangle_surface.append(lies_in_triangle)
-
-        # calculate normal and append it
-        triangle_norm = Vector(np.cross(v2 - v1, v3 - v1))
-        triangle_norm.normalize()
-        triangle_norm.inverse()
-        triangle_normals.append(triangle_norm)
-
-    # visualize(segmentation, cutoff, mesh_detail, [(c, v.get()) for c, v in zip(triangle_projection_points,
-    #                                                                       triangle_normals)],
-    #           [(coordinates, particle_normal.get())], precalc=(verts, faces_subset))
-
-    # compare vertex normal with triangle normals
-    # visualize(segmentation, cutoff, mesh_detail, [(c, v.get()) for c, v in zip(triangle_projection_points,
-    #                                                                            triangle_normals)],
-    #           [(verts[min_distance_idx], normals[min_distance_idx])], precalc=(verts, faces_subset))
-
-    # TODO this is unnecessary
-
-    std = find_std(triangle_normals)
-
-    # consider situations of coordinate above triangle, line, or vertex
-    if sum(point_on_triangle_surface) == 1:  # this is the easy case, just above a single triangle
-        id = point_on_triangle_surface.index(True)
-        membrane_normal, membrane_point = triangle_normals[id], triangle_projection_points[id]
-
-    elif sum(point_on_triangle_surface) > 1:  # above two or more, select triangle with shortest distance
-        ids = [i for i, t in enumerate(point_on_triangle_surface) if t]
-        dists = [distance.euclidean(triangle_projection_points[i], coordinates) for i in ids]
-        id = ids[dists.index(min(dists))]
-        membrane_normal, membrane_point = triangle_normals[id], triangle_projection_points[id]
-
-    else:  # not above any triangle, it is either above an edge or above a point
-        # first select all possible edges
-        edges = faces_to_edges(faces_subset, min_distance_idx)
-        line_projection_points, point_on_line, line_normals = [], [], []
-        for edge in edges:
-            line_projection, lies_on_line = point_3d_in_line(coordinates, verts[edge[0]], verts[edge[1]])
-            line_projection_points.append(line_projection)
-            point_on_line.append(lies_on_line)
-            line_normals.append(get_edge_vector(edge, faces_subset, verts))
-
-        # select edge if applicable, otherwise select vertex
-        if sum(point_on_line) == 1:
-            id = point_on_line.index(True)
-            membrane_normal, membrane_point = line_normals[id], line_projection_points[id]
-
-        elif sum(point_on_line) > 1:
-            ids = [i for i, t in enumerate(point_on_line)]
-            dists = [distance.euclidean(line_projection_points[i], coordinates) for i in ids]
-            id = ids[dists.index(min(dists))]
-            membrane_normal, membrane_point = line_normals[id], line_projection_points[id]
-
-        else:  # finally, if not above anything else, select the vertex
-            membrane_normal = Vector(normals[min_distance_idx])
-            membrane_point = verts[min_distance_idx]
-
-    return membrane_point, membrane_normal, std
-
-
-def find_orientations(plist, segmentation, cutoff, mesh_detail, reference_normal, verbose=False):
-    from pytom.voltools.utils import rotation_matrix
-    from pytom.tools.maths import Matrix
-    from pytom.angles.angleFnc import matToZXZ, differenceAngleOfTwoRotations, matToAxisAngle
-
-    # get the triangular mesh
-    verts, faces, normals, values = convert_to_mesh(segmentation, cutoff, mesh_detail)
-
-    # load reference unit vector and make sure it is actually a 'unit' vector
-    unit_vector = Vector([0, 0, 1])
-    unit_vector.normalize()
-
-    # template rotation
-    reference_basis = Vector(reference_normal)
-    reference_basis.normalize()
-
-    # basis rotation -> rotation of unit vector onto reference basis
-    # rm_to_ref_bas = reference_basis.get_rotation(unit_vector)
-    rm_to_ref_bas = unit_vector.get_rotation(reference_basis)
-
-    # initialize some lists
-    distances, orientations, orientations_around_axis, angle_stds, final_zxz = [], [], [], [], []
-    particle_arrows, membrane_arrows = [], []
-    # exclusion_count = 0
-    for p in plist:
-
-        # get the coordinates of the particle
-        coordinates = np.array(p.getPickPosition().toVector())
-
-        # find closest point on membrane
-        membrane_point, membrane_normal, angular_variation = find_membrane_surface(coordinates,
-                                                                                   verts, faces, normals)
-
-        if verbose:
-            print('average and standard deviation of membrane normals: ', angular_variation, std)
-
-        # get rotation matrix and convert to axis-angle
-        zxz_par_to_ref = p.getRotation().toVector(convention='zxz')  # z1, z2, x
-        rot_ref_to_par = rotation_matrix(rotation=zxz_par_to_ref,
-                                         rotation_order='rzxz')[:3, :3].T  # transpose for ref to par
-        # par_rot_basis = np.dot(rm_to_ref_bas.T, par_rot)  # matrix multiply
-
-        rot_mem_to_ref = reference_basis.get_rotation(membrane_normal)
-        # 'subtract' reference rotation from the particle rotation
-        rot_par_to_mem = np.dot(rot_mem_to_ref, rot_ref_to_par)
-
-        # convert to zxz, but invert the matrix to accomodate to pytom convention
-        zxz_in_mem = matToZXZ(np.linalg.inv(rot_par_to_mem)).toVector(convention='zxz')
-
-        # rotate unit vector by rotation matrix...
-        # particle_normal = Vector(unit_vector.get())  # copy reference normal
-        # particle_normal.rotate(par_rot_basis)
-
-        # ===> check that above is the same as this >
-        # test_normal = Vector(reference_basis.get())
-        # test_normal.rotate(par_rot[:3, :3])
-        # if sum([abs(a - b) for a, b  in zip(particle_normal.get(), test_normal.get())]) > 0.001:
-        #     print(particle_normal.get(), test_normal.get())
-
-        # # rotation matrix of reference vector onto membrane normal
-        # # rm_ref_to_membrane = membrane_normal.get_rotation(unit_vector)  # this is the rotation to membrane basis
-        # rm_ref_to_membrane = membrane_normal.get_rotation(unit_vector)
-        # # remove the base rotation to compare rotation in membrane frame
-        # par_rot_memb_basis = np.dot(par_rot_basis, rm_ref_to_membrane.T)
-        # # particle_normal.rotate(rm_ref_to_membrane.T) => same as recalculating particle normal as below
-        # # print(particle_normal.get())
-        #
-        # # membrane_normal.rotate(par_rot_basis.T)
-        #
-        # # rotate unit vector with relative rotation matrix
-        # particle_normal = Vector(unit_vector.get())
-        # particle_normal.rotate(par_rot_memb_basis)
-        # # we are now in the coordinates system of the [0, 0, 1] vector
-        # difference_angle = particle_normal.angle(unit_vector, degrees=True)
-        #
-        # # get rotation around axis
-        # rm_unit_to_par = particle_normal.get_rotation(unit_vector)
-        # # rot_around_axis = differenceAngleOfTwoRotations(matToZXZ(rm_unit_to_par), matToZXZ(par_rot_memb_basis))
-        #
-        # remainder = np.dot(rm_unit_to_par, par_rot_memb_basis.T)
-        # matrix_test = Matrix(3, 3)
-        # matrix_test[0, 0], matrix_test[0, 1], matrix_test[0, 2] = remainder[0]
-        # matrix_test[1, 0], matrix_test[1, 1], matrix_test[1, 2] = remainder[1]
-        # matrix_test[2, 0], matrix_test[2, 1], matrix_test[2, 2] = remainder[2]
-        # angle, axis = matToAxisAngle(matrix_test)
-        # sign = axis[2]
-        # # print(axis, angle)
-        #
-        # if sign < 0:
-        #     rot_around_axis = angle * -1 + 360
-        # else:
-        #     rot_around_axis = angle
-        #
-        # # get the difference angle
-        # # difference_angle = particle_normal.angle(membrane_normal, degrees=True)
-        # orientations.append(difference_angle)  # probability fit should correct for random angular distribution
-        #
-        # # get axis rotation
-        # # matrix_basic = particle_normal.get_rotation(unit_vector)
-        # # rot_around_axis = differenceAngleOfTwoRotations(matToZXZ(matrix_basic), matToZXZ(matrix))
-        # orientations_around_axis.append(rot_around_axis)
-        # # difference of this angle with the plane???
-
-        # get the distance
-        distances.append(distance.euclidean(membrane_point, coordinates))
-
-        # append the variation
-        angle_stds.append(angular_variation)
-
-        # create arrows for bild file
-        orientations.append(0)
-        orientations_around_axis.append(0)
-        vector_for_bild = unit_vector.copy()
-        # vector_for_bild.rotate(par_rot_basis)
-        particle_arrows.append((coordinates, vector_for_bild.get()))
-        membrane_arrows.append((membrane_point, membrane_normal.get()))
-        final_zxz.append(zxz_in_mem)
-
-    return distances, orientations, orientations_around_axis, angle_stds, particle_arrows, membrane_arrows, final_zxz
 
 
 # ===================================NUMBA ACCELERATED ANGULAR DISTANCE MATRIX==========================================
@@ -518,16 +240,29 @@ def find_std(face_normals):
 
 
 class MembraneMesh:
-    def __init__(self, volume, cutoff=0.3, mesh_detail=2, ref_vector=[0, 0, 1]):
+    def __init__(self, volume, cutoff=0.3, mesh_detail=2, ref_vector=[0, 0, 1], upside_down=False):
         # ensure volume is normalized between 0 and 1
         self.volume = (volume - volume.min()) / (volume.max() - volume.min())
         self.verts, self.faces, self.normals, self.values = \
-            measure.marching_cubes(self.volume, level=cutoff, step_size=mesh_detail)
+            measure.marching_cubes(self.volume, level=cutoff, step_size=mesh_detail, allow_degenerate=False)
         if ref_vector == [0, 0, 1]:
             self.reference_unit_vector = None
         else:
             self.reference_unit_vector = Vector(ref_vector, normalize=True)
-        self.z_axis_unit_vector = Vector([0, 0, 1], normalize=True)
+        if upside_down:
+            self.z_axis_unit_vector = Vector([0, 0, -1], normalize=True)
+        else:
+            self.z_axis_unit_vector = Vector([0, 0, 1], normalize=True)
+
+    def write_to_bild(self, file_name):
+        mesh = self.verts[self.faces]
+        with open(file_name, 'w') as stream:
+            for i in range(mesh.shape[0]):
+                v1, v2, v3 = mesh[i, 0], mesh[i, 1], mesh[i, 2]
+                # stream.write(f'.move {v1[0]} {v1[1]} {v1[2]} \n')
+                # stream.write(f'.draw {v2[0]} {v2[1]} {v1[2]} \n')
+                # stream.write(f'.draw {v3[0]} {v3[1]} {v3[2]} \n')
+                stream.write(f'.polygon {v1[0]} {v1[1]} {v1[2]} {v2[0]} {v2[1]} {v2[2]} {v3[0]} {v3[1]} {v3[2]}\n')
 
     def display(self):
         fig = plt.figure(figsize=(10, 10))
@@ -679,24 +414,24 @@ class MembraneMesh:
                 print('angular variation of membrane normals: ', angular_variation)
 
             # get rotation matrix and convert to axis-angle
-            zxz_par_to_ref = p.getRotation().toVector(convention='zxz')  # z1, z2, x
-            rot_ref_to_par = rotation_matrix(rotation=zxz_par_to_ref,
+            zxz_ref_to_par = p.getRotation().toVector(convention='zxz')  # z1, z2, x
+            rot_par_to_ref = rotation_matrix(rotation=zxz_ref_to_par,
                                              rotation_order='rzxz')[:3, :3].T  # transpose for ref to par
 
             if self.reference_unit_vector is not None:
                 pass  # add additional rotation to particle
 
             # get rot of membrane surface to z axis unit vec
-            rot_mem_to_ref = self.reference_unit_vector.get_rotation(membrane_normal)
+            rot_mem_to_ref = self.z_axis_unit_vector.get_rotation(membrane_normal)
 
             # 'subtract' reference rotation from the particle rotation
-            rot_par_to_mem = np.dot(rot_mem_to_ref, rot_ref_to_par)
+            rot_par_to_mem = np.dot(rot_mem_to_ref, rot_par_to_ref)
 
             # convert to zxz, but invert the matrix to accomodate to pytom convention
             zxz_in_mem = matToZXZ(np.linalg.inv(rot_par_to_mem)).toVector(convention='zxz')
 
             # create arrows for bild file
-            particle_arrows[i] = (coordinate, self.reference_unit_vector.rotate(rot_ref_to_par).get())
+            particle_arrows[i] = (coordinate, self.z_axis_unit_vector.rotate(rot_par_to_ref).get())
             membrane_arrows[i] = (membrane_point, membrane_normal.get())
             distances[i], angle_stds[i], final_zxz[i] = \
                 distance.euclidean(membrane_point, coordinate), angular_variation, zxz_in_mem
@@ -771,11 +506,18 @@ def write_clusters(particle_list, clusters):
             print(f'wrote particles_c{i}.xml with {len(cluster_list)} particles')
 
 
-if __name__ == '__main__':
-    from pytom.tools.script_helper import ScriptHelper2, ScriptOption2
-    from pytom.tools.parse_script_options import parse_script_options2
-    from pytom.agnostic.io import read
+def average_rotations(rotations):
+    """
+    Rotations is a np.array with zxz rotations in degrees of shape (N, 3)
+    """
+    # whole set of rotations can be initialized to scipy Rotation object
+    rot = transform.Rotation.from_euler('zxz', rotations, degrees=True)
 
+    # build in mean of rotations and return as zxz
+    return rot.mean().as_euler('zxz', degrees=True)
+
+
+if __name__ == '__main__':
     helper = ScriptHelper2(
         sys.argv[0].split('/')[-1],  # script name
         description='Find the orientations of particles with respect to a membrane. The particles should be in the '
@@ -826,14 +568,22 @@ if __name__ == '__main__':
             ScriptOption2(['--interactive-clustering'], 'Whether to do clustering interactively to find optimal '
                                                         'parameters.',
                           'no arguments', 'optional'),
+            ScriptOption2(['--rotation-reference'], 'Provide a 3d reconstruction to be rotated for each '
+                                                    'cluster average. Membrane will be in xy-plane.',
+                          'file', 'optional'),
+            ScriptOption2(['--upside-down-reference'], 'Boolean option to supply info that the ref is upside down. '
+                                                       'Particle alignment along membrane normal is arbitraty (either '
+                                                       'up or down). This option will invert current alignment.',
+                          'no arguments', 'optional'),
             ScriptOption2(['--verbose'], 'Be verbose.', 'no arguments', 'optional')])
 
     options = parse_script_options2(sys.argv[1:], helper)
 
     input_file, segmentation_file, output_name, voxel_size, cutoff, mesh_detail, template_normal, nstd, \
         distance_range, angle_std_cutoff, axis_distance_limit, nbins, split_lists_angle, interactive_clustering,\
-        verbose = options
+        reference_particle, reference_upside_down, verbose = options
 
+    # parse some parameters that cannot be handled in the script parser
     interactive_clustering = False if interactive_clustering is None else True
 
     if output_name is not None and not os.path.exists(output_name):
@@ -849,7 +599,8 @@ if __name__ == '__main__':
 
         # create membrane mesh
         membrane = MembraneMesh(read(segmentation_file), cutoff=cutoff, mesh_detail=mesh_detail,
-                                ref_vector=template_normal)
+                                ref_vector=template_normal,
+                                upside_down=True if reference_upside_down is not None else False)
 
         dists, stds, p_arrows, m_arrows, zxzs = membrane.find_particle_orientations(particle_list, verbose=verbose)
 
@@ -871,8 +622,11 @@ if __name__ == '__main__':
             particle_list = ParticleList()
             particle_list.fromXMLFile(p)
 
+            print(f' --> {len(particle_list)} particles in this tomogram')
+
             # create membrane mesh
-            membrane = MembraneMesh(read(s), cutoff=cutoff, mesh_detail=mesh_detail, ref_vector=template_normal)
+            membrane = MembraneMesh(read(s), cutoff=cutoff, mesh_detail=mesh_detail, ref_vector=template_normal,
+                                    upside_down=True if reference_upside_down is not None else False)
 
             d, std, p_arrows, m_arrows, zxz = membrane.find_particle_orientations(particle_list, verbose=verbose)
             distances += d
@@ -884,25 +638,19 @@ if __name__ == '__main__':
 
             # membrane_arrow_test += m_arrows
             write_arrow_bild(p_arrows, m_arrows, os.path.join(output_name, name + '.bild'))
+            membrane.write_to_bild(os.path.join(output_name, name + '_mesh.bild'))
 
     else:
         print('Invalid input extension.')
         sys.exit(0)
 
-    # total number of particles
-    # n_pre_filter = len(orientations)
-
     # convert to numpy arrays for calculation
-    distances = np.array(distances)
-    distances *= voxel_size if voxel_size is not None else 1
-    # orientations = np.array(orientations)
-    # orientations_around_axis = np.array(orientations_around_axis)
-    stds = np.array(stds)
-    zxzs = np.array(zxzs)
-    z1_angles = zxzs[:, 0]
-    x_angles = zxzs[:, 1]
-    z2_angles = zxzs[:, 2]
+    distances, stds, zxzs = np.array(distances), np.array(stds), np.array(zxzs)
 
+    # convert distance to angstrom
+    distances *= voxel_size if voxel_size is not None else 1
+
+    # total number of particles
     n_pre_filter = zxzs.shape[0]
 
     # find distance cutoff  and angle cutoff if not specified
@@ -910,32 +658,30 @@ if __name__ == '__main__':
         distance_range is None else distance_range
     angle_std_cutoff = nstd * stds.std() + stds.mean() if angle_std_cutoff is None else angle_std_cutoff
 
-    # if split_lists_angle is not None and output_name is not None:
-    #     write_split_particle_lists(orientations_per_particle_list, distance_range, angle_std_cutoff,
-    #                                split_lists_angle, voxel_size, output_name)
-
-    # Filter the combined dataset to get better statistics of distributions for plot
+    # create an outlier filter based on distance and angular variation
     distance_outlier_filter = np.logical_and(distances >= distance_range[0], distances <= distance_range[1])
     angle_outlier_filter = (stds < angle_std_cutoff)
     outlier_filter = np.logical_and(distance_outlier_filter, angle_outlier_filter)
-    distances_filtered = distances[outlier_filter]
-    # orientations = orientations[outlier_filter]
-    # orientations_around_axis = orientations_around_axis[outlier_filter]
-    z1_angles, x_angles, z2_angles = z1_angles[outlier_filter], x_angles[outlier_filter], z2_angles[outlier_filter]
-    n = len(distances_filtered)
+
+    # get angles separately for plotting
+    z1_angles, x_angles, z2_angles = zxzs[outlier_filter, 0], zxzs[outlier_filter, 1], zxzs[outlier_filter, 2]
 
     # output number of particle excluded due to filtering
-    total_outliers = (outlier_filter == False).sum()
-    print(f'Filtered {total_outliers} from total of {zxzs.shape[0]} particles')
+    n = outlier_filter.sum()
+    n_outliers = (outlier_filter == False).sum()
+    print(f'Number of outliers {n_outliers} in total of {n_pre_filter} => {n} particles left over after filtering')
 
-    plt.hist(z1_angles)  # => z1 angles are completely random, as they should be:
+    # visualize z1 angles to ensure they are randomly distributed
+    plt.hist(z1_angles)
     plt.show()
 
+    # filters euler angles and calculate distances between them
     rot_filtered = zxzs[outlier_filter]
-    rot_filtered[:, 0] = 0.
+    rot_filtered[:, 0] = 0.  # remove first z rotations as its irrelevant
     ang_matrix = angular_distance_matrix(rot_filtered)
 
     # use dbscan, eps is the distance of points to be considered in the neighbourhood
+    min_cluster, min_samples, eps = int(0.067 * ang_matrix.shape[0]), int(0.013 * ang_matrix.shape[0]), 0.
     # model = cluster.OPTICS(metric='precomputed', max_eps=0.04, min_cluster_size=0.1, n_jobs=8).fit(ang_matrix)
     model = hdbscan.HDBSCAN(metric='precomputed',
                             min_cluster_size=int(0.067 * ang_matrix.shape[0]),
@@ -947,8 +693,8 @@ if __name__ == '__main__':
         min_cluster = int(input('Minimum cluster size: '))
         min_samples = int(input('Minimum samples size: '))
         eps = float(input('Epsilon: '))
-        # model = cluster.OPTICS(metric='precomputed', max_eps=eps, min_cluster_size=min_cluster, min_samples=min_samples,
-        #                        n_jobs=8, algorithm='brute')
+        # model = cluster.OPTICS(metric='precomputed', max_eps=eps, min_cluster_size=min_cluster,
+        # min_samples=min_samples, n_jobs=8, algorithm='brute')
         model = hdbscan.HDBSCAN(metric='precomputed',
                                 min_cluster_size=min_cluster,  # int(0.05 * ang_matrix.shape[0]),
                                 min_samples=min_samples,  # int(0.02 * ang_matrix.shape[0]))
@@ -967,160 +713,37 @@ if __name__ == '__main__':
         interactive_clustering = int(input('Continue with interactive clustering (0 or 1): '))
         interactive_clustering = True if interactive_clustering == 1 else False
 
+    # get cluser average
+    cluster_angles_dict = {}
+    for cluster in np.unique(model.labels_):
+        if cluster != -1:
+            cluster_rotation = average_rotations(rot_filtered[model.labels_ == cluster])
+            cluster_angles_dict[cluster] = cluster_rotation
+
+    # write clustering parameters and average zxz per cluster
+    cluster_info_file = os.path.join(output_name, 'clustering-info.txt') if output_name is not None else \
+        'clustering-info.txt'
+    with open(cluster_info_file, 'w') as fstream:
+        fstream.write(f'minimum cluster size = {min_cluster} \n')
+        fstream.write(f'minimum samples = {min_samples} \n')
+        fstream.write(f'epsilon = {epsilon} \n')
+        for cluster in np.unique(model.labels_):
+            if cluster != -1:
+                fstream.write(f'cluster {cluster} has average zxz: {cluster_angles_dict[cluster]} \n')
+    print('wrote clustering-info.txt')
+
+    # write rotated references
+    if reference_particle is not None:
+        ref = read(reference_particle)
+        write('c-ref.mrc', ref)
+        for k, rot in cluster_angles_dict.items():
+            write(f'c{k}.mrc', vt.transform(ref, rotation=(-rot[2], -rot[1], .0), rotation_order='rzxz'))
+
     # write clusters as particle lists
     new_list = ParticleList()
     for i, (f, p) in enumerate(zip(outlier_filter, combined_particle_list)):
         new_list.append(p)
     write_clusters(new_list, model.labels_)
-
-    # ============================== create plots
-    # try:
-    #     import matplotlib.pyplot as plt
-    # except Exception as e:
-    #     import matplotlib
-    #     matplotlib.use('Qt5Agg')
-    #     import matplotlib.pyplot as plt
-    #
-    # # fig = plt.figure(figsize=(5, 5))
-    # # ax = fig.add_subplot(111, projection='3d')
-    # #
-    # # points = np.array([p for o, p in membrane_arrow_test]).T
-    # # ax.scatter(points[0], points[1], points[2], s=1)
-    # # # ax.quiver(0, 0, 0, *norm, length=100, color='red')
-    # #
-    # # ax.set_xlabel('x')
-    # # # ax.set_xlim(-300, 300)
-    # # ax.set_ylabel('y')
-    # # # ax.set_ylim(-300, 300)
-    # # ax.set_zlabel('z')
-    # # # ax.set_zlim(-300, 300)
-    # # plt.show()
-    #
-    # font = {'size': 16}
-    # plt.rc('font', **font)
-    #
-    #
-    #
-    # # do some plotting
-    # fig, ax = plt.subplots(figsize=(5, 5))
-    #
-    # ax.hist(orientations, bins=nbins, color='black', histtype='stepfilled', alpha=0.5)
-    # h = ax.hist(orientations, bins=nbins, color='black', histtype='step')
-    # values, bins = h[0], h[1]
-    # ax.set_ylabel('Number of particles')
-    # ax.set_xlabel('Angle (degrees)')
-    #
-    # # information about number of particles
-    # textstr = f'N={n}'
-    # # these are matplotlib.patch.Patch properties
-    # props = dict(boxstyle='round', facecolor='wheat', alpha=0.7)
-    # # place a text box in upper left in axes coords
-    # ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-    #            verticalalignment='top', bbox=props)
-    #
-    # plt.tight_layout()
-    #
-    # if output_name is not None:
-    #     plt.savefig(os.path.join(output_name, 'orientation_distribution.png'), dpi=300, format='png', transparent=True)
-    #     plt.close()
-    #     print(f"wrote {os.path.join(output_name, 'orientation_distribution.png')}")
-    #     if ext == '.xml':
-    #         write_arrow_bild(p_arrows, m_arrows, os.path.join(output_name, 'vectors.bild'),
-    #                          outlier_filter=outlier_filter)
-    #         print(f"wrote {os.path.join(output_name, 'vectors.bild')}")
-    # else:
-    #     plt.show()
-    #
-    # from scipy.stats import kstest # compare distribution to scipy.stats.uniform ??
-    # # => this is the kolmogorov smirnov test
-    #
-    # # statistical test whether angles come from sin distribution
-    # random_z = np.random.uniform(-1, 1, size=len(orientations))
-    # random_angles = np.rad2deg(np.arccos(random_z))
-    # ks_result = kstest(orientations, random_angles)
-    # print(ks_result)
-    #
-    # # ks plot
-    # sort_rand = sorted(random_angles)
-    # sort_orie = sorted(orientations)
-    # p = 1. * np.arange(len(sort_rand)) / (len(sort_rand) - 1)
-    # fig, ax = plt.subplots()
-    # ax.plot(p, sort_rand, label='random')
-    # ax.plot(p, sort_orie, label='data')
-    # ax.legend()
-    # ax.set_title(f'D({len(orientations)})={ks_result.statistic:.2f}, p={ks_result.pvalue}')
-    #
-    # plt.tight_layout()
-    #
-    # if output_name is not None:
-    #     plt.savefig(os.path.join(output_name, 'kolmogorov-smirnov.png'), dpi=300, format='png',
-    #                 transparent=True)
-    #     plt.close()
-    #     print(f"wrote {os.path.join(output_name, 'kolmogorov-smirnov.png')}")
-    # else:
-    #     plt.show()
-    #
-    # # do some plotting
-    # fig, ax = plt.subplots(figsize=(5, 5))
-    #
-    # angles = (bins[:-1] + bins[1:]) / 2
-    # # print(angles)
-    # random_prob = np.sin(np.deg2rad(angles)) # * -1 + 1
-    #
-    # # ax.plot(angles, random_prob / random_prob)
-    # # ax.plot(angles, values / random_prob)
-    # ax.hist(angles, weights=values / random_prob, color='black', alpha=0.5, histtype='stepfilled', bins=nbins)
-    # ax.hist(angles, weights=values / random_prob, color='black', histtype='step', bins=nbins)
-    # # ax.hlines(0.5, xmin=-1, xmax=1, linestyles='dashed', color='black', label='random dist')
-    # # ax.legend()
-    # ax.set_ylabel('Number of particles')
-    # ax.set_xlabel('Angle (degrees)')
-    # ax.set_xlim(0, 180)
-    #
-    # # information about number of particles
-    # textstr = f'N={n}'
-    # # these are matplotlib.patch.Patch properties
-    # props = dict(boxstyle='round', facecolor='wheat', alpha=0.7)
-    # # place a text box in upper left in axes coords
-    # ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-    #         verticalalignment='top', bbox=props)
-    #
-    # plt.tight_layout()
-    #
-    # if output_name is not None:
-    #     plt.savefig(os.path.join(output_name, 'orientation_distribution_normalized.png'), dpi=300, format='png',
-    #                 transparent=True)
-    #     plt.close()
-    #     print(f"wrote {os.path.join(output_name, 'orientation_distribution_normalized.png')}")
-    # else:
-    #     plt.show()
-
-    # ==================== create plot of distance vs. angles
-
-    # fig, ax = plt.subplots(figsize=(5, 5))
-    # ax.scatter(distances_filtered, orientations, alpha=0.7, color='gray')
-    # if voxel_size is not None:
-    #     ax.set_xlabel(r'Distance ($\AA$)')
-    # else:
-    #     ax.set_xlabel('Distance (voxels)')
-    # ax.set_ylabel('Angle (degrees)')
-    #
-    # # information about number of particles
-    # textstr = f'N={n}'
-    # # these are matplotlib.patch.Patch properties
-    # props = dict(boxstyle='round', facecolor='wheat', alpha=0.7)
-    # # place a text box in upper left in axes coords
-    # ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-    #            verticalalignment='top', bbox=props)
-    #
-    # plt.tight_layout()
-    #
-    # if output_name is not None:
-    #     plt.savefig(os.path.join(output_name, 'scatter.png'), dpi=300, format='png', transparent=True)
-    #     plt.close()
-    #     print(f"wrote {os.path.join(output_name, 'scatter.png')}")
-    # else:
-    #     plt.show()
 
     # ==================== plot histogram of distances with cutoffs
 
@@ -1179,11 +802,7 @@ if __name__ == '__main__':
     # => scipy.stats.gaussian_kde
     # could do a 2d kde on the data and then correct the density for random angular distribution of the vector angle
 
-    # plt.hist(x_angles)
-    # plt.show()
-    # plt.hist(z2_angles)
-    # plt.show()
-
+    # DENSITY PLOT
     fig, ax = plt.subplots(figsize=(4.5, 7))
     h = ax.hist2d(x_angles, z2_angles, bins=(nbins//2, nbins))
     plt.colorbar(h[3], ax=ax)
@@ -1198,11 +817,35 @@ if __name__ == '__main__':
     else:
         plt.show()
 
-    # print(x_angles.min(), x_angles.max())
-    # print(z2_angles.min(), z2_angles.max())
+    # SCATTER PLOT
+    norm = plt.Normalize(model.labels_.min(), model.labels_.max())
+    cmap_name = 'viridis'
+    cmap = mpl.cm.ScalarMappable(norm, cmap=cmap_name).get_cmap()
 
     fig, ax = plt.subplots(figsize=(4, 8))
-    ax.scatter(x_angles, z2_angles, alpha=0.7, s=4, c=model.labels_.astype(float))
+    ax.scatter(x_angles, z2_angles, alpha=0.7, s=4, c=model.labels_.astype(float), norm=norm, cmap=cmap_name)
+    ax.scatter([v[1] for v in cluster_angles_dict.values()],
+               [v[2] if v[2] >= 0 else v[2] + 360 for v in cluster_angles_dict.values()],
+               c=np.array(list(cluster_angles_dict.keys())).astype(float), s=4, norm=norm, cmap=cmap_name)
+
+    # plot lines to cluster center
+    for theta, psi, c in zip(x_angles, z2_angles, model.labels_):
+        if c != -1:
+            c_theta, c_psi = cluster_angles_dict[c][1], cluster_angles_dict[c][2]
+            c_psi = c_psi if c_psi >= 0 else c_psi + 360
+            if abs(psi - c_psi) > 180:
+                x = [theta, c_theta]
+                y = [psi, c_psi + 360] if psi > c_psi else [psi, c_psi - 360]
+                plt.plot(x, y, color=cmap(norm(float(c))), alpha=0.2)
+
+                x = [theta, c_theta]
+                y = [psi - 360, c_psi] if psi > c_psi else [psi + 360, c_psi]
+                plt.plot(x, y, color=cmap(norm(float(c))), alpha=0.2)
+            else:
+                x = [theta, c_theta]
+                y = [psi, c_psi]
+                plt.plot(x, y, color=cmap(norm(float(c))), alpha=0.2)
+
     ax.set_xlim(0, 180)
     ax.set_xlabel('euler X')
     ax.set_ylim(0, 360)
