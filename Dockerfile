@@ -21,7 +21,7 @@ ADD tutorials /app/doc
 ADD MANIFEST.in LICENSE LICENSE.txt .gitmodules .gitignore setup.py /app/
 
 # compile/setup pytom
-RUN python3.8 setup.py install --prefix /opt/conda/envs/pytom_env
+RUN python setup.py install --prefix $CONDA_PREFIX
 
 # MPI and test flags
 ENV OMPI_ALLOW_RUN_AS_ROOT=1
