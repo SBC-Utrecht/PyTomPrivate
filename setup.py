@@ -38,6 +38,7 @@ setup(
         'pytom.simulation.membrane_models': ['*.pdb']
     },
     data_files=[("pytom_data", ["./LICENSE.txt"])], # This is a relative dir to sys.prefix
+    include_package_data=True,
     author='`FridoF',
     author_email='gijsschot@gmail.com',
     url='https://github.com/FridoF/PyTomPrivate.git',
