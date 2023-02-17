@@ -9,7 +9,7 @@ class pytom_GLocalTest(unittest.TestCase):
     def setUp(self):
         from helper_functions import create_RandomParticleList, installdir
         from pytom.agnostic.io import read_size
-        from pytom_volume import vol, initSphere
+        from pytom.lib.pytom_volume import vol, initSphere
 
         self.installdir = installdir
         self.reffile = f'../testData/ribo.em'
@@ -28,20 +28,15 @@ class pytom_GLocalTest(unittest.TestCase):
         initSphere(maskvol, 30,5, 0, int(dims[0]/2), int(dims[1]/2), int(dims[2]/2))
         maskvol.write(self.settings["mask"])
         self.settings["destination"] = './'
-        #self.settings["score"] = 'nxcf'
         self.settings["score"] = 'flcf'
         self.settings["pixelsize"] = 2.
         self.settings["diameter"] = 250.
         self.settings["job"] = './myGLocal.xml'
 
-    #def tearDown(self):
-        #self.cleanUp()
-
     def cleanUp(self):
         """
         check that files are written and remove them
         """
-        from helper_functions import cleanUp_RandomParticleList
         from os import system
 
         for ii in range(0, self.settings["niteration"]):
@@ -91,7 +86,6 @@ class pytom_GLocalTest(unittest.TestCase):
         fname='average-FinalFiltered_*.em'
         system('rm '+fname)
         system(f'rm {self.pl_filename}')
-        #cleanUp_RandomParticleList( pl_filename=self.pl_filename, pdir=self.pdir)
 
     def remove_file(self, filename):
         """
@@ -107,14 +101,13 @@ class pytom_GLocalTest(unittest.TestCase):
         if filecheck:
             remove(filename)
 
-
     def xtest_Score(self):
         """
         test implementation of different scores
         """
         import os
 
-        cmd = f'mpirun -np 2 {self.installdir}/bin/pytom {self.installdir}/bin/GLocalJob.py'
+        cmd = f'mpirun -np 1 {self.installdir}/bin/pytom {self.installdir}/bin/GLocalJob.py'
         cmd = cmd + ' -p ' + self.pl_filename
         cmd = cmd + ' -m ' + str(self.settings["mask"])
         cmd = cmd + ' -b ' + str(self.settings["binning"])
@@ -124,7 +117,6 @@ class pytom_GLocalTest(unittest.TestCase):
         cmd = cmd + ' --pixelSize ' + str(self.settings["pixelsize"])
         cmd = cmd + ' --particleDiameter ' + str(self.settings["diameter"])
         cmd = cmd + ' -j ' + str(self.settings["job"])
-        #cmd = cmd + ' -r ' + str(self.settings["reference"])
         print(cmd)
         os.system(cmd)
         self.cleanUp()
@@ -137,7 +129,9 @@ class pytom_GLocalTest(unittest.TestCase):
 
         self.settings["score"] = 'nxcf'
 
-        cmd = f'mpirun -np 2 {self.installdir}/bin/pytom {self.installdir}/bin/GLocalJob.py -g 0'
+        # had to change number of mpi procs to 1 to comply with running on single gpu
+        # BUT: All the docs say that the number of mpi processes should be ( number_of_gpus + 1 )
+        cmd = f'mpirun -np 1 {self.installdir}/bin/pytom {self.installdir}/bin/GLocalJob.py -g 0'
         cmd = cmd + ' -p ' + self.pl_filename
         cmd = cmd + ' -m ' + str(self.settings["mask"])
         cmd = cmd + ' -b ' + str(self.settings["binning"])
@@ -147,12 +141,10 @@ class pytom_GLocalTest(unittest.TestCase):
         cmd = cmd + ' --pixelSize ' + str(self.settings["pixelsize"])
         cmd = cmd + ' --particleDiameter ' + str(self.settings["diameter"])
         cmd = cmd + ' -j ' + str(self.settings["job"])
-        #cmd = cmd + ' -r ' + str(self.settings["reference"])
         print(cmd)
         os.system(cmd)
-        # self.cleanUp()
 
-        cmd = f'mpirun -np 2 {self.installdir}/bin/pytom {self.installdir}/bin/GLocalJob.py '
+        cmd = f'mpirun -np 1 {self.installdir}/bin/pytom {self.installdir}/bin/GLocalJob.py '
         cmd = cmd + ' -p ' + self.pl_filename
         cmd = cmd + ' -m ' + str(self.settings["mask"])
         cmd = cmd + ' -b ' + str(self.settings["binning"])
@@ -162,7 +154,6 @@ class pytom_GLocalTest(unittest.TestCase):
         cmd = cmd + ' --pixelSize ' + str(self.settings["pixelsize"])
         cmd = cmd + ' --particleDiameter ' + str(self.settings["diameter"])
         cmd = cmd + ' -j ' + str(self.settings["job"])
-        # cmd = cmd + ' -r ' + str(self.settings["reference"])
         print(cmd)
         os.system(cmd)
         self.cleanUp()
