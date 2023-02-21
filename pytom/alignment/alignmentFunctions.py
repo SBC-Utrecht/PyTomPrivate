@@ -791,7 +791,6 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
             # print('Mask is sphere: ', mask.isSphere(), scoreObject._type)
 
             if (not mask.isSphere()) and (scoreObject._type=='FLCFScore'):
-                if 1: print('recalc meanV en stdV')
                 meanV   = meanUnderMask(particle, m, p)
                 stdV    = stdUnderMask(particle, m, p, meanV)
         else:
