@@ -812,7 +812,7 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
         from pytom.agnostic.structures import Reference
         from pytom.agnostic.io import read, write
 
-        print(f'averaging particles on {device} for {averageName}.')
+        print(f'Averaging particles on {device} for {averageName}.')
 
     else:
         gpuIDs = [None,]*splitFactor
