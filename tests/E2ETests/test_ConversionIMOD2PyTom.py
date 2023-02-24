@@ -9,8 +9,8 @@ from pytom.agnostic.io import read, write
 from pytom.agnostic.tools import create_circle, convert_operation_order_list2str as list2str, \
     convert_operation_order_str2list as str2list
 from numpy.fft import fftshift, fftn, ifftn
-from pytom_volume import read as readC, vol, pasteCenter
-from pytom_numpy import vol2npy
+from pytom.lib.pytom_volume import read as readC, vol, pasteCenter
+from pytom.lib.pytom_numpy import vol2npy
 from pytom.basic.transformations import general_transform2d, resize
 
 
