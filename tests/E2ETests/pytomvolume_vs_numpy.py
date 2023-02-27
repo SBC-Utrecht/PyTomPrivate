@@ -12,7 +12,7 @@ class NumericalTest(unittest.TestCase):
     def setUp(self):
         from pytom.agnostic.io import read
         from pytom.agnostic.tools import paste_in_center
-        from pytom_numpy import npy2vol
+        from pytom.lib.pytom_numpy import npy2vol
         self.wedge_angles = [30., 30.]
         self.dims = (100, 100, 71)
         self.ndims = 3
@@ -47,7 +47,7 @@ class NumericalTest(unittest.TestCase):
 
     def wedgePyTomVol(self):
         from pytom.basic.structures import Wedge
-        from pytom_numpy import vol2npy
+        from pytom.lib.pytom_numpy import vol2npy
         w = Wedge(wedgeAngles=self.wedge_angles, cutoffRadius=self.cutoff)
         wedge = w.returnWedgeVolume(*self.dims)
         wedge_np = vol2npy(wedge).copy()
@@ -59,8 +59,8 @@ class NumericalTest(unittest.TestCase):
     # Run each test for numpy and cupy separetely!
 
     def fftPyTomVol(self):
-        from pytom_volume import reducedToFull
-        from pytom_numpy import vol2npy
+        from pytom.lib.pytom_volume import reducedToFull
+        from pytom.lib.pytom_numpy import vol2npy
         from pytom.basic.fourier import fft
         ft = reducedToFull(fft(self.random_vol))
         ft_np = vol2npy(ft).copy()
@@ -70,8 +70,8 @@ class NumericalTest(unittest.TestCase):
         return np.fft.fftn(self.random_np).astype(np.complex64)
 
     def rotatePyTomVol(self):
-        from pytom_volume import rotateSpline as rotate  # for more accuracy
-        from pytom_numpy import vol2npy
+        from pytom.lib.pytom_volume import rotateSpline as rotate  # for more accuracy
+        from pytom.lib.pytom_numpy import vol2npy
         rotate(self.reference_vol, self.template_vol, *self.rotation_angles)
         rotated_np = vol2npy(self.template_vol).copy()
         return rotated_np.astype(np.float32)
@@ -84,8 +84,8 @@ class NumericalTest(unittest.TestCase):
 
     def calcStdvPyTom(self):
         from pytom.basic.correlation import meanUnderMask, stdUnderMask
-        from pytom_numpy import vol2npy
-        from pytom_volume import sum
+        from pytom.lib.pytom_numpy import vol2npy
+        from pytom.lib.pytom_volume import sum
         p = sum(self.mask_vol)
         meanV = meanUnderMask(self.random_vol, self.mask_vol, p)
         stdV = stdUnderMask(self.random_vol, self.mask_vol, p, meanV)
@@ -105,12 +105,12 @@ class NumericalTest(unittest.TestCase):
         w_pytomvol = self.wedgePyTomVol()
         w_npcp = self.wedgeNpCp()
         if np.all(w_pytomvol == w_npcp):
-            print('pytom_volume wedge is identical to numpy/cupy wedge')
+            print('pytom.lib.pytom_volume wedge is identical to numpy/cupy wedge')
         ccc = nxcc(w_pytomvol, w_npcp)
         print('wedge ccc: ', ccc)
         print('wedge rmsd: ', self.rmsd(w_pytomvol, w_npcp))
         # self.display_diff_vol(np.abs(w_pytomvol - w_npcp))
-        self.assertAlmostEqual(ccc, 1.0, places=4, msg='correlation not sufficient between pytom_volume wedge and '
+        self.assertAlmostEqual(ccc, 1.0, places=4, msg='correlation not sufficient between pytom.lib.pytom_volume wedge and '
                                                        'numpy/cupy wedge')
 
     def fft(self):
@@ -122,7 +122,7 @@ class NumericalTest(unittest.TestCase):
         print('fft rmsd real: ', self.rmsd(ft_pytomvol.real, ft_npcp.real))
         print('fft rmsd imag: ', self.rmsd(ft_pytomvol.imag, ft_npcp.imag))
         # self.display_diff_fft(np.abs(ft_pytomvol.real - ft_npcp.real), np.abs(ft_pytomvol.imag - ft_npcp.imag))
-        self.assertAlmostEqual(ccc, 1.0, places=4, msg='correlation not sufficient between pytom_volume fft and '
+        self.assertAlmostEqual(ccc, 1.0, places=4, msg='correlation not sufficient between pytom.lin.pytom_volume fft and '
                                                        'numpy/cupy fft')
 
     def rotation(self):
@@ -133,7 +133,7 @@ class NumericalTest(unittest.TestCase):
         print('rotation ccc: ', ccc)
         print('rotation rmsd: ', self.rmsd(rt_pytomvol, rt_npcp))
         # self.display_diff_vol(np.abs(rt_pytomvol - rt_npcp))
-        self.assertAlmostEqual(ccc, 1.0, places=1, msg='correlation not sufficient between pytom_volume rotateSpline '
+        self.assertAlmostEqual(ccc, 1.0, places=1, msg='correlation not sufficient between pytom.lib.pytom_volume rotateSpline '
                                                        'and voltools cpu rotate')
 
     def calcStdv(self):
@@ -144,7 +144,7 @@ class NumericalTest(unittest.TestCase):
         print('stdv ccc: ', ccc)
         print('stdv rmsd: ', self.rmsd(std_pytomvol, std_npcp))
         # self.display_diff_vol(np.abs(std_pytomvol - std_npcp))
-        self.assertAlmostEqual(ccc, 1.0, places=4, msg='correlation not sufficient between pytom_volume calcStdv '
+        self.assertAlmostEqual(ccc, 1.0, places=4, msg='correlation not sufficient between pytom.lib.pytom_volume calcStdv '
                                                        'and voltools cpu calcStdv')
 
     def display_fft(self, v1, v2):
@@ -155,7 +155,7 @@ class NumericalTest(unittest.TestCase):
         fig, ax = plt.subplots(1, 2)
         ax[0].imshow(np.log(np.abs(v1[..., 0])))
         ax[1].imshow(np.log(np.abs(v2[..., 0])))
-        ax[0].set_title('pytom_volume')
+        ax[0].set_title('pytom.lib.pytom_volume')
         ax[1].set_title('numpy/cupy')
         plt.show()
 
@@ -167,7 +167,7 @@ class NumericalTest(unittest.TestCase):
         fig, ax = plt.subplots(1, 2)
         ax[0].imshow(v1[..., v1.shape[2] // 2])
         ax[1].imshow(v2[..., v2.shape[2] // 2])
-        ax[0].set_title('pytom_volume')
+        ax[0].set_title('pytom.lib.pytom_volume')
         ax[1].set_title('numpy/cupy')
         plt.show()
 

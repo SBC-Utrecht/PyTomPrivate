@@ -12,9 +12,9 @@ def Vol_G_Val(volume, value):
     """
     Vol_GE_Val: returns True when peak in volume greater than value
     @param volume: A volume
-    @type volume: L{pytom_volume.vol}
+    @type volume: L{pytom.lib.pytom_volume.vol}
     @param value: A value
-    @type value: L{pytom_volume.vol}
+    @type value: L{pytom.lib.pytom_volume.vol}
     @return: True if peak in volume > value
     @rtype: boolean
     @author: Thomas Hrabe
@@ -23,7 +23,7 @@ def Vol_G_Val(volume, value):
         p = peak(value)
         value = value[p]
 
-    if volume.__class__ == pytom_volume.vol:
+    if volume.__class__ == pytom.lib.pytom_volume.vol:
         p = peak(volume)
         volume = volume[p]
 
@@ -34,13 +34,13 @@ def weightedCoefficient(self, volume, reference, mask=None, stdV=None):
     weightedCoefficient: Determines the peak coefficient of the scoring function.
     The distance from the center contributes to the peak value. Must be activated by hand.
     @param volume: A volume.
-    @type volume: L{pytom_volume.vol}
+    @type volume: L{pytom.lib.pytom_volume.vol}
     @param reference: A reference.
-    @type reference: L{pytom_volume.vol}
+    @type reference: L{pytom.lib.pytom_volume.vol}
     @param mask: A mask.
-    @type mask: L{pytom_volume.vol}
+    @type mask: L{pytom.lib.pytom_volume.vol}
     @param stdV: Deviation volume of volume
-    @type stdV: L{pytom_volume.vol}
+    @type stdV: L{pytom.lib.pytom_volume.vol}
     @return: The highest coefficient determined.
     @author: Thomas Hrabe
     """
@@ -54,9 +54,9 @@ def peakCoef(self, volume, reference, mask=None, s=0.1, cutout=5, shifts=False):
     """
     peakCoef: Determines the coefficient of the scoring function.
     @param volume: A volume.
-    @type volume: L{pytom_volume.vol}
+    @type volume: L{pytom.lib.pytom_volume.vol}
     @param reference: A reference.
-    @type reference: L{pytom_volume.vol}
+    @type reference: L{pytom.lib.pytom_volume.vol}
     @return: The highest coefficient determined.
     @author: GvdS
     """
@@ -197,13 +197,13 @@ class Score:
         """
         returns weighted Coefficient
         @param volume: A volume.
-        @type volume: L{pytom_volume.vol}
+        @type volume: L{pytom.lib.pytom_volume.vol}
         @param reference: A reference.
-        @type reference: L{pytom_volume.vol}
+        @type reference: L{pytom.lib.pytom_volume.vol}
         @param mask: A mask.
-        @type mask: L{pytom_volume.vol}
+        @type mask: L{pytom.lib.pytom_volume.vol}
         @param stdV: Deviation volume of volume
-        @type stdV: L{pytom_volume.vol}
+        @type stdV: L{pytom.lib.pytom_volume.vol}
         @return: The highest coefficient determined.
         """
         return self.weightedCoefficient(self, particle, reference, mask, stdV)

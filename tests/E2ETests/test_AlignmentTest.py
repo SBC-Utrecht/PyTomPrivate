@@ -5,10 +5,14 @@ implementations.
 @author: McHaillet
 """
 # gpu env needs to be initialized on top, otherwise environment is not set correctly
-from pytom.gpu.initialize import initialize_gpu
-initialize_gpu(0)
-
 import unittest
+try:
+    # TODO rewrite this test to compare between cpu and cpu parallel if this fails
+    from pytom.gpu.initialize import initialize_gpu
+    initialize_gpu(0)
+except ImportError:
+    raise unittest.SkipTest('Missing gpu')
+
 import os
 from pytom.reconstruction.reconstructionStructures import ProjectionList
 from pytom.agnostic.io import write
