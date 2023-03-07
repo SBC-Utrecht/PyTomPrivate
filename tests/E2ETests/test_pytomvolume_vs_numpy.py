@@ -124,7 +124,7 @@ class NumericalTest(unittest.TestCase):
         print('fft rmsd imag: ', self.rmsd(ft_pytomvol.imag, ft_npcp.imag))
         # self.display_diff_fft(np.abs(ft_pytomvol.real - ft_npcp.real), np.abs(ft_pytomvol.imag - ft_npcp.imag))
         self.assertAlmostEqual(ccc, 1.0, places=4,
-                               msg='correlation not sufficient between pytom.lin.pytom_volume fft and numpy/cupy fft')
+                               msg='correlation not sufficient between pytom.lib.pytom_volume fft and numpy/cupy fft')
 
     def rotation(self):
         rt_pytomvol = self.rotatePyTomVol()
