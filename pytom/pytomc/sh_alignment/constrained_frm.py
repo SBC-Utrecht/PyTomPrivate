@@ -269,7 +269,7 @@ def frm_constrained_align(vf, wf, vg, wg, b, max_freq, peak_offset=None, mask=No
           pytom.lib.pytom_volume.vol
 
     constraint: Angular constraint
-                sh_alignment.constrained_frm.AngularConstraint
+                pytom.lib.constrained_frm.AngularConstraint
 
     weights: Obsolete.
 

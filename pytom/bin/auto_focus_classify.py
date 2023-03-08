@@ -44,7 +44,7 @@ def calculate_difference_map(v1, band1, v2, band2, mask=None, focus_mask=None, a
 
     # do alignment of two volumes, if required. v1 is used as reference.
     if align:
-        from sh_alignment.frm import frm_align
+        from pytom.lib.frm import frm_align
         band = int(band1 if band1<band2 else band2)
         pos, angle, score = frm_align(lv2, None, lv1, None, [4,64], band, lv1.sizeX()//4, mask)
         shift = [pos[0]-v1.sizeX()//2, pos[1]-v1.sizeY()//2, pos[2]-v1.sizeZ()//2]
@@ -448,7 +448,7 @@ def calculate_averages(pl, binning, mask, outdir='./', gpuIDs=None):
 def frm_proxy(p, ref, freq, offset, binning, mask):
     from pytom.lib.pytom_volume import read, pasteCenter, vol
     from pytom.basic.structures import Shift, Rotation
-    from sh_alignment.frm import frm_align
+    from pytom.lib.frm import frm_align
 
     v = p.getVolume(binning)
 

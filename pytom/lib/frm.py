@@ -5,7 +5,7 @@ Created on Sep 16, 2011
 '''
 
 import numpy as np
-import swig_frm # the path of this swig module should be set correctly in $PYTHONPATH
+import pytom.lib.swig_frm as swig_frm
 from .vol2sf import vol2sf
 
 
