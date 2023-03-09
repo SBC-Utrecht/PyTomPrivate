@@ -52,8 +52,9 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         pl2 = ParticleList()
         pl2.fromXMLFile(fname)
-
-        assert pl2[0].getFilename() == os.path.join(folder, part)
+                    
+        assert pl2[0].getInfoGUI().getProjectDir() == folder
+        assert pl2[0].getFilename() == part
 
     def average(self):
         func = self.generate_cmd(sys._getframe().f_code.co_name)
