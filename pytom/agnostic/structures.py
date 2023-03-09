@@ -1782,7 +1782,7 @@ class GeneralWedge(PyTomClass):
     def apply(self, volume, rotation=None):
 
         if not volume.__class__ == xp.array:
-            raise TypeError('You must provide a pytom.lib.pytom_volume.vol here!')
+            raise TypeError('You must provide a xp.ndarray here!')
 
         from pytom.agnostic.filter import applyFourierFilter as filter
         wedgeFilter = self.returnWedgeFilter(None, None, None, rotation)

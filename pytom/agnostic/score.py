@@ -12,9 +12,9 @@ def Vol_G_Val(volume, value):
     """
     Vol_GE_Val: returns True when peak in volume greater than value
     @param volume: A volume
-    @type volume: L{pytom.lib.pytom_volume.vol}
+    @type volume: L{xp.ndarray}
     @param value: A value
-    @type value: L{pytom.lib.pytom_volume.vol}
+    @type value: L{float}
     @return: True if peak in volume > value
     @rtype: boolean
     @author: Thomas Hrabe
@@ -22,10 +22,6 @@ def Vol_G_Val(volume, value):
     if value.__class__ == xp.array:
         p = peak(value)
         value = value[p]
-
-    if volume.__class__ == pytom.lib.pytom_volume.vol:
-        p = peak(volume)
-        volume = volume[p]
 
     return volume > value
 
