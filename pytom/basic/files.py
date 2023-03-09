@@ -1422,16 +1422,16 @@ def txt2wimp(fname, target, prefix, outname=''):
     out.write(wimpfile)
     out.close()
 
+
 def txt2fid(fname, target, prefix, outname=''):
     import os
     outname = outname if outname else os.path.join(target, fname.split('/')[-1][:-4] + '.wimp')
     txt2wimp(fname,outname=outname)
     os.system('wimp')
 
+
 def name_to_format(filename, target, extension):
-    import os
-    basename = os.path.basename(filename)
-    return target + ("" if target.endswith(os.sep) else os.sep) + ".".join(basename.split(".")[:-1]) + '.' + extension
+    return os.path.join(target, os.path.splitext(os.path.basename(filename))[0] + '.' + extension)
 
 
 def headerline(line):
