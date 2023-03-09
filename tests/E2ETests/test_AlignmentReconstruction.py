@@ -47,10 +47,10 @@ class pytom_AlignmentReconstructionTest(unittest.TestCase):
         raw_tilt_images_folder.mkdir(exist_ok=True)
 
         # convert imod files for pytom reading
-        submit(f'mrcs2mrc.py -f {imod_reconstruction_folder.joinpath("tomo1_bin5.mrc.st")} '
+        submit(f'mrcs2mrc.py -f {imod_reconstruction_folder.joinpath("tomo1_bin6.mrc.st")} '
                f'-t {raw_tilt_images_folder} --prefix sorted ')
         # Import IMOD ali parameters into alignmentResults.txt
-        cmd = f'convert.py -f {imod_reconstruction_folder.joinpath("tomo1_bin5.mrc.xf")} -o txt ' \
+        cmd = f'convert.py -f {imod_reconstruction_folder.joinpath("tomo1_bin6.mrc.xf")} -o txt ' \
               f'--tlt-file {imod_reconstruction_folder.joinpath("tomo1.mrc.tlt")} -t {raw_tilt_images_folder} ' \
               f'--sortedFolder {raw_tilt_images_folder.absolute()} '
         submit(cmd)
@@ -67,10 +67,10 @@ class pytom_AlignmentReconstructionTest(unittest.TestCase):
         submit(f'cd {imod_reconstruction_folder}; submfg newst.com ')
         submit(f'cd {imod_reconstruction_folder}; submfg newst_bin.com ')
         submit(f'cd {imod_reconstruction_folder}; submfg tilt.com ')
-        submit(f'cd {imod_reconstruction_folder}; trimvol -yz tomo1_bin10.mrc.rec tomogram_IMOD.mrc ')
-        submit(f'mrcs2mrc.py -f {imod_reconstruction_folder.joinpath("tomo1_bin10.mrc.ali")} '
+        submit(f'cd {imod_reconstruction_folder}; trimvol -yz tomo1_bin12.mrc.rec tomogram_IMOD.mrc ')
+        submit(f'mrcs2mrc.py -f {imod_reconstruction_folder.joinpath("tomo1_bin12.mrc.ali")} '
                f'-t {imod_aligned_images_folder} --prefix sorted ')
-        submit(f'mrcs2mrc.py -f {imod_reconstruction_folder.joinpath("tomo1_bin5.mrc.ali")} '
+        submit(f'mrcs2mrc.py -f {imod_reconstruction_folder.joinpath("tomo1_bin6.mrc.ali")} '
                f'-t {imod_aligned_images_folder} --prefix unbinned_sorted ')
 
     @staticmethod
@@ -102,7 +102,7 @@ class pytom_AlignmentReconstructionTest(unittest.TestCase):
                     --tomogram {} \\
                     --projBinning {} \\
                     --applyWeighting -1  \\
-                    --size 370,370,200
+                    --size 300,300,150
                 """
 
         self.WBPFormat2 = """cd {}
@@ -111,7 +111,7 @@ class pytom_AlignmentReconstructionTest(unittest.TestCase):
                     --tomogram {} \\
                     --projBinning {} \\
                     --applyWeighting -1  \\
-                    --size 370,370,200 \\
+                    --size 300,300,150 \\
                     {}
                 """
 
@@ -200,7 +200,7 @@ class pytom_AlignmentReconstructionTest(unittest.TestCase):
     def test_alignment_reconstruction(self):
         # make sure that a tomogram was reconstructed with the proper dimensions
         tomo = read(raw_tilt_images_folder.joinpath('tomogram_PYTOM.mrc'))
-        self.assertTrue(tomo.shape == (370, 370, 200), msg='reconstructed tomogram does not have expected dimensions')
+        self.assertTrue(tomo.shape == (300, 300, 150), msg='reconstructed tomogram does not have expected dimensions')
 
     @unittest.skipIf(only_run_cpu,
                      "The test below uses a GPU and cannot be executed in a docker environment")
