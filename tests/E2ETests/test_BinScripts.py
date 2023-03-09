@@ -39,7 +39,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         self.create_RandomParticleList = create_RandomParticleList
         self.outdir = self.settings["outputDirectory"]
 
-    def addProjectDirToParticleList(self):
+    def test_addProjectDirToParticleList(self):
         from pytom.basic.structures import ParticleList
         fname = 'dummy.xml'
         part = 'Structures/particle_0.mrc'
@@ -56,7 +56,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         assert pl2[0].getInfoGUI().getProjectDir() == folder
         assert pl2[0].getFilename() == part
 
-    def average(self):
+    def test_average(self):
         func = self.generate_cmd(sys._getframe().f_code.co_name)
 
         outname = merge(self.outdir, 'average.mrc')
@@ -65,17 +65,17 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         self.check_cmd(cmd, func, outname)
 
-    def bandpassFilterVolume(self):
+    def test_bandpassFilterVolume(self):
         outname = merge(self.outdir, 'dummy.mrc')
         os.system(f'bandpassFilterVolume.py -v {self.reffile} -o {outname} -l 10 -h 25 -s 3')
         self.assertTrue(os.path.exists(outname))
         os.remove(outname)
 
-    def cancel_batch(self):
+    def test_cancel_batch(self):
         '''Cancels all slurm jobs between first number and last number (including last)'''
         os.system('cancel_batch 10000 100001')
 
-    def combineParticleLists(self):
+    def test_combineParticleLists(self):
 
         outdir = 'rest'
         self.create_folder(outdir)
@@ -101,25 +101,25 @@ class pytom_MyFunctionTest(unittest.TestCase):
         except:
             os.system(f'rm -rf {outfile}')
 
-    def convert(self):
+    def test_convert(self):
         folder = 'testparticles'
         func = self.generate_cmd(sys._getframe().f_code.co_name)
         cmd = f"{func} -d {folder} -t {self.outdir} -o mrc "
         self.check_cmd(cmd, func, merge(self.outdir, 'particle_0.mrc'))
 
-    def create_mask(self):
+    def test_create_mask(self):
         outfile = merge(self.outdir, 'ellipse.mrc')
         func = self.generate_cmd(sys._getframe().f_code.co_name)
         cmd = f"{func} -e {128} -m {40} -n {30} -l {20} -o {outfile} -s {5} -c {3}"
         self.check_cmd(cmd, func, outfile)
 
-    def createFolderStructure(self):
+    def test_createFolderStructure(self):
         outfolder = merge(self.outdir, 'guiFolderStructure')
         func = self.generate_cmd(sys._getframe().f_code.co_name)
         cmd = f"{func} -d {outfolder}"
         self.check_cmd(cmd, func, outfolder)
 
-    def createParticleListFromDir(self):
+    def test_createParticleListFromDir(self):
         outfile = merge(self.outdir, 'createPL.xml')
         func = self.generate_cmd(sys._getframe().f_code.co_name)
         prefix = 'particle_'
@@ -127,7 +127,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         self.check_cmd(cmd, func, outfile)
 
-    def cropSubvolumes(self):
+    def test_cropSubvolumes(self):
         outfile = merge(self.outdir, 'cropSubPL.xml')
         func = self.generate_cmd(sys._getframe().f_code.co_name)
         inname = merge(self.outdir, 'start.xml')
@@ -136,10 +136,10 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         self.check_cmd(cmd, func, outfile)
 
-    def diff(self):
+    def test_diff(self):
         os.system(f'diff.py {self.pl[0].getFilename()} {self.pl[1].getFilename()}')
 
-    def extractClassesFromParticleList(self):
+    def test_extractClassesFromParticleList(self):
         plname = merge(self.outdir, 'class.xml')
 
         pl = self.pl.copy()
@@ -153,7 +153,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         self.check_cmd(cmd, func, plname)
 
-    def extractClassXML(self):
+    def test_extractClassXML(self):
         plname = merge(self.outdir, 'class2.xml')
 
         pl = self.pl.copy()
@@ -172,7 +172,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         for p in pl:
             self.assertTrue( p.getClass() in ("1", '2'), 'wrong class')
 
-    def extractProjectDirFromParticleList(self):
+    def test_extractProjectDirFromParticleList(self):
         plname = merge(self.outdir, 'dd.xml')
 
         pl = self.pl.copy()
@@ -187,7 +187,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         self.check_cmd(cmd, func, plname)
 
-    def extractTomoNameFromXML(self):
+    def test_extractTomoNameFromXML(self):
         plname = merge(self.outdir, 'dd.xml')
 
         pl = self.pl.copy()
@@ -203,14 +203,14 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         self.check_cmd(cmd, func, plname)
 
-    def filter(self):
+    def test_filter(self):
         outname = merge(self.settings['outputDirectory'], 'dance.mrc')
         func = self.generate_cmd(sys._getframe().f_code.co_name)
         cmd = f'{func} -f {self.reffile} -t {outname} -l 10 --highestFrequency 25 -s 3'
         os.system(cmd)
         self.assertTrue(os.path.exists(outname), f'{func} failed')
 
-    def flip_coordinate_file(self):
+    def test_flip_coordinate_file(self):
         coordinateFile = '../testData/coords_tomogram_000_WBP.txt'
         outCoordinateFile = 'coords_tomogram_000_WBP_flipped.txt'
         func = self.generate_cmd(sys._getframe().f_code.co_name)
@@ -218,7 +218,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         os.system(cmd)
         self.assertTrue(os.path.exists(f"{self.settings['outputDirectory']}/{outCoordinateFile}"), f'{func} failed')
 
-    def fsc(self):
+    def test_fsc(self):
         func = self.generate_cmd(sys._getframe().f_code.co_name)
         fsc = 0.143
         outfolder = self.outdir
@@ -227,13 +227,13 @@ class pytom_MyFunctionTest(unittest.TestCase):
         cmd = f'{func} --v1 {self.reffile} --v2 {self.reffile} --fsc {fsc} --pixelsize {pixelsize} --combinedResolution --outputFolder {outfolder} --xml'
         self.check_cmd(cmd, func, os.path.join(outfolder, 'FSCOrig.dat'))
 
-    def gen_mask(self):
+    def test_gen_mask(self):
         outname = merge(self.outdir, 'dummy.mrc')
         os.system(f'gen_mask.py -f {self.reffile} -o {outname} -n {1} -s {3} -c {4}')
         self.assertTrue(os.path.exists(outname))
         os.remove(outname)
 
-    def lenPL(self):
+    def test_lenPL(self):
         fname = merge(self.outdir, 'len.xml')
         self.pl.toXMLFile(fname)
         self.assertTrue('10' == os.popen(f'lenPL.py -f {fname}').read()[:-1].split()[-1], 'lenPL.py is not functional')
@@ -241,7 +241,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
     def create_folder(self, fname):
         if not os.path.exists(fname): os.mkdir(fname)
 
-    def mirrorVolume(self):
+    def test_mirrorVolume(self):
         outname = merge(self.outdir, 'dummy.em')
         os.system(f'mirrorVolume.py -v {self.reffile} -o {outname}')
         data = read(outname)
@@ -250,7 +250,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         diff = np.abs(data[::-1,:,:] - ref)
         self.assertTrue(diff.sum() < 1E-5)
 
-    def mrcs2mrc(self):
+    def test_mrcs2mrc(self):
         from pytom.agnostic.io import read, write
         import numpy as np
 
@@ -271,7 +271,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
             self.assertTrue(np.abs(data[i,i] - (i+1))  < 1E-5, 'Max value is off')
             self.assertTrue(np.abs(data).sum() > i+1-1E-5, f'{np.abs(data).sum()} ')
 
-    def setWedgeToParticleList(self):
+    def test_setWedgeToParticleList(self):
         angle = 45
         outfile = merge(self.outdir, 'addedWedge.xml')
         plname = merge(self.outdir, 'temp.xml')
@@ -286,7 +286,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
             self.assertTrue(np.abs(particle.getWedge().getWedgeAngle() - angle) < 1E-5,
                             f'wedge angle is not set to {angle}')
 
-    def symmetrize(self):
+    def test_symmetrize(self):
         plname = merge(self.outdir, 'temp.xml')
         self.pl.toXMLFile(plname)
         volume = 'testparticles/particle_0.em'
@@ -298,40 +298,40 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
 
     # Already in Micrograph modeller unittest
-    def create_template(self):
+    def test_create_template(self):
         pass
 
     # Need to find solution to test plotting, maybe flag that not show but saves fig
 
-    def mrcshow(self):
+    def test_mrcshow(self):
         pass
 
-    def plotAngularDistribution(self):
+    def test_plotAngularDistribution(self):
         pass
 
-    def plotGaussianFit(self):
+    def test_plotGaussianFit(self):
         pass
 
 
 
     # here we need a good working example. It is duplicate with FullPipeline, so kept it to pass.
 
-    def ctfCorrImod(self):
+    def test_ctfCorrImod(self):
         pass
 
-    def reconstructTomogramGPU(self):
+    def test_reconstructTomogramGPU(self):
         pass
 
-    def reconstructTomogram(self):
+    def test_reconstructTomogram(self):
         pass
 
-    def calcAngThickSpecimen(self):
+    def test_calcAngThickSpecimen(self):
         pass
 
-    def reconstructTomogramWithoutAlignment(self):
+    def test_reconstructTomogramWithoutAlignment(self):
         pass
 
-    def localizationJob(self):
+    def test_localizationJob(self):
         folder = ''
         dest = self.settings['outputDirectory']
         self.create_folder(dest)
@@ -351,7 +351,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         os.system(cmd)
 
-    def localization(self):
+    def test_localization(self):
 
         jobname = 'testjob.xml'
 
@@ -361,49 +361,49 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         os.system(cmd)
 
-    def extractCandidates(self):
+    def test_extractCandidates(self):
         pass
 
-    def templateMatchingCandidateExtractionSingleGPU(self):
+    def test_templateMatchingCandidateExtractionSingleGPU(self):
         pass
 
-    def cutParticlesFromVol(self):
+    def test_cutParticlesFromVol(self):
         pass
 
-    def deconv(self):
+    def test_deconv(self):
         pass
 
-    def reconstructWB(self):
+    def test_reconstructWB(self):
         pass
 
-    def updateParticleList(self):
+    def test_updateParticleList(self):
         pass
 
-    def reconstructWB2(self):
+    def test_reconstructWB2(self):
         pass
 
-    def alignJob(self):
+    def test_alignJob(self):
         pass
 
-    def align(self):
+    def test_align(self):
         pass
 
-    def GLocalJob(self):
+    def test_GLocalJob(self):
         pass
 
-    def CPCAJob(self):
+    def test_CPCAJob(self):
         pass
 
-    def mcoACJob(self):
+    def test_mcoACJob(self):
         pass
 
-    def mcoAC(self):
+    def test_mcoAC(self):
         pass
 
-    def mcoEXMXJob(self):
+    def test_mcoEXMXJob(self):
         pass
 
-    def mcoEXMX(self):
+    def test_mcoEXMX(self):
         pass
 
 
@@ -411,32 +411,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
     def generate_cmd(self, name):
 
         return(name + '.py ')
-
-    def runTest(self):
-        self.addProjectDirToParticleList()
-        self.average()
-        self.bandpassFilterVolume()
-        self.cancel_batch()
-        self.combineParticleLists()
-        self.convert()
-        self.create3DEllipse()
-        self.createFolderStructure()
-        self.createParticleListFromDir()
-        self.cropSubvolumes()
-        self.diff()
-        self.extractClassesFromParticleList()
-        self.extractClassXML()
-        self.extractProjectDirFromParticleList()
-        self.extractTomoNameFromXML()
-        self.filter()
-        self.flip_coordinate_file()
-        self.fsc()
-        self.gen_mask()
-        self.lenPL()
-        self.mirrorVolume()
-        self.mrcs2mrc()
-        self.setWedgeToParticleList()
-        # self.symmetrize()
 
 if __name__ == '__main__':
     unittest.main()
