@@ -236,38 +236,31 @@ RELION31_OPTICS_GROUP = [('OpticsGroupName', 'U200'),
                          ('MicrographPixelSize', 'f4')
                          ]
 
-
-
 DATATYPE_RELION31_EXTENDED = [('CoordinateX', 'f4'),
-                     ('CoordinateY', 'f4'),
-                     ('CoordinateZ', 'f4'),
-                     ('MicrographName', 'U1000'),
-                     ('GroupNumber', 'i4'),
-                     ('AngleRot', 'f4'),
-                     ('AngleTilt', 'f4'),
-                     ('AnglePsi', 'f4'),
-                     ('CtfMaxResolution', 'f4'),
-                     ('ImageName', 'U1000'),
-                     ('CtfImage', 'U1000'),
-                     ('PixelSize', 'f4'),
-                     ('OpticsGroup', 'i4'),
-                     ('OriginXAngst', 'f4'),
-                     ('OriginYAngst', 'f4'),
-                     ('OriginZAngst', 'f4'),
-                     ('ClassNumber', 'i4'),
-                     ('NormCorrection', 'f4'),
-                     ('LogLikeliContribution', 'f4'),
-                     ('MaxValueProbDistribution', 'f4'),
-                     ('NrOfSignificantSamples', 'i4'),
-                     ('RandomSubset', 'i4')
-                     ]
+                              ('CoordinateY', 'f4'),
+                              ('CoordinateZ', 'f4'),
+                              ('MicrographName', 'U1000'),
+                              ('GroupNumber', 'i4'),
+                              ('AngleRot', 'f4'),
+                              ('AngleTilt', 'f4'),
+                              ('AnglePsi', 'f4'),
+                              ('CtfMaxResolution', 'f4'),
+                              ('ImageName', 'U1000'),
+                              ('CtfImage', 'U1000'),
+                              ('PixelSize', 'f4'),
+                              ('OriginXAngst', 'f4'),
+                              ('OriginYAngst', 'f4'),
+                              ('OriginZAngst', 'f4'),
+                              ('ClassNumber', 'i4'),
+                              ('Voltage', 'f4'),
+                              ('SphericalAberration', 'f4')]
 
 headerRelion31EXTENDEDSubtomo = '\ndata_\n\nloop_\n\n'
 for n, h in enumerate(DATATYPE_RELION31_EXTENDED):
     headerRelion31EXTENDEDSubtomo += '_rln{} #{}\n'.format(h[0], n+1)
 headerRelion31EXTENDEDSubtomo = headerRelion31EXTENDEDSubtomo[:-1]
 
-fmtR31EXTENDED = '%-9.4f %-9.4f %-9.4f %60s %4d %9.4f %9.4f %9.4f %9.4f %60s %60s %9.4f %6d %9.4f %9.4f %9.4f %6d %9.4f %9.4f %9.4f %6d %6d'
+fmtR31EXTENDED = '%-9.4f %-9.4f %-9.4f %60s %4d %9.4f %9.4f %9.4f %9.4f %60s %60s %9.4f %9.4f %9.4f %9.4f %6d %.3f %.3f'
 
 datatype_list = [DATATYPE_0,DATATYPE_MARKERFILE, DATATYPE_METAFILE, DATATYPE_MARKER_RESULTS, DATATYPE_TASOLUTION,
                  DATATYPE_PROJECT_ALIGN_RESULTS, DATATYPE_ALIGNMENT_RESULTS_RO,
