@@ -33,6 +33,18 @@ class PyTomDeveloper(develop):
         compile_pytom(pathlib.Path(self.prefix))
         develop.run(self)
 
+        """Hacky solution, but we cannot rely on the script linking of pip in develop-mode. Pip will put scripts in the 
+        miniconda bin that have a different shebang than the original ones. However, we need the pytom shebang for GPU 
+        scripts to execute. Only then is the GPU environment variable properly set. Updating gpu code to the cupy 
+        advised agnostic setup (as put in PyTomPrivate issue #117) should also solve this."""
+        miniconda_bin = pathlib.Path(self.prefix)
+        scripts = find_executables()
+        for script in scripts:
+            script_path = pathlib.Path(script)
+            symlink_path = miniconda_bin.joinpath('bin', script_path.name)
+            symlink_path.unlink()
+            symlink_path.symlink_to(script_path.absolute())
+
 
 setup(
     name='pytom',
