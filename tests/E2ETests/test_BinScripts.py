@@ -73,7 +73,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
     def test_cancel_batch(self):
         '''Cancels all slurm jobs between first number and last number (including last)'''
-        os.system('cancel_batch 10000 100001')
+        os.system('cancel_batch.py 10000 100001')
 
     def test_combineParticleLists(self):
 
@@ -87,7 +87,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         pl.toXMLFile(outname0)
         pl.toXMLFile(outname1)
 
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'combineParticleLists.py'
 
         cmd = f'{func} -d {outdir} -o {outfile}'
 
@@ -103,25 +103,26 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
     def test_convert(self):
         folder = 'testparticles'
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'convert.py'
         cmd = f"{func} -d {folder} -t {self.outdir} -o mrc "
         self.check_cmd(cmd, func, merge(self.outdir, 'particle_0.mrc'))
 
     def test_create_mask(self):
         outfile = merge(self.outdir, 'ellipse.mrc')
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'create_mask.py'
         cmd = f"{func} -e {128} -m {40} -n {30} -l {20} -o {outfile} -s {5} -c {3}"
+        print(cmd)
         self.check_cmd(cmd, func, outfile)
 
     def test_createFolderStructure(self):
         outfolder = merge(self.outdir, 'guiFolderStructure')
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'createFolderStructure.py'
         cmd = f"{func} -d {outfolder}"
         self.check_cmd(cmd, func, outfolder)
 
     def test_createParticleListFromDir(self):
         outfile = merge(self.outdir, 'createPL.xml')
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'createParticleListFromDir.py'
         prefix = 'particle_'
         cmd = f"{func} -d {self.outdir} -p {prefix} -o {outfile} -w 10"
 
@@ -129,7 +130,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
     def test_cropSubvolumes(self):
         outfile = merge(self.outdir, 'cropSubPL.xml')
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'cropSubvolumes.py'
         inname = merge(self.outdir, 'start.xml')
         self.pl.toXMLFile(inname)
         cmd = f"{func} --particleList {inname} --output particle_ --center 50,50,50 --cubesize 20 --outParticleList {outfile}"
@@ -219,7 +220,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         self.assertTrue(os.path.exists(f"{self.settings['outputDirectory']}/{outCoordinateFile}"), f'{func} failed')
 
     def test_fsc(self):
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'fsc.py'
         fsc = 0.143
         outfolder = self.outdir
         pixelsize=10
