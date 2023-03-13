@@ -291,9 +291,8 @@ class pytom_MyFunctionTest(unittest.TestCase):
         self.pl.toXMLFile(plname)
         volume = 'testparticles/particle_0.em'
         outfile = merge(self.outdir, 'cropSubPL.xml')
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = "symmetrize.py"
         cmd = f"{func} -p {plname} -v {volume} -r {outfile} -s {3}"
-
         self.check_cmd(cmd, func, outfile)
 
 
