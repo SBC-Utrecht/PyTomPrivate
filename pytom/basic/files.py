@@ -1123,6 +1123,10 @@ def pl2star(filename, target, prefix='', pixelsize=1., binningPyTom=1., binningW
     import os
     import numpy as np
 
+    if pixelsize == 1:
+        print('\nWARNING: You likely did not specify a pixel size for the particle star file, might cause unexpected '
+              'behaviour in Relion.\n')
+
     # If filename is a directory combine all xmls, otherwise read filename
     if os.path.isdir(filename):
         pl = ParticleList()
@@ -1144,10 +1148,13 @@ def pl2star(filename, target, prefix='', pixelsize=1., binningPyTom=1., binningW
     # are we dealing with a subtomogram type particle list with 3d ctf volumes?
     subtomo_flag = pl[0].getWedge().getType() == 'Wedge3dCTF'
 
-    if subtomo_flag:
-        stardata = np.zeros((len(pl)), dtype=DATATYPE_RELION31_EXTENDED)
-    else:
-        stardata = np.zeros((len(pl)), dtype=RELION31_PICKPOS_STAR)
+    if subtomo_flag and (rln_voltage is None or rln_spherical_aberration is None):
+        print('\nERROR: Conversion from pytom particle list to relion subtomo star files requires some additional '
+              'information that pytom cannot store in its format. Please provide voltage and spherical aberration for '
+              'file conversion. Exiting...\n')
+        raise ValueError
+
+    stardata = np.zeros((len(pl)), dtype=(DATATYPE_RELION31_EXTENDED if subtomo_flag else RELION31_PICKPOS_STAR))
 
     for n, p in enumerate(pl):
         x, y, z = p.getPickPosition().toVector()
@@ -1189,10 +1196,10 @@ def pl2star(filename, target, prefix='', pixelsize=1., binningPyTom=1., binningW
 
     newFilename = name_to_format(filename if outname == '' else outname, target, "star")
 
-    if subtomo_flag:
-        np.savetxt(newFilename, stardata, fmt=fmtR31EXTENDED, header=headerRelion31EXTENDEDSubtomo, comments='')
-    else:
-        np.savetxt(newFilename, stardata, fmt=fmtR31S, header=headerRelion31Subtomo, comments='')
+    np.savetxt(newFilename, stardata,
+               fmt=fmtR31EXTENDED if subtomo_flag else fmtR31S,
+               header=headerRelion31EXTENDEDSubtomo if subtomo_flag else headerRelion31Subtomo,
+               comments='')
 
 
 def star2xml(filename, target, prefix='', pixelsize=1., binningPyTom=1., binningWarpM=1., outname='', wedgeAngles=None,
@@ -1257,7 +1264,7 @@ def star2pl(filename, target, prefix='', pixelsize=1., binningPyTom=1., binningW
                              ctf_max_resolution=stardata['CtfMaxResolution'][n]))
 
         # ===== set empty score
-        p.setScore(FLCFScore(1.))
+        p.setScore(FLCFScore(0.))
 
         pl.append(p)
 

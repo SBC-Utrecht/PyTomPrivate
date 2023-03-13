@@ -142,7 +142,7 @@ for n, h in enumerate(RELION31_PICKPOS_STAR):
 headerRelion31Subtomo = headerRelion31Subtomo[:-1]
 
 
-fmtR31S = '%-9.4f %-9.4f %-9.4f %60s %9.4f %9.4f %4d %9.4f %9.4f %9.4f'
+fmtR31S = '%-9.4f %-9.4f %-9.4f %s %9.4f %9.4f %4d %9.4f %9.4f %9.4f'
 
 DATATYPE_PROJECT_ALIGN_RESULTS = [('TomogramName', 'U1000'),
                                   ('AlignmentMethod', 'U1000'),
@@ -240,6 +240,8 @@ DATATYPE_RELION31_EXTENDED = [('CoordinateX', 'f4'),
                               ('CoordinateY', 'f4'),
                               ('CoordinateZ', 'f4'),
                               ('MicrographName', 'U1000'),
+                              ('Magnification', 'f4'),
+                              ('DetectorPixelSize', 'f4'),
                               ('GroupNumber', 'i4'),
                               ('AngleRot', 'f4'),
                               ('AngleTilt', 'f4'),
@@ -260,7 +262,8 @@ for n, h in enumerate(DATATYPE_RELION31_EXTENDED):
     headerRelion31EXTENDEDSubtomo += '_rln{} #{}\n'.format(h[0], n+1)
 headerRelion31EXTENDEDSubtomo = headerRelion31EXTENDEDSubtomo[:-1]
 
-fmtR31EXTENDED = '%-9.4f %-9.4f %-9.4f %60s %4d %9.4f %9.4f %9.4f %9.4f %60s %60s %9.4f %9.4f %9.4f %9.4f %6d %.3f %.3f'
+fmtR31EXTENDED = ('%-9.4f %-9.4f %-9.4f %s %.1f %.5f %4d %9.4f %9.4f %9.4f %.1f %s %s %9.4f %9.4f %9.4f %9.4f '
+                  '%6d %.3f %.3f')
 
 datatype_list = [DATATYPE_0,DATATYPE_MARKERFILE, DATATYPE_METAFILE, DATATYPE_MARKER_RESULTS, DATATYPE_TASOLUTION,
                  DATATYPE_PROJECT_ALIGN_RESULTS, DATATYPE_ALIGNMENT_RESULTS_RO,
