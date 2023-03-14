@@ -802,14 +802,15 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
     from pytom.basic.fourier import fft,ifft
     from pytom.basic.filter import lowpassFilter
     from pytom.basic.structures import Reference
-    from pytom.bin.average import average, invert_WedgeSum
+    from pytom.alignment.averaging import average
+    from pytom.alignment.alignmentFunctions import invert_WedgeSum
 
     import os
     splitLists = splitParticleList(particleList, setParticleNodesRatio=setParticleNodesRatio)
     splitFactor = len(splitLists)
     assert splitFactor > 0, "splitFactor == 0, issue with parallelization"
     if 'gpu' in device:
-        from pytom.bin.average import averageGPU as average
+        from pytom.alignment.averaging import averageGPU as average
         from pytom.agnostic.structures import Reference
         from pytom.agnostic.io import read, write
 
