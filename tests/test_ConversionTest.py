@@ -1,16 +1,28 @@
 import unittest
 import numpy as np
 import os
+import pathlib
 from pytom.voltools.utils import transform_matrix
 from pytom.agnostic.io import read
+from pytom.basic.files import pl2star
+
+
+# test data folder and test files
+test_data = pathlib.Path('testData')
+subtomo_star = test_data.joinpath('subtomo_format.star')
+pickpos_xml = test_data.joinpath('pickpos_format.xml')
+# output files from conversion should be named
+subtomo_xml = 'subtomo_format.xml'
+subtomo_copy_star = 'subtomo_format_copy.star'
+pickpos_star = 'pickpos_format.star'
 
 
 class pytom_ConversionTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
-        os.remove('testData/subtomo_format.xml')
-        os.remove('testData/subtomo_format_copy.star')
-        os.remove('testData/pickpos_format.star')
+        test_data.joinpath(subtomo_xml).unlink()
+        test_data.joinpath(subtomo_copy_star).unlink()
+        test_data.joinpath(pickpos_star).unlink()
 
     def imod_forward(self):
         # imod (.xf) to pytom (alignmentResults.txt)
@@ -49,23 +61,31 @@ class pytom_ConversionTest(unittest.TestCase):
 
     def test_subtomo_format_conversion(self):
         # do forward and backward conversion of the subtomo star format
-        os.system('convert.py -f testData/subtomo_format.star -t testData --outname subtomo_format -o xml')
-        os.system('convert.py -f testData/subtomo_format.xml -t testData --outname subtomo_format_copy -o star '
-                  '--rln-voltage 200 --rln-spherical-aberration 2.7 --pixelSize 6.896')
+        os.system(f'convert.py -f {subtomo_star} -t testData --outname subtomo_format -o xml')
+        os.system(f'convert.py -f {test_data.joinpath(subtomo_xml)} -t testData --outname subtomo_format_copy '
+                  f'-o star --rln-voltage 200 --rln-spherical-aberration 2.7 --pixelSize 6.896')
 
         # read them in and test whether the copy has still all the same header as the original
-        star_original = read('testData/subtomo_format.star')
-        star_copy = read('testData/subtomo_format_copy.star')
+        star_original = read(subtomo_star)
+        star_copy = read(test_data.joinpath(subtomo_copy_star))
         original_in_copy = [col in star_copy.dtype.names for col in star_original.dtype.names]
         self.assertTrue(all(original_in_copy), msg='after back and forth conversion not all header are present')
 
+        # check whether the function raises the right exception when voltage or Cs is missing
+        with self.assertRaises(ValueError):
+            pl2star(test_data.joinpath(subtomo_xml), test_data)
+        with self.assertRaises(ValueError):
+            pl2star(test_data.joinpath(subtomo_xml), test_data, rln_spherical_aberration=2.7)
+        with self.assertRaises(ValueError):
+            pl2star(test_data.joinpath(subtomo_xml), test_data, rln_voltage=200)
+
     def test_pickpos_conversion(self):
         # convert forward
-        os.system('convert.py -f testData/pickpos_format.xml -t testData --outname pickpos_format -o star '
-                  '--pixelSize 20')
+        os.system(f'convert.py -f {pickpos_xml} -t testData --outname pickpos_format -o star '
+                  f'--pixelSize 20')
 
         # test if all the headers are present for the pickpos format that can be read by Warp
-        star_pickpos = read('testData/pickpos_format.star')
+        star_pickpos = read(test_data.joinpath(pickpos_star))
         required_headers = ['CoordinateX', 'CoordinateY', 'CoordinateZ',
                             'MicrographName','Magnification', 'DetectorPixelSize',
                             'GroupNumber', 'AngleRot', 'AngleTilt', 'AnglePsi']

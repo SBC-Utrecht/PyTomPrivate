@@ -1149,7 +1149,7 @@ def pl2star(filename, target, prefix='', pixelsize=1., binningPyTom=1., binningW
     subtomo_flag = pl[0].getWedge().getType() == 'Wedge3dCTF'
 
     if subtomo_flag and (rln_voltage is None or rln_spherical_aberration is None):
-        print('\nERROR: Conversion from pytom particle list to relion subtomo star files requires some additional '
+        print('\nConversion from pytom particle list to relion subtomo star files requires some additional '
               'information that pytom cannot store in its format. Please provide voltage and spherical aberration for '
               'file conversion. Exiting...\n')
         raise ValueError
