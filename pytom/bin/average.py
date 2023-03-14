@@ -1,14 +1,11 @@
 #!/usr/bin/env pytom
-from pytom.basic.structures import PyTomClass
 from pytom.basic.structures import ParticleList
-from pytom.angles.localSampling import LocalSampling
-from pytom.agnostic.mpi import MPI
+from pytom.gpu.initialize import xp
 import os
 
 
 analytWedge=False
 
-from pytom.gpu.initialize import xp, device
 
 def splitParticleList(particleList, setParticleNodesRatio=3, numberOfNodes=10):
     """
@@ -27,6 +24,7 @@ def splitParticleList(particleList, setParticleNodesRatio=3, numberOfNodes=10):
         splitFactor = len(particleList) / int(setParticleNodesRatio)
     splitLists = particleList.splitNSublists(splitFactor)  # somehow ...
     return splitLists
+
 
 def average(particleList, averageName, showProgressBar=False, verbose=False,
             createInfoVolumes=False, weighting=False, norm=False, gpuId=None):
@@ -50,6 +48,7 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
     from pytom.basic.structures import Reference
     from pytom.basic.normalise import mean0std1
     from pytom.tools.ProgressBar import FixedProgBar
+    from pytom.alignment.alignmentFunctions import invert_WedgeSum
     from math import exp
     import os
     if len(particleList) == 0:
@@ -196,27 +195,6 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
 
     return newReference
 
-def multi_read(shared, filenames, startID=0, size=0):
-    from pytom.agnostic.io import read
-    print(len(filenames), size)
-    for i, filename in enumerate(filenames):
-        shared[(startID+i)*size:(startID+i+1)*size] = read(filename, keepnumpy=True).flatten()
-
-def allocateProcess(pl, shared_array, n=0, total=1, size=200):
-    from multiprocessing import Process
-
-    filenames = []
-    if n+total > len(pl):
-        total -= n+total-len(pl)
-
-    for i in range(total):
-        filenames.append(pl[n+i].getFilename())
-        print(filenames[-1])
-    procs = []
-    p = Process(target=multi_read, args=(shared_array, filenames, 0, size))
-    p.start()
-    procs.append(p)
-    return procs
 
 def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
             createInfoVolumes=False, weighting=False, norm=False, gpuId=None, profile=False):
@@ -389,73 +367,6 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
 
     return newReference
 
-def invert_WedgeSum( invol, r_max=None, lowlimit=0., lowval=0.):
-    """
-    invert wedge sum - avoid division by zero and boost of high frequencies
-
-    @param invol: input volume
-    @type invol: L{pytom.lib.pytom_volume.vol} or L{pytom.lib.pytom_volume.vol_comp}
-    @param r_max: radius
-    @type r_max: L{int}
-    @param lowlimit: lower limit - all values below this value that lie in the specified radius will be replaced \
-                by lowval
-    @type lowlimit: L{float}
-    @param lowval: replacement value
-    @type lowval: L{float}
-
-    @author: FF
-    """
-    from math import sqrt
-    if not r_max:
-        r_max=invol.sizeY()/2-1
-
-    # full representation with origin in center
-    if invol.sizeZ() == invol.sizeX():
-        centX1 = int(invol.sizeX()/2)
-        centY1 = int(invol.sizeY()/2)
-        centZ  = int(invol.sizeZ()/2)
-        for ix in range(0,invol.sizeX()):
-            for iy in range(0,invol.sizeY()):
-                for iz in range(0,invol.sizeZ()):
-                    dx = (ix-centX1)**2
-                    dy = (iy-centY1)**2
-                    dz = (iz-centZ)**2
-                    r = sqrt(dx+dy+dz)
-                    if r < r_max:
-                        v = invol.getV( ix, iy, iz)
-                        if v < lowlimit:
-                            v = 1./lowval
-                        else:
-                            v = 1./v
-                    else:
-                        v = 0.
-                    invol.setV( v, ix, iy, iz)
-    else:
-        centX1 = 0
-        centX2 = invol.sizeX()-1
-        centY1 = 0
-        centY2 = invol.sizeY()-1
-        centZ  = 0
-        for ix in range(0,invol.sizeX()):
-            for iy in range(0,invol.sizeY()):
-                for iz in range(0,invol.sizeZ()):
-                    d1 = (ix-centX1)**2
-                    d2 = (ix-centX2)**2
-                    dx = min(d1,d2)
-                    d1 = (iy-centY1)**2
-                    d2 = (iy-centY2)**2
-                    dy = min(d1,d2)
-                    dz = (iz-centZ)**2
-                    r = sqrt(dx+dy+dz)
-                    if r < r_max:
-                        v = invol.getV( ix, iy, iz)
-                        if v < lowlimit:
-                            v = 1./lowval
-                        else:
-                            v = 1./v
-                    else:
-                        v = 0.
-                    invol.setV( v, ix, iy, iz)
 
 def averageParallel(particleList,averageName, showProgressBar=False, verbose=False,
                     createInfoVolumes=False, weighting=None, norm=False,
@@ -480,8 +391,10 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
     from pytom.basic.filter import lowpassFilter
     from pytom.basic.structures import Reference
     from pytom.alignment.alignmentFunctions import invert_WedgeSum
-
+    from pytom.basic.files import em2mrc
+    from multiprocessing import Process
     import os
+    import time
 
     splitLists = splitParticleList(particleList, setParticleNodesRatio=setParticleNodesRatio, numberOfNodes=cores)
     splitFactor = len(splitLists)
@@ -495,17 +408,12 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
         preList.append(averageName + '_dist' + str(ii) + '-PreWedge.em')
         wedgeList.append(averageName + '_dist' + str(ii) + '-WedgeSumUnscaled.em')
 
-    #reference = average(particleList=plist, averageName=xxx, showProgressBar=True, verbose=False,
-    # createInfoVolumes=False, weighting=weighting, norm=False)
-    from multiprocessing import Process
-
     procs = []
     for i in range(splitFactor):
         proc = Process(target=average,args=(splitLists[i],avgNameList[i], showProgressBar,verbose,createInfoVolumes, weighting, norm) )
         procs.append(proc)
         proc.start()
 
-    import time
     while procs:
         procs = [proc for proc in procs if proc.is_alive()]
         time.sleep(.1)
@@ -529,7 +437,6 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
         os.system('rm ' + wedgeList[ii])
         os.system('rm ' + avgNameList[ii])
 
-    
     if createInfoVolumes:
         root, ext = os.path.splitext(averageName)
 
@@ -554,8 +461,6 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
 
 
     if averageName.endswith("mrc"):
-        from pytom.basic.files import em2mrc
-        import os
         averageNameEM = averageName[:-3]+'em'
         unweiAv.write(averageNameEM)
         em2mrc(averageNameEM, './' if not os.path.dirname(averageName) else os.path.dirname(averageName))
@@ -585,12 +490,7 @@ def averageParallelGPU(particleList, averageName, showProgressBar=False, verbose
     @author: FF
 
     """
-    from pytom.lib.pytom_volume import read, complexRealMult
-    from pytom.basic.fourier import fft, ifft
-    from pytom.basic.filter import lowpassFilter
-    from pytom.basic.structures import Reference
     from pytom.agnostic.tools import invert_WedgeSum
-    from pytom.lib.pytom_numpy import vol2npy
     from pytom.agnostic.io import write, read
     import os
 
@@ -608,10 +508,9 @@ def averageParallelGPU(particleList, averageName, showProgressBar=False, verbose
 
     #####
     averageGPU(splitLists[0],avgNameList[0], showProgressBar,verbose,createInfoVolumes, weighting, norm, gpuID)
-#averageList = mpi.parfor( average, list(zip(splitLists, avgNameList, [showProgressBar]*splitFactor,
-#                                       [verbose]*splitFactor, [createInfoVolumes]*splitFactor,
-#                                            [weighting]*splitFactor, [norm]*splitFactor)), verbose=True)
-
+    #averageList = mpi.parfor( average, list(zip(splitLists, avgNameList, [showProgressBar]*splitFactor,
+    #                                       [verbose]*splitFactor, [createInfoVolumes]*splitFactor,
+    #                                            [weighting]*splitFactor, [norm]*splitFactor)), verbose=True)
 
     unweiAv = read(preList[0])
     wedgeSum = read(wedgeList[0])
@@ -649,25 +548,6 @@ def averageParallelGPU(particleList, averageName, showProgressBar=False, verbose
 
     write(averageName, unweiAv)
     return 1
-
-
-
-def run(fname, outname, cores=6):
-
-
-    even = ParticleList()
-
-    even.fromXMLFile(fname)
-
-    aa = averageParallel(particleList=even,
-                         averageName=outname,
-                         showProgressBar=True, verbose=False, createInfoVolumes=False,
-                         weighting=False, norm=False,
-                         setParticleNodesRatio=3, cores=cores)
-
-    #evenAverage.getVolume().write('Even.em')
-    
-
 
 
 if __name__=='__main__':
