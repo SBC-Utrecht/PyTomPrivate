@@ -1726,7 +1726,7 @@ class Wedge3dCTF(PyTomClass):
             raise TypeError('Is not a lxml.etree._Element! You must provide a valid XML-Wedge object.')
 
         self._filename = xmlObj.get('Filename')
-        self._ctf_max_resolution = xmlObj.get('CtfMaxResolution')
+        self._ctf_max_resolution = float(xmlObj.get('CtfMaxResolution'))
 
     def toXML(self):
         """
@@ -1736,7 +1736,8 @@ class Wedge3dCTF(PyTomClass):
         """
         from lxml import etree
 
-        wedgeElement = etree.Element('Wedge3dCTF', Filename=self._filename, CtfMaxResolution=self._ctf_max_resolution)
+        wedgeElement = etree.Element('Wedge3dCTF', Filename=self._filename,
+                                     CtfMaxResolution=str(self._ctf_max_resolution))
 
         return wedgeElement
 
