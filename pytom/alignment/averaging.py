@@ -1,4 +1,5 @@
 from pytom.gpu.initialize import xp
+import numpy as np
 
 
 analytWedge = False
@@ -130,6 +131,8 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
                                     isReducedComplex=True, returnReducedComplex=True)
             wedge = wedge * wedge
         elif analytWedge:
+            # TODO McHaillet: analytWedge should first rotate the fourier grid and then calculate the wedge
+            # TODO instead of calculate the wedge and then interpolating, doubt if this is ever getting a fix
             # > analytical buggy version
             wedge = wedgeInfo.returnWedgeVolume(sizeX, sizeY, sizeZ, False, rotinvert)
         else:
@@ -149,7 +152,7 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
         # convolute the particle with the unrotated wedge
         particle = wedgeInfo.apply(particle)
 
-        ### shift and rotate particle
+        # shift and rotate particle
         newParticle.setAll(0)
         # pass rotinvert here, why otherwise calculate rotinvert before...
         # previously: -rotation[1], -rotation[0], -rotation[2]
@@ -158,7 +161,6 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
 
         if weighting:
             weight = 1. - particleObject.getScore().getValue()
-            # weight = weight**2
             weight = exp(-1. * weight)
             result = result + newParticle * weight
             wedgeSum = wedgeSum + wedge * weight
@@ -170,17 +172,24 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
             numberAlignedParticles = numberAlignedParticles + 1
             progressBar.update(numberAlignedParticles)
 
+    # get file name format
     root, ext = os.path.splitext(averageName)
 
     # calculate the signal power spectrum from the previous average
     if wiener_filter:
+        # write estimated signal and noise 1d vectors to disk
         signal_vector = radialaverage(powerspectrum(previous_average), isreduced=False)
         noise_vector = radialaverage(noise_spectrum / len(particleList))
+
+        # write as a 1d array to text file is most efficient
+        np.savetxt(f'{root}-signal-spectrum-1d.txt', signal_vector)
+        np.savetxt(f'{root}-noise-spectrum-1d.txt', noise_vector)
+
+        # calculate the inverse ssnr for the wiener filter
         ssnr_inv_vector = [n / s for s, n in zip(signal_vector, noise_vector)]
         ssnr_inv = fullToReduced(iftshift(profile2FourierVol(ssnr_inv_vector, dim=sizeX, reduced=False)))
-        ssnr_inv.write(f'{root}-SSNR{ext}')
 
-    ###apply spectral weighting to sum
+    # remove unknown fourier areas
     result = lowpassFilter(result, sizeX / 2 - 1, 0.)[0]
 
     # if createInfoVolumes:
