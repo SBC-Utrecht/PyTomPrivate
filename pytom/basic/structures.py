@@ -1519,7 +1519,8 @@ class Wedge3dCTF(PyTomClass):
                           rotation=None, as_numpy=False):
         """parameters here are not needed but for compat with the wedge class"""
         if wedgeSizeX is not None or wedgeSizeY is not None or wedgeSizeZ is not None:
-            print('WARNING! Wedge size specification wont have effect for 3d ctf wedge!')
+            # print('WARNING! Wedge size specification wont have effect for 3d ctf wedge!')
+            pass
         wedge = read(self._filename)
         if rotation is not None:
             wedge = rotateWeighting(wedge, z1=rotation[0], z2=rotation[1], x=rotation[2], mask=None,

@@ -378,7 +378,6 @@ def powerspectrum(volume):
 
     @author: FF
     """
-    from pytom.basic.fourier import fft, ftshift
     from pytom.lib.pytom_volume import vol, reducedToFull
 
     fvol = ftshift(reducedToFull(fft(volume)),inplace=False)

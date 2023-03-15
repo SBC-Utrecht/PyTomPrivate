@@ -24,7 +24,7 @@ def splitParticleList(particleList, setParticleNodesRatio=3, numberOfNodes=10):
 
 
 def average(particleList, averageName, showProgressBar=False, verbose=False,
-            createInfoVolumes=False, weighting=False, norm=False, gpuId=None):
+            createInfoVolumes=False, weighting=False, norm=False, previousReference=None, gpuId=None):
     """
     average : Creates new average from a particleList
     @param particleList: The particles
@@ -38,10 +38,10 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
     @author: Thomas Hrabe
     @change: limit for wedgeSum set to 1% or particles to avoid division by small numbers - FF
     """
-    from pytom.lib.pytom_volume import read, vol, reducedToFull
-    from pytom.basic.filter import lowpassFilter, rotateWeighting
+    from pytom.lib.pytom_volume import read, vol, reducedToFull, fullToReduced, complexRealMult, real, abs
+    from pytom.basic.filter import lowpassFilter, rotateWeighting, profile2FourierVol
     from pytom.lib.pytom_volume import transformSpline as transform
-    from pytom.basic.fourier import convolute
+    from pytom.basic.fourier import convolute, fft, powerspectrum, radialaverage, iftshift
     from pytom.basic.structures import Reference
     from pytom.basic.normalise import mean0std1
     from pytom.tools.ProgressBar import FixedProgBar
@@ -51,15 +51,13 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
     if len(particleList) == 0:
         raise RuntimeError('The particle list is empty. Aborting!')
 
+    # initialize to None to ensure variable exists
+    numberAlignedParticles, progressBar = None, None
     if showProgressBar:
         progressBar = FixedProgBar(0, len(particleList), 'Particles averaged ')
         progressBar.update(0)
         numberAlignedParticles = 0
 
-    result = []
-    wedgeSum = []
-
-    newParticle = None
     # pre-check that scores != 0
     if weighting:
         wsum = 0.
@@ -69,7 +67,31 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
             weighting = False
             print("Warning: all scores have been zero - weighting not applied")
 
-    n = 0
+    # read box dims and interpolation center from the first particle
+    particleObject = particleList[0]
+    wedgeInfo = particleObject.getWedge()
+    particle = read(particleObject.getFilename())
+    sizeX, sizeY, sizeZ = particle.sizeX(), particle.sizeY(), particle.sizeZ()
+    centerX, centerY, centerZ = sizeX // 2, sizeY // 2, sizeZ // 2
+    wiener_filter = wedgeInfo._type == 'Wedge3dCTF'
+
+    # allocate boxes for averaging
+    newParticle = vol(sizeX, sizeY, sizeZ)
+    result = vol(sizeX, sizeY, sizeZ)
+    result.setAll(0.0)
+    wedgeSum = wedgeInfo.returnWedgeVolume(sizeX, sizeY, sizeZ)
+    wedgeSum.setAll(0)
+
+    # bug check: size dim should be sizeZ / 2 + 1 as pytom works with fourier reduced volumes
+    assert wedgeSum.sizeX() == sizeX and wedgeSum.sizeY() == sizeY and wedgeSum.sizeZ() == sizeZ / 2 + 1, \
+        "wedge initialization result in wrong dims :("
+
+    # initialize to None to ensure variable exists
+    noise_spectrum, previous_average, previous_average_rotated, ssnr_inv = None, None, None, None
+    if wiener_filter:
+        noise_spectrum = vol(wedgeSum.sizeX(), wedgeSum.sizeY(), wedgeSum.sizeZ())
+        previous_average = previousReference.getVolume()
+        previous_average_rotated = vol(sizeX, sizeY, sizeZ)
 
     for particleObject in particleList:
         if 0 and verbose:
@@ -81,45 +103,33 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
         if norm:  # normalize the particle
             mean0std1(particle)  # happen inplace
 
+        # get data about particle
         wedgeInfo = particleObject.getWedge()
-        # apply its wedge to itself
-
+        shiftV = particleObject.getShift()
         rotation = particleObject.getRotation()
         rotinvert = rotation.invert()
 
-        if not result:
-            sizeX = particle.sizeX()
-            sizeY = particle.sizeY()
-            sizeZ = particle.sizeZ()
-            newParticle = vol(sizeX, sizeY, sizeZ)
+        # load wedges and for 3d ctf calculate noise spectrum
+        if wiener_filter:
+            wedge = wedgeInfo.returnWedgeVolume(sizeX, sizeY, sizeZ, False)
 
-            centerX = sizeX // 2
-            centerY = sizeY // 2
-            centerZ = sizeZ // 2
+            # =====> first calculate the noise spectrum with unrotated wedge
+            previous_average_rotated.setAll(0.0)
+            transform(previous_average, previous_average_rotated, rotation[0], rotation[1], rotation[2],
+                      centerX, centerY, centerZ, shiftV[0], shiftV[1], shiftV[2], 0, 0, 0)
 
-            result = vol(sizeX, sizeY, sizeZ)
-            result.setAll(0.0)
+            p_noise = abs(
+                fft(particle, scaling='sqrtN') - complexRealMult(fft(previous_average_rotated,
+                                                                     scaling='sqrtN'), wedge))
+            # power spectrum is abs square of fourier transform
+            noise_spectrum = noise_spectrum + real(p_noise * p_noise)
 
-            if analytWedge:
-                wedgeSum = wedgeInfo.returnWedgeVolume(wedgeSizeX=sizeX, wedgeSizeY=sizeY, wedgeSizeZ=sizeZ)
-            else:
-                # > FF bugfix
-                wedgeSum = wedgeInfo.returnWedgeVolume(sizeX, sizeY, sizeZ)
-                # < FF
-                # > TH bugfix
-                # wedgeSum = vol(sizeX,sizeY,sizeZ)
-                # < TH
-                # wedgeSum.setAll(0)
-            assert wedgeSum.sizeX() == sizeX and wedgeSum.sizeY() == sizeY and wedgeSum.sizeZ() == sizeZ / 2 + 1, \
-                "wedge initialization result in wrong dims :("
-            wedgeSum.setAll(0)
-            # wedgeFilter = wedgeInfo.returnWedgeFilter(particle.sizeX(), particle.sizeY(), particle.sizeZ())
-
-        if wedgeInfo._type in ['SingleTiltWedge', 'DoubleTiltWedge']:
-            particle = wedgeInfo.apply(particle)  # dont for 3d ctf, because particle is premult with ctf
-
-        ### create spectral wedge weighting
-        if analytWedge:
+            # =====> calculate the CTF^2 for the rotated particle
+            wedge = rotateWeighting(weighting=wedge,
+                                    z1=rotinvert[0], z2=rotinvert[1], x=rotinvert[2], mask=None,
+                                    isReducedComplex=True, returnReducedComplex=True)
+            wedge = wedge * wedge
+        elif analytWedge:
             # > analytical buggy version
             wedge = wedgeInfo.returnWedgeVolume(sizeX, sizeY, sizeZ, False, rotinvert)
         else:
@@ -136,14 +146,14 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
             # wedge = rotate(volume=wedgeVolume, rotation=rotinvert, imethod='linear')
             # < TH
 
-        if wedgeInfo._type == 'Wedge3dCTF':  # square the 3d ctf for the weighting
-            wedge = wedge * wedge
+        # convolute the particle with the unrotated wedge
+        particle = wedgeInfo.apply(particle)
 
         ### shift and rotate particle
-        shiftV = particleObject.getShift()
         newParticle.setAll(0)
-
-        transform(particle, newParticle, -rotation[1], -rotation[0], -rotation[2],
+        # pass rotinvert here, why otherwise calculate rotinvert before...
+        # previously: -rotation[1], -rotation[0], -rotation[2]
+        transform(particle, newParticle, rotinvert[0], rotinvert[1], rotinvert[2],
                   centerX, centerY, centerZ, -shiftV[0], -shiftV[1], -shiftV[2], 0, 0, 0)
 
         if weighting:
@@ -160,34 +170,45 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
             numberAlignedParticles = numberAlignedParticles + 1
             progressBar.update(numberAlignedParticles)
 
-        n += 1
+    root, ext = os.path.splitext(averageName)
+
+    # calculate the signal power spectrum from the previous average
+    if wiener_filter:
+        signal_vector = radialaverage(powerspectrum(previous_average), isreduced=False)
+        noise_vector = radialaverage(noise_spectrum / len(particleList))
+        ssnr_inv_vector = [n / s for s, n in zip(signal_vector, noise_vector)]
+        ssnr_inv = fullToReduced(iftshift(profile2FourierVol(ssnr_inv_vector, dim=sizeX, reduced=False)))
+        ssnr_inv.write(f'{root}-SSNR{ext}')
+
     ###apply spectral weighting to sum
     result = lowpassFilter(result, sizeX / 2 - 1, 0.)[0]
-
-    root, ext = os.path.splitext(averageName)
 
     # if createInfoVolumes:
     result.write(f'{root}-PreWedge{ext}')
 
     # wedgeSum = wedgeSum*0+len(particleList)
     wedgeSum.write(f'{root}-WedgeSumUnscaled{ext}')
-    invert_WedgeSum(invol=wedgeSum, r_max=sizeX / 2 - 2., lowlimit=.05 * len(particleList),
-                    lowval=.05 * len(particleList))
+
+    if wiener_filter:
+        wedgeSum = wedgeSum + ssnr_inv
+        invert_WedgeSum(invol=wedgeSum, r_max=sizeX / 2 - 2., lowlimit=1e-6,
+                        lowval=1e-6)
+    else:
+        invert_WedgeSum(invol=wedgeSum, r_max=sizeX / 2 - 2., lowlimit=.05 * len(particleList),
+                        lowval=.05 * len(particleList))
 
     if createInfoVolumes:
         w1 = reducedToFull(wedgeSum)
         w1.write(f'{root}-WedgeSumInverted{ext}')
 
     result = convolute(v=result, k=wedgeSum, kernel_in_fourier=True)
-
-    # do a low pass filter
-    # result = lowpassFilter(result, sizeX/2-2, (sizeX/2-1)/10.)[0]
     result.write(averageName)
 
     if createInfoVolumes:
         resultINV = result * -1
         # write sign inverted result to disk (good for chimera viewing ... )
-        resultINV.write('{root}-INV{ext}')
+        resultINV.write(f'{root}-INV{ext}')
+
     newReference = Reference(averageName, particleList)
 
     return newReference
