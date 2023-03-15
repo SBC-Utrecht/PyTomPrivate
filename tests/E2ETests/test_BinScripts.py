@@ -57,7 +57,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         assert pl2[0].getFilename() == part
 
     def test_average(self):
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'average.py'
 
         outname = merge(self.outdir, 'average.mrc')
         self.pl.toXMLFile('average.xml')
@@ -110,8 +110,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
     def test_create_mask(self):
         outfile = merge(self.outdir, 'ellipse.mrc')
         func = 'create_mask.py'
-        cmd = f"{func} -e {128} -m {40} -n {30} -l {20} -o {outfile} -s {5} -c {3}"
-        print(cmd)
+        cmd = f"{func} --boxSize {128} --radius {40} --minor1 {30} --minor2 {20} -o {outfile} --sigma {5} --cutoff {3}"
         self.check_cmd(cmd, func, outfile)
 
     def test_createFolderStructure(self):
@@ -149,7 +148,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         pl.toXMLFile(plname)
         outfile = merge(self.outdir, 'sel.xml')
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'extractClassesFromParticleList.py'
         cmd = f"{func} -p {plname}  -c 1,2 -o {outfile}"
 
         self.check_cmd(cmd, func, plname)
@@ -163,7 +162,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         pl.toXMLFile(plname)
         outfile = merge(self.outdir, 'sel.xml')
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'extractClassXML.py'
         cmd = f"{func} -p {plname}  -c 1,2 -o {outfile}"
 
         self.check_cmd(cmd, func, plname)
@@ -183,7 +182,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         pl.toXMLFile(plname)
         outfolder = merge(self.outdir, 'particleList')
         self.create_folder(outfolder)
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'extractProjectDirFromParticleList.py'
         cmd = f"{func} -p {plname}  -d {outfolder}"
 
         self.check_cmd(cmd, func, plname)
@@ -199,14 +198,14 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         outfolder = merge(self.outdir, 'particleList')
         self.create_folder(outfolder)
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'extractTomoNameFromXML.py'
         cmd = f"{func} -p {plname}  -t {outfolder}"
 
         self.check_cmd(cmd, func, plname)
 
     def test_filter(self):
         outname = merge(self.settings['outputDirectory'], 'dance.mrc')
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'filter.py'
         cmd = f'{func} -f {self.reffile} -t {outname} -l 10 --highestFrequency 25 -s 3'
         os.system(cmd)
         self.assertTrue(os.path.exists(outname), f'{func} failed')
@@ -214,7 +213,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
     def test_flip_coordinate_file(self):
         coordinateFile = '../testData/coords_tomogram_000_WBP.txt'
         outCoordinateFile = 'coords_tomogram_000_WBP_flipped.txt'
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'flip_coordinate_file.py'
         cmd = f"{func} -f {coordinateFile} -d ../testData -t {self.settings['outputDirectory']} -s 464 -p flipped"
         os.system(cmd)
         self.assertTrue(os.path.exists(f"{self.settings['outputDirectory']}/{outCoordinateFile}"), f'{func} failed')
@@ -277,7 +276,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         outfile = merge(self.outdir, 'addedWedge.xml')
         plname = merge(self.outdir, 'temp.xml')
         self.pl.toXMLFile(plname)
-        func = self.generate_cmd(sys._getframe().f_code.co_name)
+        func = 'setWedgeToParticleList.py'
         cmd = f"{func} -p {plname} -o {outfile} -w {angle}"
         os.system(cmd)
 
@@ -333,15 +332,17 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
     def test_localizationJob(self):
         folder = ''
+        jobname = 'testlocaljob.xml'
         dest = self.settings['outputDirectory']
         self.create_folder(dest)
+        mpi_cores = 4
+        cmd = 'localizatonJob.py'
+        mask = self.settings["mask"]
 
-        cmd = self.generate_cmd(sys._getframe().f_code.co_name)
-
-        cmd = f'cd {self.folder}; mpiexec -np 16 {cmd} -j {jobname} '
+        cmd = f'cd {self.folder}; mpiexec -np {mpi_cores} {cmd} -j {jobname} '
         cmd += f'--volume {self.reffile} '
         cmd += f'--reference {self.reffile} '
-        cmd += f'--mask {self.mask} '
+        cmd += f'--mask {mask} '
         cmd += f'--wedge1 {30} '
         cmd += f'--wedge2 {30} '
         cmd += f'--angles angles_50_100.em '
@@ -354,10 +355,10 @@ class pytom_MyFunctionTest(unittest.TestCase):
     def test_localization(self):
 
         jobname = 'testjob.xml'
+        mpi_procs = 4
+        cmd = 'localization.py'
 
-        cmd = self.generate_cmd(sys._getframe().f_code.co_name)
-
-        cmd = f'cd {self.folder}; mpiexec -np 16 {cmd} -x 4 -y 4 -z 1 -j {jobname}'
+        cmd = f'cd {self.folder}; mpiexec -np {mpi_procs} {cmd} -x 4 -y 4 -z 1 -j {jobname}'
 
         os.system(cmd)
 
@@ -406,11 +407,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
     def test_mcoEXMX(self):
         pass
 
-
-
-    def generate_cmd(self, name):
-
-        return(name + '.py ')
 
 if __name__ == '__main__':
     unittest.main()
