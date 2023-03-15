@@ -20,7 +20,7 @@ if os.path.exists(fname):
 
 create_project_filestructure(fname)
 os.system(f'cp -rf {fname}/03_Tomographic_Reconstruction/.tomoname {fname}/03_Tomographic_Reconstruction/tomogram_000')
-os.system(f'cp testData/tomogram_000.meta {fname}/03_Tomographic_Reconstruction/tomogram_000/sorted/')
+os.system(f'cp ../testData/tomogram_000.meta {fname}/03_Tomographic_Reconstruction/tomogram_000/sorted/')
 
 if not os.path.exists(os.path.join(fname, 'logfile.pickle')):
     os.system(f"touch {os.path.join(fname, 'logfile.pickle')}")
