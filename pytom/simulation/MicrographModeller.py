@@ -1921,7 +1921,7 @@ def reconstruct_tomogram(save_path, weighting=-1, reconstruction_bin=1,
     vol = projections.reconstructVolume(dims=vol_size, reconstructionPosition=[0, 0, 0], binning=reconstruction_bin,
                                         weighting=weighting)
     vol.write(filename_output)
-    os.system(f'em2mrc.py -f {filename_output} -t {os.path.dirname(filename_output)}')
+    os.system(f'convert.py -f {filename_output} -o mrc -t {os.path.dirname(filename_output)}')
     os.system(f'rm {filename_output}')
 
     # only if binning during reconstruction is used or the scaled projections are used, ground truth annotation needs
