@@ -1,4 +1,5 @@
 import unittest
+from shutil import which
 import os
 from pytom.gpu.initialize import device
 import sys
@@ -22,7 +23,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         self.orignal_data = 'ftp://ftp.ebi.ac.uk/empiar/world_availability/10064/data/mixedCTEM_tomo3.mrc'
         self.mrcs = 'mixedCTEM_tomo3.mrc'
-        self.pytomDir = os.path.dirname(os.path.dirname(os.popen('which pytom').readlines()[0]))
+        self.pytomDir = os.path.dirname(os.path.dirname(which('pytom')))
         if 'miniconda' in self.pytomDir:
             self.pytomDir2 = os.path.join(self.pytomDir, f'lib/{pythonversion}/site-packages/pytom')
         else:
@@ -55,14 +56,14 @@ class pytom_MyFunctionTest(unittest.TestCase):
         self.startAngleReduced = -20
         self.endAngleReduced = 20
 
-        self.numcores = 15
+        self.numcores = 4
         self.IMODTiltAxis = 180
 
         self.pixelSize = 2.62
         self.binningGLocalFull = 2
         self.binningGLocalReduced = 1
         self.particleDiameter = 300
-        self.dont = True
+        self.dont = False
         #global device
 
         #device= 'gpu:0'
@@ -109,7 +110,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
     def test_02_dataExtraction(self):
         import os
-        if self.dont: return
+        if self.dont: raise self.skipTest("don't is set")
         os.system(f'mrcs2mrc.py -f {self.mrcs} -t {self.tomoname}/sorted -p sorted -i 2 -s {self.startAngleFull} -e {self.endAngleFull} -m ')
         os.system(f'cp {self.markerFile} {self.tomoname}/sorted')
 
@@ -127,7 +128,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         from pytom.basic.datatypes import DATATYPE_ALIGNMENT_RESULTS
         from pytom.gui.guiFunctions import loadstar
         import os
-        if self.dont: return
+        if self.dont: raise self.skipTest("don't is set")
 
         cmd = f'pytom {self.pytomDir2}/reconstruction/generateAlignedTiltImages.py '
 
@@ -157,44 +158,28 @@ class pytom_MyFunctionTest(unittest.TestCase):
             self.assertTrue(abs(ref['InPlaneRotation'][i] - ali['InPlaneRotation'][i]) < 0.001)
             self.assertTrue(abs(ref['Magnification'][i] - ali['Magnification'][i]) < 0.001)
 
-        pass
 
     def test_05_Reconstruction(self):
         """
         check that resulting alignment score is smaller than reference score
         """
         import os
-        if self.dont: return
-
-        cmd = f"pytom {self.pytomDir}/bin/reconstructTomogram.py "
-        cmd += f"--tiltSeriesName {self.tomoname}/sorted/sorted "
-        cmd += f"--firstIndex {self.firstIndexFull} "
-        cmd += f"--lastIndex {self.lastIndexFull} "
-        cmd += f"--referenceIndex {self.referenceTiltIndex} "
-        cmd += f"--markerFile {self.tomoname}/sorted/markerfile.txt "
-        cmd += f"--referenceMarkerIndex {self.referenceMarker} "
-        cmd += f"--expectedRotationAngle {self.expectedRotationAngle} "
-        cmd += f"--projectionTargets {self.tomoname}/reconstruction/WBP/temp_files_unweighted/sorted_aligned "
-        cmd += f"--projectionBinning 8 "
-        cmd += f"--lowpassFilter 0.9  "
-        cmd += f"--weightingType {self.weightingTypeRecon}  "
-        cmd += f"--tomogramFile {self.tomoname}/reconstruction/WBP/tomogram_000_WBP.mrc "
-        cmd += f"--tiltSeriesFormat mrc "
-        cmd += f"--fileType mrc  "
-        cmd += f"--tomogramSizeX 464 "
-        cmd += f"--tomogramSizeY 464 "
-        cmd += f"--tomogramSizeZ 464 "
-        cmd += f"--reconstructionCenterX 0 "
-        cmd += f"--reconstructionCenterY 0 "
-        cmd += f"--reconstructionCenterZ 0 "
-
+        if self.dont: raise self.skipTest("don't is set")
+        outfile = f"{self.tomoname}/reconstruction/WBP/tomogram_000_WBP.mrc"
+        cmd = "reconstructWB.py "
+        cmd += f"--tomogram  {outfile} "
+        cmd += "--applyWeighting 1 "
+        cmd += "--size 464,464,464 "
+        cmd += "--projBinning 8 "
+        # From test_04_Alignment
+        cmd += f"--alignResultFile {self.tomoname}/alignment/marker_0004_-60.0,56.0/GlobalAlignment/sorted/alignmentResults.txt " 
+        
         print(cmd)
 
         os.system(cmd)
 
         self.assertTrue(os.path.exists(f'{self.tomoname}/reconstruction/WBP/tomogram_000_WBP.mrc'))
 
-        pass
 
     def test_06_TemplateMatching_CPU(self):
         """
@@ -202,10 +187,9 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         import os
 
-        if self.dont: return
+        if self.dont: raise self.skipTest("don't is set")
 
-        if 'gpu' in device:
-            return
+        if 'gpu' in device: raise self.skipTest("Doing GPU instead of CPU")
 
         if not os.path.exists(f'{self.projectname}/04_Particle_Picking/Template_Matching/cross_correlation/tomogram_000_WBP'):
             os.mkdir(f'{self.projectname}/04_Particle_Picking/Template_Matching/cross_correlation/tomogram_000_WBP')
@@ -228,7 +212,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
             d = open(fname, 'w')
             d.write(jobFile)
             d.close()
-            cmd = f"mpiexec --tag-output -n 16 pytom {self.pytomDir}/bin/localization.py -j {fname} -x 4 -y 4 -z 1"
+            cmd = f"mpiexec --tag-output -n {self.numcores} pytom {self.pytomDir}/bin/localization.py -j {fname} -x 4 -y 4 -z 1"
             print(cmd)
 
             os.system(cmd)
@@ -240,9 +224,9 @@ class pytom_MyFunctionTest(unittest.TestCase):
         check that resulting sum of correlation scores are larger than ref value. Check locations? Check if correct handedness has a higher score
         """
         import os
-        if self.dont: return
+        if self.dont: raise self.skipTest("don't is set")
 
-        if 'cpu' in device: return
+        if 'cpu' in device: raise self.skipTest("Doing CPU instead of GPU")
 
         if not os.path.exists(f'{self.projectname}/04_Particle_Picking/Template_Matching/cross_correlation/tomogram_000_WBP'):
             os.mkdir(f'{self.projectname}/04_Particle_Picking/Template_Matching/cross_correlation/tomogram_000_WBP')
@@ -268,8 +252,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
             cmd = f"mpiexec --tag-output -n 1 pytom {self.pytomDir}/bin/localization.py -j {fname} -x 1 -y 1 -z 1 -g 0"
             os.system(cmd)
 
-        pass
-
     def test_07_TemplateMatchingCandidateExtractionGPU(self):
         """
         check that resulting scores and angle list is similar to gpu standalone
@@ -280,7 +262,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         check that resulting scores and angle list is similar to gpu standalone
         """
-        if self.dont: return
+        if self.dont: raise self.skipTest("don't is set")
 
         for suffix in ('', '_Mirrored'):
             cmd = f'pytom {self.pytomDir}/bin/extractCandidates.py '
@@ -296,9 +278,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
             os.system(cmd)
 
 
-
-        pass
-
     def test_09_GenerateSubsetParticles(self):
         """
         check that resulting scores and angle list is similar to gpu standalone
@@ -306,8 +285,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         from pytom.basic.structures import ParticleList
         import numpy as np
 
-        if self.dont: return
-
+        if self.dont: raise self.skipTest("don't is set")
 
         particleListNormal = ParticleList()
         particleListNormal.fromXMLFile(f'{self.projectname}/04_Particle_Picking/Picked_Particles/particleList_TM_tomogram_000_WBP.xml')
@@ -426,7 +404,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         from pytom.bin.updateParticleList import updatePL
         from pytom.basic.structures import ParticleList
 
-        updatePL([self.glocaldir + '/alignment_000_gpu/3-ParticleList.xml'], [self.plFilenameReduced], suffix='_reduced', wedgeangles=[70,70], multiplyshift=1,)
+        updatePL([self.glocaldir + 'alignment_000_gpu/3-ParticleList.xml'], [self.plFilenameReduced], suffix='_reduced', wedgeangles=[70,70], multiplyshift=1,)
 
         self.assertTrue(os.path.exists(self.plFilenameReduced), 'Updated particle list has not been created.')
 
