@@ -405,8 +405,11 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         from pytom.bin.updateParticleList import updatePL
         from pytom.basic.structures import ParticleList
-
-        updatePL([self.glocaldir + 'alignment_000_gpu/3-ParticleList.xml'], [self.plFilenameReduced], suffix='_reduced', wedgeangles=[70,70], multiplyshift=1,)
+        if 'gpu' in device:
+            subdir = 'alignment_000_gpu'
+        else:
+            subdir = 'alignment_000_cpu'
+        updatePL([self.glocaldir + f'{subdir}/3-ParticleList.xml'], [self.plFilenameReduced], suffix='_reduced', wedgeangles=[70,70], multiplyshift=1,)
 
         self.assertTrue(os.path.exists(self.plFilenameReduced), 'Updated particle list has not been created.')
 
@@ -427,7 +430,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         check that resulting scores of alignment of corrected are similar to ref values
         """
-
+        if which('ctfphaseflip') is None: raise self.skipTest('No ctfphaseflip from imod installed')
         import glob
         folder = f'{self.tomoname}/ctf'
         # Create stack from sorted
