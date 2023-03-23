@@ -467,7 +467,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         os.system(cmd)
 
         # Align the ctf corrected files
-        cmd = f'pytom {self.pytomDir}/reconstruction/generateAlignedTiltImages.py '
+        cmd = f'pytom {self.pytomDir2}/reconstruction/generateAlignedTiltImages.py '
 
         cmd += f'--tiltSeriesName {self.tomoname}/ctf/sorted_ctf/sorted_ctf '
         cmd += f'--markerFile {self.tomoname}/sorted/markerfile.txt '
@@ -498,7 +498,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         cmd += f'--projBinning {binning} '
         cmd += f'--recOffset 0,0,0 '
         cmd += f'--metafile {self.tomoname}/sorted/mixedCTEM_tomo3.meta '
-        cmd += f'--numProcesses 10 '
+        cmd += f'--numProcesses {self.numcores}'
         print(cmd)
         os.system(cmd)
 
@@ -506,11 +506,11 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         """
         check resulting resolution
         """
-        if self.dont: return
+        if self.dont: raise self.skipTest("Don't is set")
 
-        if 'gpu' in device: return
+        if 'gpu' in device: raise self.skipTest("Running GPU test instead")
 
-        outdir = os.path.join(self.glocaldir, 'alignment_002_gpu')
+        outdir = os.path.join(self.glocaldir, 'alignment_002_cpu')
         self.outdir_ali2 = outdir
 
         if not os.path.exists(outdir): os.mkdir(outdir)
@@ -527,7 +527,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         cmd += f'--angleShells 3 '
         cmd += f'--angleIncrement 3.00 '
         cmd += f'--jobName {self.outdir_ali2}/glocal_input_params_reduced.xml '
-        cmd += f'--reference {os.path.join(self.glocaldir, "alignment_000_gpu")}/3-All.mrc '
+        cmd += f'--reference {os.path.join(self.glocaldir, "alignment_000_cpu")}/3-All.em '
 
         os.system(cmd)
 
@@ -538,7 +538,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         check that resulting resolution is below threshold and similar to CPU
         """
 
-        if 'cpu' in device: return
+        if 'cpu' in device: raise self.skipTest("Running CPU test instead")
 
         outdir = os.path.join(self.glocaldir, 'alignment_002_gpu')
         self.outdir_ali2 = outdir
@@ -557,7 +557,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         cmd += f'--angleShells 3 '
         cmd += f'--angleIncrement 3.00 '
         cmd += f'--jobName {self.outdir_ali2}/glocal_input_params_reduced.xml '
-        cmd += f'--reference {os.path.join(self.glocaldir, "alignment_000_gpu")}/3-All.mrc '
+        cmd += f'--reference {os.path.join(self.glocaldir, "alignment_000_gpu")}/3-All.em '
         cmd += f'--gpuID 0,1,2,3 '
 
         os.system(cmd)
@@ -567,7 +567,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         check that resulting resolution is below threshold and similar to CPU
         """
 
-        if 'gpu' in device: return
+        if 'gpu' in device: raise self.skipTest("Running GPU tests instead")
 
         from pytom.agnostic.transform import resize
         from pytom.agnostic.io import read, write
@@ -581,14 +581,14 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         cmd += f'--projBinning 1 '
         cmd += f'--recOffset 0,0,0 '
         cmd += f'--metafile {self.tomoname}/sorted/mixedCTEM_tomo3.meta '
-        cmd += f'--numProcesses 10 '
+        cmd += f'--numProcesses {self.numcores} '
         print(cmd)
         os.system(cmd)
 
-        outdir3 = os.path.join(self.glocaldir, 'alignment_003_gpu')
+        outdir3 = os.path.join(self.glocaldir, 'alignment_003_cpu')
         if not os.path.exists(outdir3): os.mkdir(outdir3)
 
-        outdir = os.path.join(self.glocaldir, 'alignment_002_gpu')
+        outdir = os.path.join(self.glocaldir, 'alignment_002_cpu')
         self.outdir_ali2 = outdir
 
         v = read(f'{self.outdir_ali2}/3-All.mrc')
@@ -650,7 +650,7 @@ fsc.py  '''
         check that resulting resolution is below threshold and similar to CPU
         """
 
-        if 'cpu' in device: return
+        if 'cpu' in device: raise self.skipTest("Running CPU test instead")
 
         from pytom.agnostic.transform import resize
         from pytom.agnostic.io import read, write
