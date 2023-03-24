@@ -591,7 +591,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         outdir = os.path.join(self.glocaldir, 'alignment_002_cpu')
         self.outdir_ali2 = outdir
 
-        v = read(f'{self.outdir_ali2}/3-All.mrc')
+        v = read(f'{self.outdir_ali2}/3-All.em')
 
         r = resize(v, 2)
         reference = f'{outdir3}/resizedReference.mrc'
@@ -623,8 +623,8 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         gen_mask_fsc(read(model), 4, f'{self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc',
                      1, 3)
 
-        # alignedVolume = f'{outdir}/referrenceAligned3-All.mrc'
-        # alignTwoVolumes(f'{outdir}/3-All.mrc', self.reference, outname=alignedVolume)
+        # alignedVolume = f'{outdir}/referrenceAligned3-All.em'
+        # alignTwoVolumes(f'{outdir}/3-All.em', self.reference, outname=alignedVolume)
 
         cmd = f'''cd {self.projectname}/05_Subtomogram_Analysis/Validation
 
@@ -675,7 +675,7 @@ fsc.py  '''
         self.outdir_ali2 = outdir
 
 
-        v =  read(f'{self.outdir_ali2}/3-All.mrc')
+        v =  read(f'{self.outdir_ali2}/3-All.em')
 
         r = resize(v,2)
         reference = f'{outdir3}/resizedReference.mrc'
