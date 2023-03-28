@@ -305,12 +305,10 @@ class pytom_MyFunctionTest(unittest.TestCase):
         scoresMirror = np.array(scores[1])
 
         self.assertTrue(scoresNormal.sum() > scoresMirror.sum(), 'Wrong handedness of reconstruction.')
-        print(len(scoresNormal), len(scoresMirror), np.sum(scoresNormal > scoresMirror))
-        cutoff = 20+((scoresNormal[20:] > scoresMirror[20:])).astype(np.int32).sum()
+        cutoff = 20+np.argmax(scoresNormal[20:] <= scoresMirror[20:])
         print('cutoff: ', cutoff, scoresNormal[cutoff])
-        #TODO Figure out what this check is supposed to test; disabled for now
-        #self.assertTrue(cutoff > 1160, 'Wrong handedness of reconstruction.')
-        self.assertTrue(scoresNormal[cutoff] > 0.12, "Poor correlation score")
+        self.assertTrue(cutoff > 1078, 'Wrong handedness of reconstruction.')
+        self.assertTrue(scoresNormal[cutoff] > 0.237, "Poor correlation score")
 
         pl = particleListNormal[:cutoff]
         pl.toXMLFile(self.plFilename)
