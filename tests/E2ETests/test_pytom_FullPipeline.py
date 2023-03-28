@@ -618,7 +618,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         from pytom.agnostic.io import read, write
 
         model = sorted([os.path.join(outdir3, f) for f in os.listdir(outdir3) if
-                        'average-FinalFiltered' in f and f.endswith('mrc')])[0]
+                        'average-FinalFiltered' in f and f.endswith('em')])[0]
 
         gen_mask_fsc(read(model), 4, f'{self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc',
                      1, 3)
@@ -629,8 +629,8 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         cmd = f'''cd {self.projectname}/05_Subtomogram_Analysis/Validation
 
 fsc.py  '''
-        cmd += f'--v1 {outdir3}/average-Final-Even.mrc  '
-        cmd += f'--v2 {outdir3}/average-Final-Odd.mrc '
+        cmd += f'--v1 {outdir3}/average-Final-Even.em  '
+        cmd += f'--v2 {outdir3}/average-Final-Odd.em '
         cmd += f'--mask {self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc '
         cmd += f'--outputFolder {self.projectname}/05_Subtomogram_Analysis/Validation '
         cmd += f'--fsc 0.143 '
