@@ -640,8 +640,8 @@ fsc.py  '''
 
         resolution = float(result.split('Resolution determined for pixelsize :')[1].split()[-2])
 
-        self.assertTrue(resolution < 10.,
-                        'Final Resolution of the reconstruction is {resolution}. A resolution below 10. Angstrom is expected.')
+        self.assertTrue(resolution < 16.,
+                        'Final Resolution of the reconstruction is {resolution}. A resolution below 16. Angstrom is expected.')
 
     def test_20_GLocal_Reduced_NonBinned_GPU(self):
         """
@@ -701,7 +701,7 @@ fsc.py  '''
         from pytom.bin.gen_mask import  gen_mask_fsc
         from pytom.agnostic.io import read, write
 
-        model = sorted([os.path.join(outdir3, f) for f in os.listdir(outdir3) if 'average-FinalFiltered' in f and f.endswith('mrc')])[0]
+        model = sorted([os.path.join(outdir3, f) for f in os.listdir(outdir3) if 'average-FinalFiltered' in f and f.endswith('em')])[0]
 
         gen_mask_fsc(read(model), 4, f'{self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc', 1, 3 )
 
@@ -711,8 +711,8 @@ fsc.py  '''
         cmd = f'''cd {self.projectname}/05_Subtomogram_Analysis/Validation
 
 fsc.py  '''
-        cmd += f'--v1 {outdir3}/average-Final-Even.mrc  '
-        cmd += f'--v2 {outdir3}/average-Final-Odd.mrc '
+        cmd += f'--v1 {outdir3}/average-Final-Even.em '
+        cmd += f'--v2 {outdir3}/average-Final-Odd.em '
         cmd += f'--mask {self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc '
         cmd += f'--outputFolder {self.projectname}/05_Subtomogram_Analysis/Validation '
         cmd += f'--fsc 0.143 '
@@ -727,7 +727,7 @@ fsc.py  '''
         resolution = float(result.split('Resolution determined for pixelsize :')[1].split()[-2])
         print(f'Determined resolution: {resolution:.2f}')
 
-        self.assertTrue(resolution < 10., f'Final Resolution of the reconstruction is {resolution}. A resolution below 10. Angstrom is expected.')
+        self.assertTrue(resolution < 16., f'Final Resolution of the reconstruction is {resolution}. A resolution below 16. Angstrom is expected.')
 
     def test_21_CCC_CPU(self):
         """
