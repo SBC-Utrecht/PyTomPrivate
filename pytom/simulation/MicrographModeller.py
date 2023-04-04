@@ -1068,7 +1068,7 @@ def generate_tilt_series_cpu(save_path,
             grandcell = grandcell.astype(xp_type)
             solvent_amplitude = 0.0
     else:
-        if grandcell.dtype == complex:
+        if xp.iscomplexobj(grandcell):
             solvent_amplitude = physics.potential_amplitude(physics.AMORPHOUS_ICE_DENSITY, physics.WATER_MW, voltage)
             # set dtype to be complex64 to save memory
             xp_type = xp.complex64
@@ -1401,7 +1401,7 @@ def generate_frame_series_cpu(save_path, n_frames=20, nodes=1, image_size=None, 
             grandcell = grandcell.astype(xp.float32)
             solvent_amplitude = 0.0
     else:
-        if grandcell.dtype == complex:
+        if xp.iscomplexobj(grandcell):
             solvent_amplitude = physics.potential_amplitude(physics.AMORPHOUS_ICE_DENSITY, physics.WATER_MW, voltage)
             # set dtype to be complex64 to save memory
             grandcell = grandcell.astype(xp.complex64)
