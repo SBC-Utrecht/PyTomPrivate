@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from pytom.gpu.initialize import xp, device
 import pytom.simulation.physics as physics
 from scipy.optimize import curve_fit
@@ -242,23 +243,31 @@ def radial_average(image):
 
     @author: Marten Chaillet
     """
-    assert len(image.shape) in [2, 3], "radial average calculation only works for 2d image arrays"
+    assert len(image.shape) in [2, 3], "radial average calculation only works for 2d and 3d image arrays"
     assert len(set(image.shape)) == 1, 'differently size dimension, cannot perform radial averaging'
 
     size = image.shape[0]
-    center = size // 2 + 1  # fourier space center
+    center = size // 2 + size % 2  # this is proper fourier space center for even and uneven dimension
     if len(image.shape) == 3:
-        x, y, z = xp.meshgrid(xp.arange(size), xp.arange(size), xp.arange(size))
+        # using broadcasting save a lot of memory
+        x, y, z = (xp.arange(size)[:, xp.newaxis, xp.newaxis],
+                   xp.arange(size)[xp.newaxis, :, xp.newaxis],
+                   xp.arange(size)[xp.newaxis, xp.newaxis, :])
         R = xp.sqrt((x - center) ** 2 + (y - center) ** 2 + (z - center)**2)
     else:
-        x, y = xp.meshgrid(xp.arange(size), xp.arange(size))
+        x, y = (xp.arange(size)[:, xp.newaxis],
+                xp.arange(size)[xp.newaxis, :])
         R = xp.sqrt((x - center) ** 2 + (y - center) ** 2)
 
     f = lambda r: image[(R >= r - .5) & (R < r + .5)].mean()
-    r = xp.linspace(0, size // 2)
-    mean = xp.vectorize(f)(r)
+    x = xp.arange(size // 2)
 
-    return r, mean
+    if type(image) is not np.ndarray:
+        mean = xp.array([f(radius) for radius in x])
+    else:  # vectorize only works for numpy
+        mean = xp.vectorize(f)(x)
+
+    return x, mean
 
 
 def display_microscope_function(image, form='', ylim=(-1, 1), complex=False):

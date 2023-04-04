@@ -25,7 +25,8 @@ def splitParticleList(particleList, setParticleNodesRatio=3, numberOfNodes=10):
 
 
 def average(particleList, averageName, showProgressBar=False, verbose=False,
-            createInfoVolumes=False, weighting=False, norm=False, previousReference=None, gpuId=None):
+            createInfoVolumes=False, weighting=False, norm=False, previousReference=None, wiener_filter=False,
+            gpuId=None):
     """
     average : Creates new average from a particleList
     @param particleList: The particles
@@ -74,7 +75,6 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
     particle = read(particleObject.getFilename())
     sizeX, sizeY, sizeZ = particle.sizeX(), particle.sizeY(), particle.sizeZ()
     centerX, centerY, centerZ = sizeX // 2, sizeY // 2, sizeZ // 2
-    wiener_filter = wedgeInfo._type == 'Wedge3dCTF'
 
     # allocate boxes for averaging
     newParticle = vol(sizeX, sizeY, sizeZ)
@@ -88,9 +88,10 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
         "wedge initialization result in wrong dims :("
 
     # initialize to None to ensure variable exists
-    noise_spectrum, previous_average, previous_average_rotated, ssnr_inv = None, None, None, None
+    noise_spectrum, previous_average, previous_average_rotated, ssnr_filter = None, None, None, None
     if wiener_filter:
         noise_spectrum = vol(wedgeSum.sizeX(), wedgeSum.sizeY(), wedgeSum.sizeZ())
+        noise_spectrum.setAll(0.0)
         previous_average = previousReference.getVolume()
         previous_average_rotated = vol(sizeX, sizeY, sizeZ)
 
@@ -177,17 +178,21 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
 
     # calculate the signal power spectrum from the previous average
     if wiener_filter:
+        noise_spectrum = noise_spectrum / len(particleList)
+
         # write estimated signal and noise 1d vectors to disk
         signal_vector = radialaverage(powerspectrum(previous_average), isreduced=False)
-        noise_vector = radialaverage(noise_spectrum / len(particleList))
+        noise_vector = radialaverage(noise_spectrum, isreduced=True)
 
         # write as a 1d array to text file is most efficient
         np.savetxt(f'{root}-signal-spectrum-1d.txt', signal_vector)
         np.savetxt(f'{root}-noise-spectrum-1d.txt', noise_vector)
 
         # calculate the inverse ssnr for the wiener filter
-        ssnr_inv_vector = [n / s for s, n in zip(signal_vector, noise_vector)]
-        ssnr_inv = fullToReduced(iftshift(profile2FourierVol(ssnr_inv_vector, dim=sizeX, reduced=False)))
+        ssnr_vector = [s / n for s, n in zip(signal_vector, noise_vector)]
+        ssnr_filter = fullToReduced(iftshift(profile2FourierVol(ssnr_vector, dim=sizeX, reduced=False)))
+        invert_WedgeSum(invol=ssnr_filter, r_max=sizeX / 2 - 2, lowlimit=1e-6,
+                        lowval=1e-6)
 
     # remove unknown fourier areas
     result = lowpassFilter(result, sizeX / 2 - 1, 0.)[0]
@@ -199,11 +204,12 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
     wedgeSum.write(f'{root}-WedgeSumUnscaled{ext}')
 
     if wiener_filter:
-        wedgeSum = wedgeSum + ssnr_inv
-        invert_WedgeSum(invol=wedgeSum, r_max=sizeX / 2 - 2., lowlimit=1e-6,
+        wedgeSum = wedgeSum + ssnr_filter
+        invert_WedgeSum(invol=wedgeSum, r_max=sizeX / 2 - 2, lowlimit=1e-6,
                         lowval=1e-6)
+        wedgeSum.write(f'{root}-wiener-filter{ext}')
     else:
-        invert_WedgeSum(invol=wedgeSum, r_max=sizeX / 2 - 2., lowlimit=.05 * len(particleList),
+        invert_WedgeSum(invol=wedgeSum, r_max=sizeX / 2 - 2, lowlimit=.05 * len(particleList),
                         lowval=.05 * len(particleList))
 
     if createInfoVolumes:
@@ -223,8 +229,18 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
     return newReference
 
 
+def average_wiener(previous_average=None):
+    """
+    If no previous average is provided will use Grigorieff method to estimate the signal.
+    :param previous_average:
+    :return:
+    """
+    pass
+
+
 def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
-               createInfoVolumes=False, weighting=False, norm=False, gpuId=None, profile=False):
+               createInfoVolumes=False, weighting=False, norm=False, previousReference=None,
+               wiener_filter=False, gpuId=None, profile=False):
     """
     average : Creates new average from a particleList
     @param particleList: The particles
@@ -239,12 +255,13 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
     @change: limit for wedgeSum set to 1% or particles to avoid division by small numbers - FF
     """
     from pytom.agnostic.io import read, write, read_size
-    from pytom.agnostic.filter import bandpass as lowpassFilter, applyFourierFilterFull
+    from pytom.agnostic.filter import bandpass as lowpassFilter, applyFourierFilterFull, profile2FourierVol
     from pytom.voltools import transform
     from pytom.basic.structures import Reference
     from pytom.agnostic.normalise import mean0std1
-    from pytom.agnostic.tools import invert_WedgeSum
+    from pytom.agnostic.tools import invert_WedgeSum, create_sphere
     from pytom.agnostic.transform import fourier_full2reduced
+    from pytom.simulation.microscope import radial_average
     from pytom.tools.ProgressBar import FixedProgBar
     import cupy as xp
     import os
@@ -273,11 +290,6 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
     if len(particleList) == 0:
         raise RuntimeError('The particle list is empty. Aborting!')
 
-    if showProgressBar:
-        progressBar = FixedProgBar(0, len(particleList), 'Particles averaged ')
-        progressBar.update(0)
-        numberAlignedParticles = 0
-
     # pre-check that scores != 0
     if weighting:
         wsum = 0.
@@ -287,41 +299,58 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
             weighting = False
             print("Warning: all scores have been zero - weighting not applied")
 
-    sx, sy, sz = read_size(particleList[0].getFilename())
-    wedgeInfo = particleList[0].getWedge().convert2numpy()
+    # extract root path and extension for writing files
+    root, ext = os.path.splitext(averageName)
+
+    shape = tuple(read_size(particleList[0].getFilename()))
+    center = shape[0] // 2, shape[1] // 2, shape[2] // 2
 
     # TODO ifftshift to shift centered spectrum back to corner!
-    wedgeZero = xp.fft.ifftshift(wedgeInfo.returnWedgeVolume(sx, sy, sz, True))
-    wedge = xp.zeros_like(wedgeZero, dtype=xp.float32)
-    wedgeSum = xp.zeros_like(wedge, dtype=xp.float32)
-
-    newParticle = xp.zeros((sx, sy, sz), dtype=xp.float32)
-
-    centerX = sx // 2
-    centerY = sy // 2
-    centerZ = sz // 2
-
-    result = xp.zeros((sx, sy, sz), dtype=xp.float32)
-
+    wedge = xp.zeros(shape, dtype=xp.float32)
+    wedgeSum = xp.zeros(shape, dtype=xp.float32)
+    newParticle = xp.zeros(shape, dtype=xp.float32)
+    result = xp.zeros(shape, dtype=xp.float32)
     fftplan = get_fft_plan(wedge.astype(xp.complex64))
 
-    n = 0
+    ortho_scaling, low_pass, noise_variance_sum, signal_variance_sum, signal_raw, signal = (None, None, None,
+                                                                                            None, None, None)
+    if wiener_filter:
+        # TODO mask is necessary for wiener filter spectra estimation
+        # prev_average_rotated = xp.zeros(shape)
+        ortho_scaling = xp.sqrt(result.size, dtype=xp.float32)
+        low_pass = xp.fft.ifftshift(create_sphere(shape, radius=shape[0] // 2 - 1))
+        noise_variance_sum = xp.zeros(shape)
+        signal_variance_sum = xp.zeros(shape)
+        signal_raw = xp.zeros(shape, dtype=xp.complex64)
+        signal = fftnP(read(previousReference.getFilename()), plan=fftplan) * (1 / ortho_scaling)
 
+        # create signal spectrum
+        # prev_average = read(previousReference.getFilename())
+        # signal = xp.abs(xp.fft.fftshift(xp.fft.fftn(prev_average, norm='ortho'))) ** 2 / 2
+        # _, r_signal = radial_average(signal)
+        # signal_spectrum = profile2FourierVol(r_signal * t_fudge, dim=shape) * low_pass
+
+    # for profiling
     total = len(particleList)
-
     if profile:
         t_end = stream.record()
         t_end.synchronize()
 
         time_took = xp.cuda.get_elapsed_time(t_start, t_end)
-        print(f'startup time {n:5d}: \t{time_took:.3f}ms')
+        print(f'startup time: \t{time_took:.3f}ms')
         t_start = stream.record()
 
-    for particleObject in particleList:
+    if showProgressBar:
+        progressBar = FixedProgBar(0, len(particleList), 'Particles averaged ')
+        progressBar.update(0)
 
+    for n, particleObject in enumerate(particleList):
+        # get the transformation parameters from the particle object
         rotation = particleObject.getRotation()
         rotinvert = rotation.invert()
-        shiftV = particleObject.getShift()
+        zxz_backward = (rotinvert[0], rotinvert[2], rotinvert[1])
+        shift_forward = tuple(particleObject.getShift().toVector())
+        shift_backward = (-shift_forward[0], -shift_forward[1], -shift_forward[2])
 
         particle = read(particleObject.getFilename(), deviceID=device)
 
@@ -330,27 +359,46 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
 
         # get the wedge per particle because the wedge can differ
         wedgeInfo = particleObject.getWedge().convert2numpy()
-        wedgeZero = xp.fft.ifftshift(wedgeInfo.returnWedgeVolume(sx, sy, sz, True))
 
-        # apply wedge to particle
-        particle = (ifftnP(fftnP(particle, plan=fftplan) * wedgeZero, plan=fftplan)).real
+        if wiener_filter:
+            # align the particle and wedge to the reference orientation
+            transform(particle, rotation=zxz_backward, rotation_order='rzxz', translation=shift_backward,
+                      center=center, interpolation='filt_bspline', output=newParticle, device=device)  # * mask
+            particle_ft = fftnP(newParticle, plan=fftplan) * (1 / ortho_scaling)
+            ctf = xp.fft.ifftshift(
+                transform(wedgeInfo.returnWedgeVolume(humanUnderstandable=True), rotation=zxz_backward,
+                          rotation_order='rzxz', center=center, device=device))
+            ctf_squared = ctf ** 2
 
-        ### create spectral wedge weighting
-        wedge *= 0
-        transform(xp.fft.fftshift(wedgeZero), rotation=(rotinvert[0], rotinvert[2], rotinvert[1]),
-                  rotation_order='rzxz', center=(centerX, centerY, centerZ), output=wedge, device=device,
-                  interpolation='linear')
+            # calculate signal, ctf sum, noise and signal variance
+            signal_raw += (ctf * particle_ft)
+            wedgeSum += ctf_squared
+            signal_variance_sum += ctf_squared * xp.abs(particle_ft) ** 2
+            noise_variance_sum += xp.abs(particle_ft - ctf * signal) ** 2
 
-        ### shift and rotate particle
-        newParticle *= 0
-        transform(particle, output=newParticle, rotation=(-rotation[1], -rotation[2], -rotation[0]),
-                  center=(centerX, centerY, centerZ), translation=(-shiftV[0], -shiftV[1], -shiftV[2]),
-                  device=device, interpolation='filt_bspline', rotation_order='rzxz')
+        else:
+            wedgeZero = xp.fft.ifftshift(wedgeInfo.returnWedgeVolume(*shape, True))
 
-        # add to average and wedgeweighting
-        result += newParticle
-        wedgeSum += xp.fft.ifftshift(wedge)
+            # apply wedge to particle
+            particle = (ifftnP(fftnP(particle, plan=fftplan) * wedgeZero, plan=fftplan)).real
 
+            # create spectral wedge weighting
+            wedge *= 0
+            transform(xp.fft.fftshift(wedgeZero), rotation=zxz_backward,
+                      rotation_order='rzxz', center=center, output=wedge, device=device,
+                      interpolation='linear')
+
+            # shift and rotate particle
+            newParticle *= 0
+            transform(particle, output=newParticle, rotation=zxz_backward,
+                      center=center, translation=shift_backward,
+                      device=device, interpolation='filt_bspline', rotation_order='rzxz')
+
+            # add to average and wedgeweighting
+            result += newParticle
+            wedgeSum += xp.fft.ifftshift(wedge)
+
+        # for profiling
         if n % total == 0:
             if profile:
                 t_end = stream.record()
@@ -359,40 +407,84 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
                 time_took = xp.cuda.get_elapsed_time(t_start, t_end)
                 print(f'total time {n:5d}: \t{time_took:.3f}ms')
                 t_start = stream.record()
+
+        if showProgressBar:
+            progressBar.update(n)
+
         cstream.synchronize()
-        n += 1
 
-    ###apply spectral weighting to sum
+    if wiener_filter:
+        # write out for combining parallel procs
+        write(f'{root}-PreWedge{ext}', ifftnP(signal_raw * ortho_scaling, plan=fftplan).real)
+        write(f'{root}-WedgeSumUnscaled{ext}', wedgeSum)
+        write(f'{root}-signal-spectrum{ext}', signal_variance_sum)
+        write(f'{root}-noise-spectrum{ext}', noise_variance_sum)
 
-    root, ext = os.path.splitext(averageName)
+        # calculate radial profiles
+        ctf_radial = radial_average(xp.fft.fftshift(wedgeSum))[1]
+        signal_variance = radial_average(xp.fft.fftshift(signal_variance_sum))[1] / ctf_radial
+        noise_variance = (radial_average(xp.fft.fftshift(noise_variance_sum))[1] /
+                          (len(particleList) - 1))
+        ssnr = (signal_variance / noise_variance) - (1 / ctf_radial)
 
-    result = lowpassFilter(result, high=sx / 2 - 1, sigma=0)
-    # if createInfoVolumes:
-    write(f'{root}-PreWedge{ext}', result)
-    write(f'{root}-WedgeSumUnscaled{ext}', fourier_full2reduced(wedgeSum))
+        # determine wiener filter and filter result
+        wiener_filter = xp.ones(shape)
+        denom = (wedgeSum + profile2FourierVol(1 / ssnr, dim=shape) * low_pass)
+        wiener_filter[denom != 0] = (wiener_filter[denom != 0] / denom[denom != 0])
+        wiener_filter *= low_pass
+        result = ifftnP((signal_raw * wiener_filter * ortho_scaling).astype(np.complex64), plan=fftplan).real
+        # * mask
 
-    # prev: wedgeSumINV =
-    invert_WedgeSum(wedgeSum, r_max=sx // 2 - 2., lowlimit=.05 * len(particleList), lowval=.05 * len(particleList))
+        write(f'{root}-wiener-filter{ext}', wiener_filter)
+        write(averageName, result)
 
-    if createInfoVolumes:
-        # write(f'{root}-WedgeSumInverted{ext}', xp.fft.fftshift(wedgeSumINV))
-        write(f'{root}-WedgeSumInverted{ext}', xp.fft.fftshift(wedgeSum))
+    else:
+        # apply spectral weighting to sum
+        result = lowpassFilter(result, high=shape[0] / 2 - 1, sigma=0)
+        # write the unfiltered average, needed for parallel pooling of results
+        write(f'{root}-PreWedge{ext}', result)
 
-    # the wedge sum should already be centered in the corner ?
-    result = applyFourierFilterFull(result, wedgeSum)  # prev wedgeSumINV
+        write(f'{root}-WedgeSumUnscaled{ext}', fourier_full2reduced(wedgeSum))
+        # prev: wedgeSumINV =
+        invert_WedgeSum(wedgeSum, r_max=shape[0] // 2 - 2., lowlimit=.05 * len(particleList), lowval=.05 * len(
+            particleList))
 
-    # do a low pass filter
-    result = lowpassFilter(result, sx / 2 - 2, (sx / 2 - 1) / 10.)[0]
-    write(averageName, result)
+        if createInfoVolumes:
+            # write(f'{root}-WedgeSumInverted{ext}', xp.fft.fftshift(wedgeSumINV))
+            write(f'{root}-WedgeSumInverted{ext}', xp.fft.fftshift(wedgeSum))
 
-    if createInfoVolumes:
-        resultINV = result * -1
-        # write sign inverted result to disk (good for chimera viewing ... )
-        write(f'{root}-INV{ext}', resultINV)
+        # the wedge sum should already be centered in the corner ?
+        result = applyFourierFilterFull(result, wedgeSum)  # prev wedgeSumINV
+
+        # do a low pass filter
+        result = lowpassFilter(result, shape[0] / 2 - 2, (shape[0] / 2 - 1) / 10.)[0]
+        write(averageName, result)
+
+        if createInfoVolumes:
+            resultINV = result * -1
+            # write sign inverted result to disk (good for chimera viewing ... )
+            write(f'{root}-INV{ext}', resultINV)
 
     newReference = Reference(averageName, particleList)
 
     return newReference
+
+
+def average_wiener_gpu(previous_average=None, gpu_id=0):
+    """
+    If no previous average is provided will use Grigorieff method to estimate the signal.
+    :param previous_average:
+    :return:
+    """
+    pass
+
+
+def average_wiener_parallel(mpi_class=None):
+    pass
+
+
+def average_parallel(mpi_class=None):
+    pass
 
 
 def averageParallel(particleList, averageName, showProgressBar=False, verbose=False,

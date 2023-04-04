@@ -413,7 +413,7 @@ def radialaverage(volume, isreduced=True):
 
     sx, sy, sz = fvol.sizeX(), fvol.sizeY(), fvol.sizeZ()
     assert sx == sy == sz, 'radial average only implemented for cubic volumes'
-    centerx, centery, centerz = sx // 2 + 1, sy // 2 + 1, sz // 2 + 1  # fourier space center
+    centerx, centery, centerz = sx // 2 + sx % 2, sy // 2 + sy % 2, sz // 2 + sz % 2  # fourier space center
 
     sum = [0, ] * int(ceil(sx / 2))
     n_elem = [0, ] * int(ceil(sx / 2))

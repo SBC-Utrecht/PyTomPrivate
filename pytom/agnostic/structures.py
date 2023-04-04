@@ -1690,7 +1690,7 @@ class Wedge3dCTF(PyTomClass):
         if not humanUnderstandable:
             return wedge
         else:
-            return fftshift(fourier_reduced2full(wedge))
+            return xp.fft.fftshift(fourier_reduced2full(wedge))
 
     def apply(self, volume, rotation=None):
 

@@ -938,33 +938,32 @@ def profile2FourierVol(profile, dim=None, reduced=False):
         if is3D:
             nz = dim[2]
 
-
-
     try:
         r_max = profile.shape[0] - 1
-    except:
+    except AttributeError:  # if it is not a numpy array it will not have the shape attribute
         r_max = len(profile) - 1
 
-    if len(dim) ==3:
+    if len(dim) == 3:
+        x = xp.arange(-nx // 2, nx // 2 + nx % 2)[:, xp.newaxis, xp.newaxis]
+        y = xp.arange(-ny // 2, ny // 2 + ny % 2)[xp.newaxis, :, xp.newaxis]
         if reduced:
-            X, Y, Z = xp.meshgrid(xp.arange(-nx // 2, nx // 2 + nx % 2), xp.arange(-ny // 2, ny // 2 + ny % 2),
-                               xp.arange(0, nz))
+            z = xp.arange(0, nz)[xp.newaxis, xp.newaxis, :]
         else:
-            X, Y, Z = xp.meshgrid(xp.arange(-nx // 2, nx // 2 + nx % 2), xp.arange(-ny // 2, ny // 2 + ny % 2),
-                               xp.arange(-nz // 2, nz // 2 + nz % 2))
-        R = xp.sqrt(X ** 2 + Y ** 2 + Z ** 2)
+            z = xp.arange(-nz // 2, nz // 2 + nz % 2)[xp.newaxis, xp.newaxis, :]
+        R = xp.sqrt(x ** 2 + y ** 2 + z ** 2)
 
     else:
+        x = xp.arange(-nx // 2, ny // 2 + ny % 2)[:, xp.newaxis]
         if reduced:
-            X, Y = xp.meshgrid(xp.arange(-nx // 2, ny // 2 + ny % 2), xp.arange(0, ny))
+            y = xp.arange(0, ny)[xp.newaxis, :]
         else:
-            X, Y = xp.meshgrid(xp.arange(-nx // 2, nx // 2 + nx % 2), xp.arange(-ny // 2, ny // 2 + ny % 2))
-        R = xp.sqrt(X ** 2 + Y ** 2 )
+            y = xp.arange(-ny // 2, ny // 2 + ny % 2)[xp.newaxis, :]
+        R = xp.sqrt(x ** 2 + y ** 2)
 
     IR = xp.floor(R).astype(xp.int64)
     valIR_l1 = IR.copy()
     valIR_l2 = valIR_l1 + 1
-    val_l1, val_l2 = xp.zeros_like(X, dtype=xp.float64), xp.zeros_like(X, dtype=xp.float64)
+    val_l1, val_l2 = xp.zeros_like(R, dtype=xp.float64), xp.zeros_like(R, dtype=xp.float64)
 
     l1 = R - IR.astype(xp.float32)
     l2 = 1 - l1

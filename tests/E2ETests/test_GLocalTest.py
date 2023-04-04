@@ -46,19 +46,15 @@ class pytom_GLocalTest(unittest.TestCase):
             os.system('rm '+fname)
             fname = str(ii)+'-Even.em'
             self.remove_file( filename=fname)
-            fname = str(ii)+'-EvenFiltered.em'
+            fname = str(ii)+'-Even-PreWedge.em'
             self.remove_file( filename=fname)
-            fname = str(ii)+'-EvenFiltered-PreWedge.em'
-            self.remove_file( filename=fname)
-            fname = str(ii)+'-EvenFiltered-WedgeSumUnscaled.em'
+            fname = str(ii)+'-Even-WedgeSumUnscaled.em'
             self.remove_file( filename=fname)
             fname = str(ii)+'-Odd.em'
             self.remove_file( filename=fname)
-            fname = str(ii)+'-OddFiltered.em'
+            fname = str(ii)+'-Odd-PreWedge.em'
             self.remove_file( filename=fname)
-            fname = str(ii)+'-OddFiltered-PreWedge.em'
-            self.remove_file( filename=fname)
-            fname = str(ii)+'-OddFiltered-WedgeSumUnscaled.em'
+            fname = str(ii)+'-Odd-WedgeSumUnscaled.em'
             self.remove_file( filename=fname)
             fname = str(ii)+'-FSC.dat'
             self.remove_file( filename=fname)
