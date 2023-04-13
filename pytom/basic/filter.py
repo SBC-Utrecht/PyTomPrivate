@@ -386,6 +386,7 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     arrCrowther = np.abs(np.arange(-crowtherFreq, min(sX // 2, crowtherFreq + 1)))
 
     # as in the paper: 1 - frequency / overlap_frequency
+    # where frequency = arrCrowther, and 1 / overlap_frequency = sampling/sliceWidth
     wfuncCrowther = 1. / np.clip(1 - ((sampling / sliceWidth)[:, np.newaxis] * arrCrowther) ** 2, 0, 2).sum(axis=0)
 
     # Create full with weightFunc

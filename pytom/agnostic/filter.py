@@ -828,6 +828,7 @@ def exact_filter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     arrCrowther = xp.abs(xp.arange(-crowtherFreq, min(sX // 2, crowtherFreq + 1)))
 
     # as in the paper: 1 - frequency / overlap_frequency
+    # where frequency = arrCrowther, and 1 / overlap_frequency = sampling/sliceWidth
     wfuncCrowther = 1. / xp.clip(1 - ((sampling / sliceWidth)[:, xp.newaxis] * arrCrowther) ** 2, 0, 2).sum(axis=0)
 
     # Create full width weightFunc

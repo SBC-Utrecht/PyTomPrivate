@@ -1,11 +1,15 @@
 import unittest
 from shutil import which
 import os
-# from pytom.gpu.initialize import device
 import sys
 
-# TODO when working the test should run both cpu and gpu code
-device = 'gpu:0'
+# set run device based on detected cuda device
+from cupy_backends.cuda.api.runtime import CUDARuntimeError
+try:
+    import cupy as cp
+    device = f'gpu:{cp.cuda.Device().id}'
+except CUDARuntimeError:
+    device = 'cpu'
 
 
 class pytom_MyFunctionTest(unittest.TestCase):
@@ -59,7 +63,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         self.startAngleReduced = -20
         self.endAngleReduced = 20
 
-        self.gpu_id = int(device.split(':')[1])
+        self.gpu_id = None if 'gpu' not in device else int(device.split(':')[1])
         self.numcores = 4
         self.IMODTiltAxis = 180
 
