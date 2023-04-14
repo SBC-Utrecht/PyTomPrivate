@@ -121,7 +121,7 @@ class TemplateMatchingGPU(threading.Thread):
         CX, CY, CZ = SX // 2, SY // 2, SZ // 2
         cx, cy, cz = sx // 2, sy // 2, sz // 2
         mx, my, mz = sx % 2, sy % 2, sz % 2
-        # rotation center needs to be set, voltools uses (s - 1) / 2 by default, but pytom_volume s // 2 - s % 2
+        # rotation center needs to be set, voltools uses (s - 1) / 2 by default, but pytom_volume s // 2 + s % 2
         rotation_center = (cx + mx, cy + my, cz + mz)
 
         if self.mask_is_spherical:  # then we only need to calculate std volume once

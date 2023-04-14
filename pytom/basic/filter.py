@@ -390,8 +390,8 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     wfuncCrowther = 1. / np.clip(1 - ((sampling / sliceWidth)[:, np.newaxis] * arrCrowther) ** 2, 0, 2).sum(axis=0)
 
     # Create full with weightFunc
-    wfunc = np.ones((sX, sY, 1), dtype=np.float32)
-    wfunc[sX//2-crowtherFreq:sX//2+min(sX//2,crowtherFreq+1),:, 0] = np.column_stack((wfuncCrowther, ) * sY)
+    wfunc = np.ones((sX, sY, 1), dtype=float)
+    wfunc[sX//2-crowtherFreq:sX//2+min(sX//2,crowtherFreq+1),:, 0] = np.tile(wfuncCrowther, (sY, 1)).T
 
     weightFunc = vol(sX, sY, 1)
     weightFunc.setAll(0.0)

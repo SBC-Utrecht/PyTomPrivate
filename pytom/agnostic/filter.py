@@ -835,7 +835,7 @@ def exact_filter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     wfunc = xp.ones((sX, sY), dtype=xp.float32)
 
     # row_stack is not implemented in cupy
-    weightingFunc = xp.column_stack((wfuncCrowther, ) * sY)
+    weightingFunc = xp.tile(wfuncCrowther, (sY, 1)).T
 
     wfunc[sX // 2 - crowtherFreq:sX // 2 + min(sX // 2, crowtherFreq + 1), :] = weightingFunc
 

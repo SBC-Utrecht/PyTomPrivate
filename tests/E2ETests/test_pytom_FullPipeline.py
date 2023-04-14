@@ -613,7 +613,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
 
         if not os.path.exists(outdir): os.mkdir(outdir)
 
-        cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; mpiexec -n 2 pytom {self.pytomDir}/bin/GLocalJob.py '
+        cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; mpiexec -n 2 GLocalJob.py '
         cmd += f'--particleList {self.plFilenameReduced} '
         cmd += f'--mask {self.refDataDir}/Glocal_mask.mrc '
         cmd += f'--numberIterations 4 '
@@ -750,7 +750,7 @@ fsc.py  '''
         write(reference, r)
 
 
-        cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; mpiexec -n 2 pytom {self.pytomDir}/bin/GLocalJob.py '
+        cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; mpiexec -n 2 GLocalJob.py '
         cmd += f'--particleList {self.outdir_ali2}/3-ParticleList.xml '
         cmd += f'--mask {self.refDataDir}/Glocal_mask_200_75_5.mrc '
         cmd += f'--numberIterations 4 '
