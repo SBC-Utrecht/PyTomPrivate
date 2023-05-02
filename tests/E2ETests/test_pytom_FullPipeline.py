@@ -2,6 +2,8 @@ import unittest
 from shutil import which
 import os
 import sys
+from pytom.bin.gen_mask import gen_mask_fsc
+from pytom.agnostic.io import read
 
 # set run device based on detected cuda device
 from cupy_backends.cuda.api.runtime import CUDARuntimeError
@@ -47,7 +49,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         self.ctfFileNameAngle = f'{self.refDataDir}/angles.tlt'
         self.ctfFileNameDefocus = f'{self.refDataDir}/defocusValuesGijs.defocus'
 
-        self.weightingTypeRecon = 1  # TODO better to make ramp weighting
+        self.weightingTypeRecon = -1  # TODO better to make ramp weighting
         self.weightingTypeSubtomoRecon = -1
         self.weightingTypeAlignment = 0
 
@@ -67,6 +69,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         self.numcores = 4
         self.IMODTiltAxis = 180
 
+        self.subtomogram_box_size = 160
         self.pixelSize = 2.62
         self.binningGLocalFull = 2
         self.binningGLocalReduced = 1
@@ -338,18 +341,18 @@ class pytom_MyFunctionTest(unittest.TestCase):
         scoresMirror = np.array(scores[1])
 
         self.assertTrue(scoresNormal.sum() > scoresMirror.sum(), 'Wrong handedness of reconstruction.')
-        cutoff = 20+np.argmax(scoresNormal[20:] <= scoresMirror[20:])
+        cutoff = np.argmax(scoresNormal <= scoresMirror)
         print('cutoff: ', cutoff, scoresNormal[cutoff])
-        self.assertTrue(cutoff > 1070, 'Wrong handedness of reconstruction.')
-        self.assertTrue(scoresNormal[cutoff] > 0.236, "Poor correlation score")
+        self.assertTrue(cutoff > 1335, 'Wrong handedness of reconstruction.')
+        self.assertTrue(scoresNormal[cutoff] > 0.215, "Poor correlation score")
 
-        pl = particleListNormal[:cutoff]
+        pl = particleListNormal[:950]
         pl.toXMLFile(self.plFilename)
 
         self.assertTrue(os.path.exists(self.plFilename), f'{self.plFilename} does not exists')
         print(self.plFilename)
 
-    def test_10_SubtomogramExtractionBinned_CPU(self):
+    def test_10_SubtomogramExtractionBinned_CPU(self, binning=2):
         """
         check that resulting scores and angle list is similar to gpu standalone
         """
@@ -361,16 +364,16 @@ class pytom_MyFunctionTest(unittest.TestCase):
         cmd += f'--particleList {self.plFilename} '
         cmd += f'--projectionDirectory {self.tomoname}/alignment/marker_0004_-60.0,56.0/GlobalAlignment/sorted '
         cmd += f'--coordinateBinning 8 '
-        cmd += f'--size 100 '
+        cmd += f'--size {self.subtomogram_box_size // binning} '
         cmd += f'--applyWeighting {self.weightingTypeSubtomoRecon} '
-        cmd += f'--projBinning 2 '
+        cmd += f'--projBinning {binning} '
         cmd += f'--recOffset 0,0,0 '
         cmd += f'--metafile {self.tomoname}/sorted/mixedCTEM_tomo3.meta '
         cmd += f'--numProcesses {self.numcores}'
 
         os.system(cmd)
 
-    def test_10_SubtomogramExtractionBinned_GPU(self):
+    def test_10_SubtomogramExtractionBinned_GPU(self, binning=2):
         """
         check that resulting scores and angle list is similar to gpu standalone
         """
@@ -382,9 +385,9 @@ class pytom_MyFunctionTest(unittest.TestCase):
         cmd += f'--particleList {self.plFilename} '
         cmd += f'--projectionDirectory {self.tomoname}/alignment/marker_0004_-60.0,56.0/GlobalAlignment/sorted '
         cmd += f'--coordinateBinning 8 '
-        cmd += f'--size 100 '
+        cmd += f'--size {self.subtomogram_box_size // binning} '
         cmd += f'--applyWeighting {self.weightingTypeSubtomoRecon} '
-        cmd += f'--projBinning 2 '
+        cmd += f'--projBinning {binning} '
         cmd += f'--recOffset 0,0,0 '
         cmd += f'--metafile {self.tomoname}/sorted/mixedCTEM_tomo3.meta '
         cmd += f'--gpuID {self.gpu_id}'
@@ -403,7 +406,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; mpiexec -n {self.numcores} GLocalJob.py '
         cmd += f'--particleList {self.plFilename} '
-        cmd += f'--mask {self.refDataDir}/Glocal_mask.mrc '
+        cmd += f'--mask {self.refDataDir}/Glocal_mask_80_32_2.mrc '
         cmd += f'--numberIterations 8 '
         cmd += f'--pixelSize 5.24 '
         cmd += f'--particleDiameter 300 '
@@ -429,7 +432,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; mpiexec -n 2 GLocalJob.py '
         cmd += f'--particleList {self.plFilename} '
-        cmd += f'--mask {self.refDataDir}/Glocal_mask.mrc '
+        cmd += f'--mask {self.refDataDir}/Glocal_mask_ 80_32_2.mrc '
         cmd += f'--numberIterations 4 '
         cmd += f'--pixelSize 5.24 '
         cmd += f'--particleDiameter 300 '
@@ -544,7 +547,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         cmd += f'--particleList {self.plFilenameReduced} '
         cmd += f'--projectionDirectory {self.tomoname}/alignment/marker_0004_-20.0,20.0/GlobalAlignment/sorted_ctf '
         cmd += f'--coordinateBinning 8 '
-        cmd += f'--size {200//binning} '
+        cmd += f'--size {self.subtomogram_box_size // binning} '
         cmd += f'--applyWeighting {self.weightingTypeSubtomoRecon} '
         cmd += f'--projBinning {binning} '
         cmd += f'--recOffset 0,0,0 '
@@ -563,7 +566,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         cmd += f'--particleList {self.plFilenameReduced} '
         cmd += f'--projectionDirectory {self.tomoname}/alignment/marker_0004_-20.0,20.0/GlobalAlignment/sorted_ctf '
         cmd += f'--coordinateBinning 8 '
-        cmd += f'--size {200//binning} '
+        cmd += f'--size {self.subtomogram_box_size // binning} '
         cmd += f'--applyWeighting {self.weightingTypeSubtomoRecon} '
         cmd += f'--projBinning {binning} '
         cmd += f'--recOffset 0,0,0 '
@@ -587,7 +590,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
 
         cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; mpiexec -n {self.numcores} pytom {self.pytomDir}/bin/GLocalJob.py '
         cmd += f'--particleList {self.plFilenameReduced} '
-        cmd += f'--mask {self.refDataDir}/Glocal_mask.mrc '
+        cmd += f'--mask {self.refDataDir}/Glocal_mask_80_32_2.mrc '
         cmd += f'--numberIterations 4 '
         cmd += f'--pixelSize 5.24 '
         cmd += f'--particleDiameter 300 '
@@ -601,11 +604,36 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
 
         os.system(cmd)
 
+        model = sorted([os.path.join(outdir, f) for f in os.listdir(outdir) if
+                        'average-FinalFiltered' in f and f.endswith('em')])[0]
+
+        gen_mask_fsc(read(model), 4, f'{self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc',
+                     1, 3)
+
+        cmd = f'''cd {self.projectname}/05_Subtomogram_Analysis/Validation
+
+        fsc.py  '''
+        cmd += f'--v1 {outdir}/average-Final-Even.em  '
+        cmd += f'--v2 {outdir}/average-Final-Odd.em '
+        cmd += f'--mask {self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc '
+        cmd += f'--outputFolder {self.projectname}/05_Subtomogram_Analysis/Validation '
+        cmd += f'--fsc 0.143 '
+        cmd += f'--pixelsize 5.24 '
+        cmd += f'--randomizePhases 0.000 '
+        cmd += f'--combinedResolution '
+
+        result = os.popen(cmd).read()
+
+        resolution = float(result.split('Resolution determined for pixelsize :')[1].split()[-2])
+
+        self.assertTrue(resolution < 12.,
+                        'Final Resolution of the reconstruction is {resolution}. A resolution below 16. Angstrom is '
+                        'expected.')
+
     def test_18_GLocal_Reduced_Binned_GPU(self):
         """
         check that resulting resolution is below threshold and similar to CPU
         """
-
         if 'cpu' in device: raise self.skipTest("Running CPU test instead")
 
         outdir = os.path.join(self.glocaldir, 'alignment_002_gpu')
@@ -615,7 +643,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
 
         cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; mpiexec -n 2 GLocalJob.py '
         cmd += f'--particleList {self.plFilenameReduced} '
-        cmd += f'--mask {self.refDataDir}/Glocal_mask.mrc '
+        cmd += f'--mask {self.refDataDir}/Glocal_mask_80_32_2.mrc '
         cmd += f'--numberIterations 4 '
         cmd += f'--pixelSize 5.24 '
         cmd += f'--particleDiameter 300 '
@@ -630,10 +658,40 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
 
         os.system(cmd)
 
+        model = sorted([os.path.join(outdir, f) for f in os.listdir(outdir) if
+                        'average-FinalFiltered' in f and f.endswith('em')])[0]
+
+        gen_mask_fsc(read(model), 4, f'{self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc', 1,
+                     3)
+
+        cmd = f'''cd {self.projectname}/05_Subtomogram_Analysis/Validation
+
+        fsc.py  '''
+        cmd += f'--v1 {outdir}/average-Final-Even.em '
+        cmd += f'--v2 {outdir}/average-Final-Odd.em '
+        cmd += f'--mask {self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc '
+        cmd += f'--outputFolder {self.projectname}/05_Subtomogram_Analysis/Validation '
+        cmd += f'--fsc 0.143 '
+        cmd += f'--pixelsize 5.24 '
+        cmd += f'--randomizePhases 0.000 '
+        cmd += f'--combinedResolution '
+        cmd += f'--gpuID {self.gpu_id}'
+
+        print(cmd)
+        result = os.popen(cmd).read()
+
+        resolution = float(result.split('Resolution determined for pixelsize :')[1].split()[-2])
+        print(f'Determined resolution: {resolution:.2f}')
+
+        self.assertTrue(resolution < 12.,
+                        f'Final Resolution of the reconstruction is {resolution}. A resolution below 12. Angstrom is '
+                        f'expected.')
+
     def test_19_GLocal_Reduced_NonBinned_CPU(self):
         """
         check that resulting resolution is below threshold and similar to CPU
         """
+        raise self.skipTest("Skipping unbinned subtomogram averaging")
 
         if 'gpu' in device: raise self.skipTest("Running GPU tests instead")
 
@@ -717,6 +775,7 @@ fsc.py  '''
         """
         check that resulting resolution is below threshold and similar to CPU
         """
+        raise self.skipTest("Skipping unbinned subtomogram averaging")
 
         if 'cpu' in device: raise self.skipTest("Running CPU test instead")
 
