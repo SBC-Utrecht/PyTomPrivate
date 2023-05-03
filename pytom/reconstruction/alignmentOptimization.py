@@ -566,9 +566,9 @@ class FiducialLessAlignment():
                     start_time = time.time()
                 #optParam = scipy.optimize.fmin_cg(self.calcScore, param, maxiter=5, epsilon=eps)
 
-                from pytom.agnostic.correlation import FLCF
+                from pytom.agnostic.correlation import flcf
                 for i in range(len(alignmentResults['TiltAngle'])):
-                    res = FLCF(self.craw_images[i], self.csim_images[i])
+                    res = flcf(self.craw_images[i], self.csim_images[i])
                     px, py = xp.unravel_index(res.argmax(),res.shape)
                     self.params[i*3:i*3+2] = [px-sx//2,py-sy//2]
                     print(i, res.max(), px-sx//2, py-sy//2)

@@ -16,7 +16,7 @@ from pytom.agnostic.normalise import (
 from pytom.agnostic.tools import create_circle, create_sphere
 
 
-def FLCF(volume, template, mask=None, stdV=None):
+def flcf(volume, template, mask=None, stdV=None):
     """Fast local correlation function
 
     @param volume: target volume
@@ -416,10 +416,10 @@ def soc(volume, reference, mask=None, stdV=None):
     @author: Thomas Hrabe
     """
 
-    referencePeak = FLCF(reference, reference, mask)
-    peaks = FLCF(volume, reference, mask)
+    referencePeak = flcf(reference, reference, mask)
+    peaks = flcf(volume, reference, mask)
 
-    return FLCF(peaks, referencePeak, mask)
+    return flcf(peaks, referencePeak, mask)
 
 
 def dev(volume, template, mask=None, volumeIsNormalized=False):

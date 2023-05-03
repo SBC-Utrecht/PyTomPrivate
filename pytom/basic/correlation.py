@@ -90,7 +90,7 @@ def xcf(volume, template, mask=None, stdV=None):
     @type template: L{pytom.lib.pytom_volume.vol}
     @param mask: changed: will be used if specified
     @type mask: L{pytom.lib.pytom_volume.vol}
-    @param stdV: Will be unused, only for compatibility reasons with FLCF 
+    @param stdV: Will be unused, only for compatibility reasons with flcf 
     @return: XCF volume
     @rtype: L{pytom.lib.pytom_volume.vol}
     @author: Thomas Hrabe
@@ -144,7 +144,7 @@ def nXcf(volume,template,mask=None, stdV=None):
     @type template: L{pytom.lib.pytom_volume.vol}
     @param mask: template mask. If not given, a default sphere mask will be generated which has the same size with the given template.
     @type mask: L{pytom.lib.pytom_volume.vol}
-    @param stdV: Will be unused, only for compatibility reasons with FLCF
+    @param stdV: Will be unused, only for compatibility reasons with flcf
     @return: the calculated nXcf volume
     @rtype: L{pytom.lib.pytom_volume.vol}
     @author: Thomas Hrabe
@@ -292,7 +292,7 @@ def stdUnderMask(volume, mask, p, meanV):
 
     return result
 
-def FLCF(volume, template, mask=None, stdV=None, wedge=1):
+def flcf(volume, template, mask=None, stdV=None, wedge=1):
     '''
     Created on Apr 13, 2010
     FLCF: compute the fast local correlation function
@@ -818,10 +818,10 @@ def soc(volume,reference,mask=None, stdV=None):
     @type reference:  L{pytom.lib.pytom_volume.vol}
     @author: Thomas Hrabe   
     """
-    referencePeak = FLCF(reference,reference,mask)
-    peaks = FLCF(volume,reference,mask)
+    referencePeak = flcf(reference,reference,mask)
+    peaks = flcf(volume,reference,mask)
     
-    return FLCF(peaks,referencePeak,mask)
+    return flcf(peaks,referencePeak,mask)
 
 
 def subPixelPeakParabolic(scoreVolume, coordinates, verbose=False):

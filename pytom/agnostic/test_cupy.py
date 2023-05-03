@@ -91,7 +91,7 @@ if __name__=='__main__':
     s = time.time()
     for i in range(num_angles):
         tcp2 = xp.array(rotate3d(temp, 10, 10, 10))
-        m = FLCF(vcp, temp2, mask=mask2, stdV=stdV, gpu=gpu)
+        m = flcf(vcp, temp2, mask=mask2, stdV=stdV, gpu=gpu)
 
     print((time.time()-s))
 
