@@ -4,10 +4,9 @@ Created July/Aug 2014
 
 @author: FF
 '''
-from pytom.basic.structures import PyTomClass
 from pytom.gpu.initialize import xp, device
 from pytom.angles.localSampling import LocalSampling
-from pytom.alignment.alignmentStructures import GLocalSamplingJob, ScoringParameters, FLCFScore, SamplingParameters
+from pytom.alignment.alignmentStructures import GLocalSamplingJob
 from pytom.agnostic.mpi import MPI
 mpi = MPI()
 
