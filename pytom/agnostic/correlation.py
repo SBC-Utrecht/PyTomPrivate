@@ -1,13 +1,19 @@
+"""This module defines agnostic correlation functions
+
+Created: unknown date
+@author: FF
+
+restructured by @sroet in May 2023
+"""
 from pytom.gpu.initialize import xp, device
+from pytom.gpu.gpuFunctions import argmax
 from pytom.agnostic.normalise import (
     meanUnderMask,
     stdUnderMask,
     normaliseUnderMask,
     mean0std1,
 )
-
-
-# Correlation Functions
+from pytom.agnostic.tools import create_circle, create_sphere
 
 
 def FLCF(volume, template, mask=None, stdV=None):
@@ -16,14 +22,13 @@ def FLCF(volume, template, mask=None, stdV=None):
     @param volume: target volume
     @param template: template to be searched. It can have smaller size then target volume.
     @param mask: template mask. If not given, a default sphere mask will be used.
-    @param stdV: standard deviation of the target volume under mask, which do not need to be calculated again when the mask is identical.
+    @param stdV: standard deviation of the target volume under mask, which do not need to be
+                 calculated again when the mask is identical.
 
     @return: the local correlation function
     """
 
     if mask is None:
-        from pytom.agnostic.tools import create_circle, create_sphere
-
         if len(volume.shape) == 2:
             mask = create_circle(volume.shape, volume.shape[0] // 2 - 3, 3)
         elif len(volume.shape) == 3:
@@ -141,7 +146,8 @@ def xcf(
 
     @param volume : The search volume
     @type volume: L{xp.ndarray}
-    @param template : The template searched (this one will be used for conjugate complex multiplication)
+    @param template : The template searched (this one will be used for conjugate complex
+                                             multiplication)
     @type template: L{xp.ndarray}
     @param mask: Will be unused, only for compatibility reasons with FLCF
     @param stdV: Will be unused, only for compatibility reasons with FLCF
@@ -189,7 +195,8 @@ def xcf_mult(
 
     @param volume : The search volume
     @type volume: L{pytom.lib.pytom_volume.vol}
-    @param template : The template searched (this one will be used for conjugate complex multiplication)
+    @param template : The template searched (this one will be used for conjugate complex
+                                             multiplication)
     @type template: L{pytom.lib.pytom_volume.vol}
     @param mask: Will be unused, only for compatibility reasons with FLCF
     @param stdV: Will be unused, only for compatibility reasons with FLCF
@@ -224,9 +231,11 @@ def nXcf(volume, template, mask=None, stdV=None, gpu=False):
     of two equal objects would yield a max nxcf peak of 1.
 
     @param volume: The search volume
-    @param template: The template searched (this one will be used for conjugate complex multiplication)
+    @param template: The template searched (this one will be used for conjugate complex
+                                            multiplication)
     @type template: L{xp.ndarray}
-    @param mask: template mask. If not given, a default sphere mask will be generated which has the same size with the given template.
+    @param mask: template mask. If not given, a default sphere mask will be generated which has the
+                 same size with the given template.
     @type mask: L{xp.ndarray}
     @param stdV: Will be unused, only for compatibility reasons with FLCF
     @return: the calculated nXcf volume
@@ -235,7 +244,7 @@ def nXcf(volume, template, mask=None, stdV=None, gpu=False):
     @change: masking of template implemented
     """
 
-    if not (mask is None):
+    if mask is not None:
         result = xcf_mult(
             normaliseUnderMask(volume=volume, mask=mask, p=None),
             normaliseUnderMask(volume=template, mask=mask, p=None),
@@ -251,7 +260,8 @@ def nXcf(volume, template, mask=None, stdV=None, gpu=False):
 
 def weightedXCC(volume, reference, numberOfBands, wedgeAngle=-1):
     """
-    weightedXCC: Determines the band weighted correlation coefficient for a volume and reference. Notation according Steward/Grigorieff paper
+    weightedXCC: Determines the band weighted correlation coefficient for a volume and reference.
+                 Notation according Steward/Grigorieff paper
     @param volume: A volume
     @type volume: L{xp.ndarray}
     @param reference: A reference of same size as volume
@@ -664,7 +674,8 @@ def FSC(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=N
 
 def FSCSum(volume, reference, numberOfBands, wedgeAngle=-1):
     """
-    FSCSum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and reference.
+    FSCSum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and
+            reference.
     @param volume: A volume
     @type volume: L{xp.ndarray}
     @param reference: A reference of same size as volume
@@ -703,7 +714,8 @@ def FSCSum(volume, reference, numberOfBands, wedgeAngle=-1):
 
 def determineResolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=None):
     """
-    determineResolution: Determines frequency and band where correlation drops below the resolutionCriterion. Uses linear interpolation between two positions
+    determineResolution: Determines frequency and band where correlation drops below the
+                         resolutionCriterion. Uses linear interpolation between two positions
     @param fsc: The fsc list determined by L{pytom.basic.correlation.FSC}
     @param resolutionCriterion: A value between 0 and 1
     @param verbose: Bool that activate writing of info, default=False
@@ -761,9 +773,10 @@ def determineResolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=N
         resolution = 1
         interpolatedBand = numberBands
         print(
-            'Warning: PyTom determined a resolution < 0 for your data. Please check "mass" in data is positive or negative for all cubes.'
+            "Warning: PyTom determined a resolution < 0 for your data. "
+            'Please check "mass" in data is positive or negative for all cubes.'
         )
-        print("Warning: Setting resolution to 1 and ", interpolatedBand)
+        print(f"Warning: Setting resolution to 1 and {interpolatedBand}")
         print("")
 
     return [resolution, interpolatedBand, numberBands]
@@ -799,7 +812,7 @@ def calc_FSC_true(FSC_t, FSC_n, ring_thickness=1):
 
 
 def generate_random_phases_3d(shape, reduced_complex=True):
-    """this function generates a set of random phases (between -pi and pi), optionally centrosymmetric
+    """This function returns a set of random phases (between -pi and pi), optionally centrosymmetric
     @shape: shape of array
     @type: tuple
     @reduced_complex: is the shape in reduced complex format
@@ -837,7 +850,8 @@ def generate_random_phases_3d(shape, reduced_complex=True):
 
 
 def randomizePhaseBeyondFreq(volume, frequency):
-    """This function randomizes the phases beyond a given frequency, while preserving the Friedel symmetry.
+    """This function randomizes the phases beyond a given frequency,
+    while preserving the Friedel symmetry.
     @param volume: target volume
     @type volume: L{xp.ndarray}
     @param frequency: frequency in pixel beyond which phases are randomized.
@@ -966,7 +980,8 @@ def subPixelPeak(
     scoreVolume, coordinates, cubeLength=8, interpolation="Spline", verbose=False
 ):
     """
-    subPixelPeak: Will determine the sub pixel area of peak. Utilizes spline, fourier or parabolic interpolation.
+    subPixelPeak: Will determine the sub pixel area of peak. Utilizes spline, fourier or
+    parabolic interpolation.
 
     @param verbose: be talkative
     @type verbose: L{str}
@@ -1104,14 +1119,16 @@ def subPixelMax3D(
     max_id=None,
 ):
     """
-    Function to find the highest point in a 3D array, with subpixel accuracy using cubic spline interpolation.
+    Function to find the highest point in a 3D array, with subpixel accuracy using cubic spline
+    interpolation.
 
     @param inp: A 3D numpy/cupy array containing the data points.
     @type inp: numpy/cupy array 3D
-    @param k: The interpolation factor used in the spline interpolation, k < 1 is zoomed in, k>1 zoom out.
+    @param k: The interpolation factor used in the spline interpolation,
+              k < 1 is zoomed in, k>1 zoom out.
     @type k: float
-    @return: A list of maximal value in the interpolated volume and a list of  x position, the y position and
-        the value.
+    @return: A list of maximal value in the interpolated volume and a list of x position,
+             the y position and the value.
     @returntype: list
     """
 
@@ -1193,63 +1210,6 @@ def subPixelMax3D(
         print()
 
     return [peakValue, peakShift]
-
-
-if "gpu" in device:
-    argmax = xp.RawKernel(
-        r"""
-    
-        extern "C"  __device__ void warpReduce(volatile float* sdata, volatile int* maxid, int tid, int blockSize) {
-            if (blockSize >= 64 && sdata[tid] < sdata[tid + 32]){ sdata[tid] = sdata[tid + 32]; maxid[tid] = maxid[tid+32];} 
-            if (blockSize >= 32 && sdata[tid] < sdata[tid + 16]){ sdata[tid] = sdata[tid + 16]; maxid[tid] = maxid[tid+16];}
-            if (blockSize >= 16 && sdata[tid] < sdata[tid +  8]){ sdata[tid] = sdata[tid +  8]; maxid[tid] = maxid[tid+ 8];}
-            if (blockSize >=  8 && sdata[tid] < sdata[tid +  4]){ sdata[tid] = sdata[tid +  4]; maxid[tid] = maxid[tid+ 4];}
-            if (blockSize >=  4 && sdata[tid] < sdata[tid +  2]){ sdata[tid] = sdata[tid +  2]; maxid[tid] = maxid[tid+ 2];}
-            if (blockSize >=  2 && sdata[tid] < sdata[tid +  1]){ sdata[tid] = sdata[tid +  1]; maxid[tid] = maxid[tid+ 1];}
-        }
-    
-        extern "C" __global__ 
-        void argmax(float *g_idata, float *g_odata, int *g_mdata, int n) {
-            __shared__ float sdata[1024]; 
-            __shared__ int maxid[1024];
-            /* 
-            for (int i=0; i < 1024; i++){ 
-                sdata[i] = 0;
-                maxid[i] = 0;}
-                
-            __syncthreads();                                                                                                                              
-            */
-            int blockSize = blockDim.x;                                                                                                                                                   
-            unsigned int tid = threadIdx.x;                                                                                                                                        
-            int i = blockIdx.x*(blockSize)*2 + tid;                                                                                                                       
-            int gridSize = blockSize*gridDim.x*2;                                                                                                                         
-            
-            while (i < n) {
-                //if (sdata[tid] < g_idata[i]){
-                    sdata[tid] = g_idata[i];
-                    maxid[tid] = i;
-                //}
-                if (sdata[tid] < g_idata[i+blockSize]){
-                    sdata[tid] = g_idata[i+blockSize];
-                    maxid[tid] = i + blockSize; 
-                }
-                i += gridSize; 
-            };
-             __syncthreads();                                                                                                                                                       
-            
-            if (blockSize >= 1024){ if (tid < 512 && sdata[tid] < sdata[tid + 512]){ sdata[tid] = sdata[tid + 512]; maxid[tid] = maxid[tid+512]; } __syncthreads(); }
-            if (blockSize >=  512){ if (tid < 256 && sdata[tid] < sdata[tid + 256]){ sdata[tid] = sdata[tid + 256]; maxid[tid] = maxid[tid+256]; } __syncthreads(); }
-            if (blockSize >=  256){ if (tid < 128 && sdata[tid] < sdata[tid + 128]){ sdata[tid] = sdata[tid + 128]; maxid[tid] = maxid[tid+128]; } __syncthreads(); }
-            if (blockSize >=  128){ if (tid <  64 && sdata[tid] < sdata[tid +  64]){ sdata[tid] = sdata[tid +  64]; maxid[tid] = maxid[tid+ 64]; } __syncthreads(); }
-            if (tid < 32){ warpReduce(sdata, maxid, tid, blockSize);}                                                                                                                                                                      
-            if (tid == 0) {g_odata[blockIdx.x] = sdata[0]; g_mdata[blockIdx.x] = maxid[0];} 
-            
-    
-        }""",
-        "argmax",
-    )
-else:
-    argmax = xp.argmax
 
 
 def maxIndex(volume, num_threads=1024):
