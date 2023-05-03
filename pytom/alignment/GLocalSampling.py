@@ -89,7 +89,7 @@ def mainAlignmentLoop(alignmentJob, verbose=False):
         useExternalRef = True
 
     for ii in range(0, alignmentJob.max_iter):
-        print(f'running iteration {ii}/{alignmentJob.max_iter}')
+        print(f'running iteration {ii}/{alignmentJob.max_iter-1}')
         if 'gpu' in device:
             alignmentJob.scoringParameters.mask = alignmentJob.scoringParameters.mask.convert2numpy()
 
