@@ -10,7 +10,7 @@ from cupy_backends.cuda.api.runtime import CUDARuntimeError
 try:
     import cupy as cp
     device = f'gpu:{cp.cuda.Device().id}'
-except CUDARuntimeError:
+except (CUDARuntimeError, ImportError):
     device = 'cpu'
 
 
