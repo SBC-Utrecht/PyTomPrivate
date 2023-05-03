@@ -432,7 +432,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; mpiexec -n 2 GLocalJob.py '
         cmd += f'--particleList {self.plFilename} '
-        cmd += f'--mask {self.refDataDir}/Glocal_mask_ 80_32_2.mrc '
+        cmd += f'--mask {self.refDataDir}/Glocal_mask_80_32_2.mrc '
         cmd += f'--numberIterations 4 '
         cmd += f'--pixelSize 5.24 '
         cmd += f'--particleDiameter 300 '
@@ -626,7 +626,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
 
         resolution = float(result.split('Resolution determined for pixelsize :')[1].split()[-2])
 
-        self.assertTrue(resolution < 12.,
+        self.assertTrue(resolution < 11.5,
                         'Final Resolution of the reconstruction is {resolution}. A resolution below 16. Angstrom is '
                         'expected.')
 
@@ -683,7 +683,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         resolution = float(result.split('Resolution determined for pixelsize :')[1].split()[-2])
         print(f'Determined resolution: {resolution:.2f}')
 
-        self.assertTrue(resolution < 12.,
+        self.assertTrue(resolution < 11.5,
                         f'Final Resolution of the reconstruction is {resolution}. A resolution below 12. Angstrom is '
                         f'expected.')
 
