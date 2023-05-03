@@ -9,7 +9,9 @@ from pytom.gpu.initialize import xp, device
 from pytom.gpu.gpuFunctions import argmax
 from pytom.agnostic.normalise import (
     meanUnderMask,
+    meanVolUnderMask,
     stdUnderMask,
+    stdVolUnderMask,
     normaliseUnderMask,
     mean0std1,
 )
