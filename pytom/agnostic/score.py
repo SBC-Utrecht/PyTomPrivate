@@ -449,8 +449,8 @@ class FLCFScore(Score):
         __init__ : Assigns the fast local correlation as scoringFunction, peakCoef as scoringCoefficient and Vol_G_Val as scoringCriterion
         @param value: Current value of score
         """
-        from pytom.agnostic.correlation import FLCF
-        self.ctor(FLCF, self.coefFnc, Vol_G_Val)
+        from pytom.agnostic.correlation import flcf
+        self.ctor(flcf, self.coefFnc, Vol_G_Val
         self._type = 'FLCFScore'
 
         # if value and (isinstance(value, (int, long)) or value.__class__ == float):
