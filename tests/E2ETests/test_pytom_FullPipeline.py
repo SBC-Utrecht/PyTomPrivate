@@ -15,14 +15,9 @@ except (CUDARuntimeError, ImportError):
 
 
 class pytom_MyFunctionTest(unittest.TestCase):
-
     def setUp(self):
-        from helper_functions import create_RandomParticleList
-        import os
-
         pythonversion = f'python{sys.version_info.major}.{sys.version_info.minor}'
         if pythonversion == 'python3.7': pythonversion += 'm'
-
 
         self.projectname = f'{os.getcwd()}/FullPipeline'
         self.refDataDir = f'{os.getcwd()}/../testData'
@@ -313,7 +308,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
             print(cmd)
             os.system(cmd)
 
-
     def test_09_GenerateSubsetParticles(self):
         """
         check that resulting scores and angle list is similar to gpu standalone
@@ -469,14 +463,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
         pl = ParticleList()
         pl.fromXMLFile(self.plFilenameReduced)
 
-        # pl2 = ParticleList()
-        #
-        # for p in pl:
-        #     if p.getScore().getValue() > 0.09:
-        #         pl2.append(p)
-        # print('\n\n\n\n', len(pl2), '\n\n\n')
-        # pl2.toXMLFile(self.plFilenameReduced)
-
         self.assertTrue(pl[0].getWedge().getWedgeAngle() == 70, 'Wedge angles not updated')
 
     def test_15_CTFCorrection(self):
@@ -535,7 +521,6 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         cmd += f'--expectedRotationAngle 0 '
         cmd += f'--numberProcesses 1 '
         os.system(cmd)
-        pass
 
     def test_16_Subtomogram_Extraction_CPU(self, binning=2):
         """
@@ -718,7 +703,6 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         pass
 
     def test_26_CleanUp(self):
-        import os
         self.cleanUp()
         #self.assertTrue( not os.path.exists(self.projectname), msg="folder " + self.projectname + " has not been removed.")
         pass
