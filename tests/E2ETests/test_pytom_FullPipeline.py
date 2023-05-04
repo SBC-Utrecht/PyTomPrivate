@@ -85,34 +85,26 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         assert that file exists end remove it
         """
-        from os import remove
-        from os import path
-
-        filecheck = path.exists(filename)
+        filecheck = os.path.exists(filename)
         self.assertTrue(filecheck, msg="file " + filename + " does not exist")
         if filecheck:
-            remove(filename)
+            os.remove(filename)
 
     def test_00_ProjectFolderGeneration(self):
-        import os
         from pytom.gui.guiFunctions import create_project_filestructure
         create_project_filestructure(self.projectname)
         self.assertTrue( os.path.exists(self.projectname), msg="folder "+self.projectname+" does not exist")
 
-        os.system(f'cp -rf {self.projectname}/03_Tomographic_Reconstruction/.tomoname {self.projectname}/03_Tomographic_Reconstruction/tomogram_000')
-        pass
+        os.system(f'cp -rf {self.projectname}/03_Tomographic_Reconstruction/.tomoname '
+                  f'{self.projectname}/03_Tomographic_Reconstruction/tomogram_000')
 
     def test_01_dataDownload(self):
-        import os
-
         if not os.path.exists(self.mrcs):
             os.system(f'wget {self.orignal_data}')
 
         self.assertTrue(os.path.exists(self.mrcs), msg=f'Download of {self.mrcs} failed')
-        pass
 
     def test_02_dataExtraction(self):
-        import os
         if self.dont: raise self.skipTest("don't is set")
         os.system(f'mrcs2mrc.py -f {self.mrcs} -t {self.tomoname}/sorted -p sorted -i 2 -s {self.startAngleFull} -e {self.endAngleFull} -m ')
         os.system(f'cp {self.markerFile} {self.tomoname}/sorted')
@@ -130,7 +122,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         from pytom.basic.datatypes import DATATYPE_ALIGNMENT_RESULTS
         from pytom.gui.guiFunctions import loadstar
-        import os
         if self.dont: raise self.skipTest("don't is set")
 
         cmd = f'generateAlignedTiltImages.py '
@@ -165,7 +156,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         check that resulting alignment score is smaller than reference score
         """
-        import os
         if self.dont: raise self.skipTest("don't is set")
 
         if 'gpu' in device: raise self.skipTest("Doing GPU instead of CPU")
@@ -190,7 +180,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         check that resulting alignment score is smaller than reference score
         """
-        import os
         if self.dont: raise self.skipTest("don't is set")
 
         if 'cpu' in device: raise self.skipTest("Doing CPU instead of GPU")
@@ -215,8 +204,6 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         check that resulting sum of correlation scores are larger than ref value. Check locations? Check if correct handedness has a higher score
         """
-        import os
-
         if self.dont: raise self.skipTest("don't is set")
 
         if 'gpu' in device: raise self.skipTest("Doing GPU instead of CPU")
@@ -247,13 +234,10 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
             os.system(cmd)
 
-        pass
-
     def test_06_TemplateMatching_GPU(self):
         """
         check that resulting sum of correlation scores are larger than ref value. Check locations? Check if correct handedness has a higher score
         """
-        import os
         if self.dont: raise self.skipTest("don't is set")
 
         if 'cpu' in device: raise self.skipTest("Doing CPU instead of GPU")
