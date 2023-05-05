@@ -1,6 +1,7 @@
 import unittest
-from shutil import which
+import shutil
 import os
+import glob
 import sys
 from pytom.bin.gen_mask import gen_mask_fsc
 from pytom.agnostic.io import read
@@ -13,13 +14,20 @@ try:
 except (CUDARuntimeError, ImportError):
     device = 'cpu'
 
+PROJECT_DIR = f'{os.getcwd()}/FullPipeline'
 
-class pytom_MyFunctionTest(unittest.TestCase):
+
+class FullPipelineTest(unittest.TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        # shutil.rmtree(PROJECT_DIR)
+        pass
+
     def setUp(self):
         pythonversion = f'python{sys.version_info.major}.{sys.version_info.minor}'
         if pythonversion == 'python3.7': pythonversion += 'm'
 
-        self.projectname = f'{os.getcwd()}/FullPipeline'
+        self.projectname = PROJECT_DIR
         self.refDataDir = f'{os.getcwd()}/../testData'
         self.tomoname = f'{self.projectname}/03_Tomographic_Reconstruction/tomogram_000'
         self.metafile = f'{self.tomoname}/sorted/mixedCTEM_tomo3.meta'
@@ -27,7 +35,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
 
         self.orignal_data = 'ftp://ftp.ebi.ac.uk/empiar/world_availability/10064/data/mixedCTEM_tomo3.mrc'
         self.mrcs = 'mixedCTEM_tomo3.mrc'
-        self.pytomDir = os.path.dirname(os.path.dirname(which('pytom')))
+        self.pytomDir = os.path.dirname(os.path.dirname(shutil.which('pytom')))
         if 'miniconda' in self.pytomDir:
             self.pytomDir2 = os.path.join(self.pytomDir, f'lib/{pythonversion}/site-packages/pytom')
         else:
@@ -71,24 +79,7 @@ class pytom_MyFunctionTest(unittest.TestCase):
         self.particleDiameter = 300
         self.dont = False
 
-    def cleanUp(self):
-        """
-        check that files are written and remove them
-        """
-        from helper_functions import cleanUp_RandomParticleList
-        import os
-        #os.system(f'rm -rf {self.projectname}')
-
-        # cleanUp_RandomParticleList(pl_filename=self.pl_filename, pdir=self.pdir)
-
-    def remove_file(self, filename):
-        """
-        assert that file exists end remove it
-        """
-        filecheck = os.path.exists(filename)
-        self.assertTrue(filecheck, msg="file " + filename + " does not exist")
-        if filecheck:
-            os.remove(filename)
+        self.ctf_correction = False
 
     def test_00_ProjectFolderGeneration(self):
         from pytom.gui.guiFunctions import create_project_filestructure
@@ -453,8 +444,11 @@ class pytom_MyFunctionTest(unittest.TestCase):
         """
         check that resulting scores of alignment of corrected are similar to ref values
         """
-        if which('ctfphaseflip') is None: raise self.skipTest('No ctfphaseflip from imod installed')
-        import glob
+        if shutil.which('ctfphaseflip') is None:
+            raise self.skipTest('No ctfphaseflip from imod installed')
+        else:
+            self.ctf_correction = True
+
         folder = f'{self.tomoname}/ctf'
         # Create stack from sorted
         self.ctfFileNameStack = f'{folder}/sorted.st'
@@ -471,10 +465,8 @@ class pytom_MyFunctionTest(unittest.TestCase):
         os.system(cmd)
 
         # CTF correction using default files
-
         outfolder = f'{self.tomoname}/ctf/sorted_ctf'
         if not os.path.exists(outfolder): os.mkdir(outfolder)
-
 
         addGPU = '' if 'cpu' in device else f'-gpu {self.gpu_id} '
 
@@ -486,24 +478,6 @@ ctfphaseflip -inp {self.ctfFileNameStack} -o ctfCorrected.st -an {self.ctfFileNa
 
 mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -o {self.tomoname}/sorted '''
 
-
-        os.system(cmd)
-
-        # Align the ctf corrected files
-        cmd = f'generateAlignedTiltImages.py '
-
-        cmd += f'--tiltSeriesName {self.tomoname}/ctf/sorted_ctf/sorted_ctf '
-        cmd += f'--markerFile {self.tomoname}/sorted/markerfile.txt '
-        cmd += f'--tiltSeriesFormat mrc '
-        cmd += f'--firstIndex 20 '
-        cmd += f'--lastIndex 40 '
-        cmd += f'--referenceIndex 30 '
-        cmd += f"--referenceMarkerIndex 4 "
-        cmd += f'--weightingType 0 '
-        cmd += f'--projectionTargets {self.tomoname}/alignment/marker____-20.0,20.0/GlobalAlignment/sorted_ctf '
-        cmd += f'--lowpassFilter 0.9 '
-        cmd += f'--expectedRotationAngle 0 '
-        cmd += f'--numberProcesses 1 '
         os.system(cmd)
 
     def test_16_Subtomogram_Extraction_CPU(self, binning=2):
@@ -514,14 +488,21 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
 
         cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; reconstructWB.py '
         cmd += f'--particleList {self.plFilenameReduced} '
-        cmd += f'--projectionDirectory {self.tomoname}/alignment/marker_0004_-20.0,20.0/GlobalAlignment/sorted_ctf '
+        cmd += f'--alignResultFile '
+        cmd += f'{self.tomoname}/alignment/marker_0004_-60.0,56.0/GlobalAlignment/sorted/alignmentResults.txt '
+        cmd += f'--tilt-range -20,20 '
         cmd += f'--coordinateBinning 8 '
         cmd += f'--size {self.subtomogram_box_size // binning} '
         cmd += f'--applyWeighting {self.weightingTypeSubtomoRecon} '
         cmd += f'--projBinning {binning} '
         cmd += f'--recOffset 0,0,0 '
-        cmd += f'--metafile {self.tomoname}/sorted/mixedCTEM_tomo3.meta '
-        cmd += f'--numProcesses {self.numcores}'
+        cmd += f'--numProcesses {self.numcores} '
+
+        if self.ctf_correction:
+            cmd += f'--projectionDirectory {self.tomoname}/ctf/sorted_ctf '
+        else:
+            cmd += f'--projectionDirectory {self.tomoname}/sorted '
+
         print(cmd)
         os.system(cmd)
 
@@ -533,14 +514,21 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
 
         cmd = f'cd {self.projectname}/05_Subtomogram_Analysis; reconstructWB.py '
         cmd += f'--particleList {self.plFilenameReduced} '
-        cmd += f'--projectionDirectory {self.tomoname}/alignment/marker_0004_-20.0,20.0/GlobalAlignment/sorted_ctf '
+        cmd += f'--alignResultFile '
+        cmd += f'{self.tomoname}/alignment/marker_0004_-60.0,56.0/GlobalAlignment/sorted/alignmentResults.txt '
+        cmd += f'--tilt-range -20,20 '
         cmd += f'--coordinateBinning 8 '
         cmd += f'--size {self.subtomogram_box_size // binning} '
         cmd += f'--applyWeighting {self.weightingTypeSubtomoRecon} '
         cmd += f'--projBinning {binning} '
         cmd += f'--recOffset 0,0,0 '
-        cmd += f'--metafile {self.tomoname}/sorted/mixedCTEM_tomo3.meta '
-        cmd += f'--gpuID {self.gpu_id}'
+        cmd += f'--gpuID {self.gpu_id} '
+
+        if self.ctf_correction:
+            cmd += f'--projectionDirectory {self.tomoname}/ctf/sorted_ctf '
+        else:
+            cmd += f'--projectionDirectory {self.tomoname}/sorted '
+
         print(cmd)
         os.system(cmd)
 
@@ -630,8 +618,8 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         model = sorted([os.path.join(outdir, f) for f in os.listdir(outdir) if
                         'average-FinalFiltered' in f and f.endswith('em')])[0]
 
-        gen_mask_fsc(read(model), 4, f'{self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc', 1,
-                     3)
+        gen_mask_fsc(read(model), 2, f'{self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc', 1,
+                     1.5)
 
         cmd = f'''cd {self.projectname}/05_Subtomogram_Analysis/Validation
 
@@ -684,11 +672,6 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         """
         check that results are similar to reference
         """
-        pass
-
-    def test_26_CleanUp(self):
-        self.cleanUp()
-        #self.assertTrue( not os.path.exists(self.projectname), msg="folder " + self.projectname + " has not been removed.")
         pass
 
 
