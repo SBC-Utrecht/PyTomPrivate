@@ -15,13 +15,14 @@ except (CUDARuntimeError, ImportError):
     device = 'cpu'
 
 PROJECT_DIR = f'{os.getcwd()}/FullPipeline'
+# TODO tunnel all os.system() calls terminal output to a report file. Terminal wont be cluttered and report can be
+# TODO inspected in case error needs to be seen
 
 
 class FullPipelineTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
-        # shutil.rmtree(PROJECT_DIR)
-        pass
+        shutil.rmtree(PROJECT_DIR)
 
     def setUp(self):
         pythonversion = f'python{sys.version_info.major}.{sys.version_info.minor}'
@@ -445,7 +446,8 @@ class FullPipelineTest(unittest.TestCase):
         check that resulting scores of alignment of corrected are similar to ref values
         """
         if shutil.which('ctfphaseflip') is None:
-            raise self.skipTest('No ctfphaseflip from imod installed')
+            raise self.skipTest('\n>>>>>>>>>>>>>>>> No ctfphaseflip from imod installed, meaning the test will be '
+                                'completed without the strip-based phase flipping from IMOD\n')
         else:
             self.ctf_correction = True
 
@@ -584,7 +586,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         resolution = float(result.split('Resolution determined for pixelsize :')[1].split()[-2])
 
         self.assertTrue(resolution < 11.5,
-                        'Final Resolution of the reconstruction is {resolution}. A resolution below 16. Angstrom is '
+                        'Final Resolution of the reconstruction is {resolution}. A resolution below 11.5 Angstrom is '
                         'expected.')
 
     def test_18_GLocal_Reduced_Binned_GPU(self):
@@ -641,7 +643,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         print(f'Determined resolution: {resolution:.2f}')
 
         self.assertTrue(resolution < 11.5,
-                        f'Final Resolution of the reconstruction is {resolution}. A resolution below 12. Angstrom is '
+                        f'Final Resolution of the reconstruction is {resolution}. A resolution below 11.5 Angstrom is '
                         f'expected.')
 
     def test_21_CCC_CPU(self):
