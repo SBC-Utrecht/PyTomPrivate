@@ -80,7 +80,8 @@ class FullPipelineTest(unittest.TestCase):
         self.particleDiameter = 300
         self.dont = False
 
-        self.ctf_correction = False
+        # set ctf_correction to True if ctfphaseflip is found
+        self.ctf_correction = shutil.which('ctfphaseflip') is not None
 
     def test_00_ProjectFolderGeneration(self):
         from pytom.gui.guiFunctions import create_project_filestructure
@@ -445,11 +446,9 @@ class FullPipelineTest(unittest.TestCase):
         """
         check that resulting scores of alignment of corrected are similar to ref values
         """
-        if shutil.which('ctfphaseflip') is None:
+        if not self.ctf_correction:
             raise self.skipTest('\n>>>>>>>>>>>>>>>> No ctfphaseflip from imod installed, meaning the test will be '
                                 'completed without the strip-based phase flipping from IMOD\n')
-        else:
-            self.ctf_correction = True
 
         folder = f'{self.tomoname}/ctf'
         # Create stack from sorted
