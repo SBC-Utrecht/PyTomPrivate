@@ -31,10 +31,11 @@ def flcf(volume, template, mask=None, stdV=None):
     """
 
     if mask is None:
+        radius = volume.shape[0] // 2 - 3
         if len(volume.shape) == 2:
-            mask = create_circle(volume.shape, volume.shape[0] // 2 - 3, 3)
+            mask = create_circle(volume.shape, radius, 3)
         elif len(volume.shape) == 3:
-            mask = create_sphere(volume.shape, volume.shape[0] // 2 - 3, 3)
+            mask = create_sphere(volume.shape, radius, 3)
 
     p = mask.sum()
     meanT = meanUnderMask(template, mask, p=p)
@@ -371,7 +372,7 @@ def weightedXCF(volume, reference, numberOfBands, wedgeAngle=-1):
         band[0] = i * volume.shape[0] / numberOfBands
         band[1] = (i + 1) * volume.shape[0] / numberOfBands
 
-        r = bandCF(volume, reference, band, gpu=gpu)
+        r = bandCF(volume, reference, band)
 
         cc = r[0]
 
@@ -522,7 +523,8 @@ def bandCC(volume, reference, band, verbose=False, shared=None, index=None):
     cc = cc / (xp.sqrt(sumV * sumR))
 
     # numerical errors will be punished with nan
-    if abs(cc) > 1.1:
+    nan_treshold = 1.1
+    if abs(cc) > nan_treshold:
         cc = float("nan")
 
     return float(cc)
@@ -702,7 +704,7 @@ def FSCSum(volume, reference, numberOfBands, wedgeAngle=-1):
         band[0] = i * volume.shape[0] / numberOfBands
         band[1] = (i + 1) * volume.shape[0] / numberOfBands
 
-        r = bandCC(fvolume, freference, band, gpu=gpu)
+        r = bandCC(fvolume, freference, band)
         cc = r[0]
         result = result + cc
 
