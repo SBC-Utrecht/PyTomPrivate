@@ -184,7 +184,7 @@ class FiducialLessAlignment():
 
         # Shift raw image and calculated the cross-correlation and score
         optTrans = cr_projTrans.transform(translation=[shiftX, shiftY,0], rotation=[0,0,rot], rotation_order='rzxz')
-        nccVal = nxcc(cr_simProj.squeeze(), optTrans.squeeze(), volumeIsNormalized=True)
+        nccVal = nxcc(cr_simProj.squeeze(), optTrans.squeeze(), volume_is_normalized=True)
 
         return (1 - nccVal)
 
@@ -297,7 +297,7 @@ class FiducialLessAlignment():
 
         sx,ex,sy,ey = 10, 60,240,-20
 
-        nccVal = nxcc((self.maskWBP*self.refImage)[sx-1:ex-1,sy-1:ey-1], (self.maskWBP*(self.reconstruction.sum(axis=2)+rec.sum(axis=2)))[sx:ex,sy:ey], volumeIsNormalized=False)
+        nccVal = nxcc((self.maskWBP*self.refImage)[sx-1:ex-1,sy-1:ey-1], (self.maskWBP*(self.reconstruction.sum(axis=2)+rec.sum(axis=2)))[sx:ex,sy:ey], volume_is_normalized=False)
 
         if show:
             print(params)

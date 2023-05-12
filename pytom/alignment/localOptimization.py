@@ -180,7 +180,7 @@ class Alignment:
             transform(self.vol2, self.rotvol2, rot_trans[0], rot_trans[1], rot_trans[2],
                       self.centX,self.centY,self.centZ,0,0,0,
                       rot_trans[3]/self.binning,rot_trans[4]/self.binning,rot_trans[5]/self.binning)
-        self.val = -1.*(self.score(volume=self.vol1, template=self.rotvol2, mask=self.mask, volumeIsNormalized=True))
+        self.val = -1.*(self.score(volume=self.vol1, template=self.rotvol2, mask=self.mask, volume_is_normalized=True))
         return self.val
 
     def cc(self, rot, trans):
@@ -203,7 +203,7 @@ class Alignment:
             trans[0]/self.binning, trans[1]/self.binning, trans[2]/self.binning)
         # compute CCC
         cc = self.score(volume=self.vol1, template=self.rotvol2,
-                        mask=self.mask, volumeIsNormalized=True)
+                        mask=self.mask, volume_is_normalized=True)
         return cc
 
     def localOpti( self, iniRot=None, iniTrans=None):

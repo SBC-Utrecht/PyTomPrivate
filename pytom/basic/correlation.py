@@ -1,4 +1,4 @@
-def xcc(volume,template,mask=None, volumeIsNormalized=False):
+def xcc(volume,template,mask=None, volume_is_normalized=False):
     """
     xcc: Calculates the cross correlation coefficient in real space
     @param volume: A volume
@@ -7,8 +7,8 @@ def xcc(volume,template,mask=None, volumeIsNormalized=False):
     @type template:  L{pytom.lib.pytom_volume.vol}
     @param mask: mask to constrain correlation
     @type mask: L{pytom.lib.pytom_volume.vol}
-    @param volumeIsNormalized: only used for compatibility with nxcc - not used
-    @type volumeIsNormalized: L{bool}
+    @param volume_is_normalized: only used for compatibility with nxcc - not used
+    @type volume_is_normalized: L{bool}
     @return: A unscaled value
     @raise exception: Raises a runtime error if volume and template have a different size.  
     @author: Thomas Hrabe 
@@ -30,7 +30,7 @@ def xcc(volume,template,mask=None, volumeIsNormalized=False):
     
     return cc 
     
-def nxcc(volume, template, mask=None, volumeIsNormalized=False):
+def nxcc(volume, template, mask=None, volume_is_normalized=False):
     """
     nxcc: Calculates the normalized cross correlation coefficient in real space
     @param volume: A volume
@@ -39,8 +39,8 @@ def nxcc(volume, template, mask=None, volumeIsNormalized=False):
     @type template:  L{pytom.lib.pytom_volume.vol}
     @param mask: mask to constrain correlation
     @type mask: L{pytom.lib.pytom_volume.vol}
-    @param volumeIsNormalized: speed up if volume is already normalized
-    @type volumeIsNormalized: L{bool}
+    @param volume_is_normalized: speed up if volume is already normalized
+    @type volume_is_normalized: L{bool}
     @return: A value between -1 and 1
     @raise exception: Raises a runtime error if volume and template have a different size.
     @author: Thomas Hrabe 
@@ -55,7 +55,7 @@ def nxcc(volume, template, mask=None, volumeIsNormalized=False):
     
     if not mask:
         from pytom.basic.normalise import mean0std1
-        if not volumeIsNormalized:
+        if not volume_is_normalized:
            v = mean0std1(volume, True)
         t = mean0std1(template, True)
         p = volume.numelem()
@@ -63,7 +63,7 @@ def nxcc(volume, template, mask=None, volumeIsNormalized=False):
     else:
         from pytom.lib.pytom_numpy import vol2npy
         from pytom.basic.normalise import normaliseUnderMask
-        if not volumeIsNormalized:
+        if not volume_is_normalized:
             (v,p) = normaliseUnderMask(volume, mask)
             (t,p) = normaliseUnderMask(template, mask, p)
             t = t * mask # multiply with the mask
@@ -79,7 +79,7 @@ def nxcc(volume, template, mask=None, volumeIsNormalized=False):
     return ncc 
 
     
-def xcf(volume, template, mask=None, stdV=None):
+def xcf(volume, template, mask=None, std_v=None):
     """
     XCF: returns the non-normalised cross correlation function. The xcf 
     result is scaled only by the square of the number of elements.
@@ -90,7 +90,7 @@ def xcf(volume, template, mask=None, stdV=None):
     @type template: L{pytom.lib.pytom_volume.vol}
     @param mask: changed: will be used if specified
     @type mask: L{pytom.lib.pytom_volume.vol}
-    @param stdV: Will be unused, only for compatibility reasons with flcf 
+    @param std_v: Will be unused, only for compatibility reasons with flcf 
     @return: XCF volume
     @rtype: L{pytom.lib.pytom_volume.vol}
     @author: Thomas Hrabe
@@ -134,7 +134,7 @@ def xcf(volume, template, mask=None, stdV=None):
     
     return result
 
-def nXcf(volume,template,mask=None, stdV=None):
+def nXcf(volume,template,mask=None, std_v=None):
     """
     nXCF: returns the normalised cross correlation function. Autocorrelation 
     of two equal objects would yield a max nxcf peak of 1.
@@ -144,7 +144,7 @@ def nXcf(volume,template,mask=None, stdV=None):
     @type template: L{pytom.lib.pytom_volume.vol}
     @param mask: template mask. If not given, a default sphere mask will be generated which has the same size with the given template.
     @type mask: L{pytom.lib.pytom_volume.vol}
-    @param stdV: Will be unused, only for compatibility reasons with flcf
+    @param std_v: Will be unused, only for compatibility reasons with flcf
     @return: the calculated nXcf volume
     @rtype: L{pytom.lib.pytom_volume.vol}
     @author: Thomas Hrabe
@@ -153,12 +153,12 @@ def nXcf(volume,template,mask=None, stdV=None):
     from pytom.basic.normalise import mean0std1
 
     if mask == None:
-        result = xcf(mean0std1(volume,True),mean0std1(template,True), mask=None, stdV=None)
+        result = xcf(mean0std1(volume,True),mean0std1(template,True), mask=None, std_v=None)
     else:
         from pytom.basic.normalise import normaliseUnderMask
         result = xcf(normaliseUnderMask(volume=volume, mask=mask, p=None)[0],
                      normaliseUnderMask(volume=template, mask=mask, p=None)[0],
-                     mask=mask, stdV=None)
+                     mask=mask, std_v=None)
     #n = result.numelem()
     #result.shiftscale(0,1/float(n*n))
 
@@ -292,7 +292,7 @@ def stdUnderMask(volume, mask, p, meanV):
 
     return result
 
-def flcf(volume, template, mask=None, stdV=None, wedge=1):
+def flcf(volume, template, mask=None, std_v=None, wedge=1):
     '''
     Created on Apr 13, 2010
     FLCF: compute the fast local correlation function
@@ -304,8 +304,8 @@ def flcf(volume, template, mask=None, stdV=None, wedge=1):
     @type template: L{pytom.lib.pytom_volume.vol}
     @param mask: template mask. If not given, a default sphere mask will be generated which has the same size with the given template.
     @type mask: L{pytom.lib.pytom_volume.vol}
-    @param stdV: standard deviation of the target volume under mask, which do not need to be calculated again when the mask is identical.
-    @type stdV: L{pytom.lib.pytom_volume.vol}
+    @param std_v: standard deviation of the target volume under mask, which do not need to be calculated again when the mask is identical.
+    @type std_v: L{pytom.lib.pytom_volume.vol}
     @return: the local correlation function
     @rtype: L{pytom.lib.pytom_volume.vol}
     
@@ -354,14 +354,14 @@ def flcf(volume, template, mask=None, stdV=None, wedge=1):
         pasteCenter(mask, maskV)
     
     # calculate the mean and std of volume
-    if stdV.__class__ != vol:
+    if std_v.__class__ != vol:
         meanV = meanUnderMask(volume, maskV, p)
-        stdV = stdUnderMask(volume, maskV, p, meanV)
+        std_v = stdUnderMask(volume, maskV, p, meanV)
 
     size = volume.numelem()
     fT = fft(tempV)
     conjugate(fT)
-    result = iftshift(ifft(fT*fft(volume)))/stdV
+    result = iftshift(ifft(fT*fft(volume)))/std_v
 
     result.shiftscale(0, 1/(size*p))
     
@@ -809,7 +809,7 @@ def determineResolution(fsc,resolutionCriterion,verbose=False):
     return [resolution,interpolatedBand,numberBands]
 
 
-def soc(volume,reference,mask=None, stdV=None):
+def soc(volume,reference,mask=None, std_v=None):
     """
     soc : Second Order Correlation. Correlation of correlation peaks.
     @param volume: The volume
@@ -977,7 +977,7 @@ def subPixelPeak(scoreVolume, coordinates, cubeLength=8, interpolation='Spline',
     return [peakValue,peakCoordinates]
 
 
-def dev(volume, template, mask=None, volumeIsNormalized=False):
+def dev(volume, template, mask=None, volume_is_normalized=False):
     """
     dev: Calculates the squared deviation of volume and template in real space
     @param volume: A volume
@@ -986,8 +986,8 @@ def dev(volume, template, mask=None, volumeIsNormalized=False):
     @type template:  L{pytom.lib.pytom_volume.vol}
     @param mask: mask to constrain correlation
     @type mask: L{pytom.lib.pytom_volume.vol}
-    @param volumeIsNormalized: speed up if volume is already normalized
-    @type volumeIsNormalized: L{bool}
+    @param volume_is_normalized: speed up if volume is already normalized
+    @type volume_is_normalized: L{bool}
     @return: deviation
     @raise exception: Raises a runtime error if volume and template have a different size.
     @author: FF

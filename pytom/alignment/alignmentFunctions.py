@@ -776,23 +776,23 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
         from pytom.basic.correlation import meanUnderMask, stdUnderMask
         p = sum(m)
         meanV = meanUnderMask(particle, m, p)
-        stdV = stdUnderMask(particle, m, p, meanV)
+        std_v = stdUnderMask(particle, m, p, meanV)
     else:
         meanV = None
-        stdV = None
+        std_v = None
     cntr = 0
     while currentRotation != [None,None,None]:
         if mask:
             m = mask.getVolume(currentRotation)
             if binning != 1:
                 m = resize(volume=m, factor=1./binning, interpolation='Spline')
-            #update stdV if mask is not a sphere
+            #update std_v if mask is not a sphere
             # compute standard deviation volume really only if needed
             # print('Mask is sphere: ', mask.isSphere(), scoreObject._type)
 
             if (not mask.isSphere()) and (scoreObject._type=='FLCFScore'):
                 meanV   = meanUnderMask(particle, m, p)
-                stdV    = stdUnderMask(particle, m, p, meanV)
+                std_v    = stdUnderMask(particle, m, p, meanV)
         else:
             m = None
         
@@ -810,7 +810,7 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
             particleCopy = r[0]
 
 
-        scoringResult = scoreObject.score(particleCopy, simulatedVol, m, stdV)
+        scoringResult = scoreObject.score(particleCopy, simulatedVol, m, std_v)
 
         pk = peak(scoringResult)
 
@@ -857,9 +857,9 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
         if mask and scoreObject._type=='FLCFScore':
             p = sum(m)
             meanV = meanUnderMask(volume=particleUnbinned, mask=m, p=p)
-            stdV  = stdUnderMask(volume=particleUnbinned, mask=m, p=p, meanV=meanV)
+            std_v  = stdUnderMask(volume=particleUnbinned, mask=m, p=p, meanV=meanV)
         scoreObject._peakPrior.reset_weight()
-        scoringResult = scoreObject.score(particle=particleUnbinned, reference=simulatedVol, mask=m, stdV=stdV)
+        scoringResult = scoreObject.score(particle=particleUnbinned, reference=simulatedVol, mask=m, std_v=std_v)
         pk = peak(scoringResult)
         [peakValue,peakPosition] = subPixelPeak(scoreVolume=scoringResult, coordinates=pk, interpolation='Quadratic',
                                                 verbose=False)
@@ -913,7 +913,7 @@ def bestAlignmentGPU(particle, rotations, plan, preprocessing=None, wedgeInfo=No
     plan.volume = plan.cp.array(particle, dtype=plan.cp.float32) * plan.taperMask
     plan.updateWedge(wedgeInfo)
     plan.wedgeParticle()
-    plan.calc_stdV()
+    plan.calc_std_v()
     currentRotation = rotations.nextRotation()
     if currentRotation == [None, None, None]:
         raise Exception('bestAlignment: No rotations are sampled! Something is wrong with input rotations')
@@ -929,7 +929,7 @@ def bestAlignmentGPU(particle, rotations, plan, preprocessing=None, wedgeInfo=No
                                 center=centerCoordinates, rotation_order=rotation_order)
             plan.p = plan.rotatedMask.sum()
             plan.mask_fft = plan.fftnP(plan.rotatedMask.astype(plan.cp.complex64),plan=plan.fftplan)
-            plan.calc_stdV()
+            plan.calc_std_v()
 
         # Rotate reference
         plan.referenceTex.transform(rotation=(float(currentRotation[0]), float(currentRotation[2]),

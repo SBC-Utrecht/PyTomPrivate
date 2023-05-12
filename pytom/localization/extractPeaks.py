@@ -114,14 +114,14 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
             p = sum(m);
             from pytom.basic.correlation import meanUnderMask, stdUnderMask
             meanV = meanUnderMask(volume, maskV, p)
-            stdV = stdUnderMask(volume, maskV, p, meanV)
+            std_v = stdUnderMask(volume, maskV, p, meanV)
             if debug:
                 volume.write('volume_cpu.mrc')
                 meanV.write('meanV_cpu.mrc')
 
         if scoreFnc == flcf:
             if maskIsSphere == True:
-                score = scoreFnc(volume, ref, m, stdV, wedge=1)
+                score = scoreFnc(volume, ref, m, std_v, wedge=1)
             else:
                 score = scoreFnc(volume, ref, m)
         else: # not FLCF, so doesn't need mask as parameter and perhaps the reference should have the same size

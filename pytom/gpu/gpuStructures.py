@@ -127,7 +127,7 @@ class TemplateMatchingGPU(threading.Thread):
         if self.mask_is_spherical:  # then we only need to calculate std volume once
             self.plan.maskPadded[CX - cx:CX + cx + mx, CY - cy:CY + cy + my, CZ - cz:CZ + cz + mz] = \
                 self.plan.mask
-            stdV = self.calc_stdV(self.plan.volume, self.plan.maskPadded, self.plan.p)
+            std_v = self.calc_std_v(self.plan.volume, self.plan.maskPadded, self.plan.p)
 
         for angleId, angles in enumerate(self.angle_list):
 
@@ -137,7 +137,7 @@ class TemplateMatchingGPU(threading.Thread):
                 self.plan.maskPadded[CX - cx:CX + cx + mx, CY - cy:CY + cy + my, CZ - cz:CZ + cz + mz] = \
                     self.plan.mask
                 # std volume needs to be recalculated for every rotation of the mask, expensive step
-                stdV = self.calc_stdV(self.plan.volume, self.plan.maskPadded, self.plan.p)
+                std_v = self.calc_std_v(self.plan.volume, self.plan.maskPadded, self.plan.p)
 
             # Rotate template
             self.plan.template_texture.transform(rotation=(angles[0], angles[2], angles[1]), rotation_order='rzxz',
@@ -156,9 +156,9 @@ class TemplateMatchingGPU(threading.Thread):
             # Paste in center
             self.plan.templatePadded[CX-cx:CX+cx+mx, CY-cy:CY+cy+my, CZ-cz:CZ+cz+mz] = self.plan.template
 
-            # Cross-correlate and normalize by stdV
+            # Cross-correlate and normalize by std_v
             self.plan.ccc_map = self.normalized_cross_correlation(self.plan.volume_fft2, self.plan.templatePadded,
-                                                                  stdV, self.plan.p, fft_plan=self.plan.fftplan)
+                                                                  std_v, self.plan.p, fft_plan=self.plan.fftplan)
 
             # Update the scores and angles
             self.updateResFromIdx(self.plan.scores, self.plan.angles, self.plan.ccc_map,
@@ -170,13 +170,13 @@ class TemplateMatchingGPU(threading.Thread):
         """
         return self.active
 
-    def calc_stdV(self, volume, padded_mask, p):
+    def calc_std_v(self, volume, padded_mask, p):
         """
         std convolution of volume and mask
         """
-        stdV = self.meanVolUnderMask2(volume**2, padded_mask, p) - self.meanVolUnderMask2(volume, padded_mask, p)**2
-        stdV[stdV <= self.float32(1e-09)] = 1
-        return self.sqrt(stdV)
+        std_v = self.meanVolUnderMask2(volume**2, padded_mask, p) - self.meanVolUnderMask2(volume, padded_mask, p)**2
+        std_v[std_v <= self.float32(1e-09)] = 1
+        return self.sqrt(std_v)
 
     def meanVolUnderMask2(self, volume, mask, p):
         """
@@ -279,7 +279,7 @@ class GLocalAlignmentPlan():
         del dummy, taperMask
 
         # Allocate required volumes
-        self.stdV          = cp.zeros_like(self.volume, dtype=cp.float32)
+        self.std_v         = cp.zeros_like(self.volume, dtype=cp.float32)
         self.ccc_map       = cp.zeros_like(self.volume, dtype=cp.float32)
         self.sumParticles  = cp.zeros_like(self.volume, dtype=cp.float32)
         self.sumWeights    = cp.zeros_like(self.wedgePart[:,:,:self.volume.shape[2]//2+1], dtype=cp.float32)
@@ -314,7 +314,7 @@ class GLocalAlignmentPlan():
         # del croppedForZoom
 
         # Kernels
-        self.normalize     = cp.ElementwiseKernel('T ref, T mask, raw T mean, raw T stdV ', 'T z', 'z = ((ref - mean[i*0]) / stdV[i*0]) * mask', 'norm2')
+        self.normalize     = cp.ElementwiseKernel('T ref, T mask, raw T mean, raw T std_v ', 'T z', 'z = ((ref - mean[i*0]) / std_v[i*0]) * mask', 'norm2')
         self.sumMeanStdv   = cp.RawKernel(meanStdv_text, 'sumMeanStdv')
         self.argmax        = self.cp.RawKernel(argmax_text, 'argmax')
 
@@ -328,7 +328,7 @@ class GLocalAlignmentPlan():
         del self.fftnP
         del self.cp
 
-        del self.stdV
+        del self.std_v
         del self.ccc_map
 
         del self.volume_fft
@@ -375,7 +375,7 @@ class GLocalAlignmentPlan():
     def cross_correlation(self):
         self.simulatedVolume = self.fftnP(self.simulatedVolume.astype(self.cp.complex64), plan=self.fftplan)
         self.ccc_map = ( self.cp.fft.ifftshift(self.ifftnP(self.volume_fft * self.simulatedVolume.conj(), plan=self.fftplan))).real
-        self.ccc_map *= self.stdV
+        self.ccc_map *= self.std_v
 
     def wedgeRotatedRef(self):
         self.simulatedVolume = self.ifftnP(self.fftnP(self.rotatedRef.astype(self.cp.complex64), plan=self.fftplan) * self.wedgePart,
@@ -541,9 +541,9 @@ class GLocalAlignmentPlan():
         indices = self.cp.unravel_index(mm, volume.shape)
         return indices
 
-    def calc_stdV(self):
+    def calc_std_v(self):
         meanV = (self.cp.fft.fftshift(self.ifftnP(self.volume_fft * self.cp.conj(self.mask_fft), plan=self.fftplan))/self.p).real
-        self.stdV = 1 / (self.stdVolUnderMaskPlanned(self.volume, meanV) * self.p)
+        self.std_v = 1 / (self.stdVolUnderMaskPlanned(self.volume, meanV) * self.p)
         del meanV
 
     def meanVolUnderMaskPlanned(self, volume):
@@ -777,7 +777,7 @@ class GLocalAlignmentGPU(threading.Thread):
             'if (scores < ccc_map) {out = ccc_map; out2 = angleId;}',
             'updateResFromIdx')
 
-        self.plan = TemplateMatchingPlan(input[0], input[1], input[2], input[3], cp, vt, self.calc_stdV, self.pad, get_fft_plan, deviceid)
+        self.plan = TemplateMatchingPlan(input[0], input[1], input[2], input[3], cp, vt, self.calc_std_v, self.pad, get_fft_plan, deviceid)
 
         print("Initialized job_{:03d} on device {:d}".format(self.jobid, self.deviceid))
 
@@ -817,8 +817,8 @@ class GLocalAlignmentGPU(threading.Thread):
 
             # write('template_gpu.em', self.plan.templatePadded)
 
-            # Cross-correlate and normalize by stdV
-            self.plan.ccc_map = self.normalized_cross_correlation(self.plan.volume_fft2, self.plan.template, self.plan.stdV, self.plan.p, plan=self.plan.fftplan)
+            # Cross-correlate and normalize by std_v
+            self.plan.ccc_map = self.normalized_cross_correlation(self.plan.volume_fft2, self.plan.template, self.plan.std_v, self.plan.p, plan=self.plan.fftplan)
 
             # Update the scores and angles
             self.updateResFromIdx(self.plan.scores, self.plan.angles, self.plan.ccc_map, angleId, self.plan.scores, self.plan.angles)
@@ -828,10 +828,10 @@ class GLocalAlignmentGPU(threading.Thread):
     def is_alive(self):
         return self.active
 
-    def calc_stdV(self, plan):
-        stdV = self.meanVolUnderMask2(plan.volume**2, plan) - self.meanVolUnderMask2(plan.volume, plan)**2
-        stdV[stdV < self.float32(1e-09)] = 1
-        plan.stdV = self.sqrt(stdV)
+    def calc_std_v(self, plan):
+        std_v = self.meanVolUnderMask2(plan.volume**2, plan) - self.meanVolUnderMask2(plan.volume, plan)**2
+        std_v[std_v < self.float32(1e-09)] = 1
+        plan.std_v = self.sqrt(std_v)
 
     def meanVolUnderMask2(self, volume, plan):
         res = self.fftshift(self.ifftn(self.fftn(volume) * self.fftn(plan.maskPadded).conj())) / plan.mask.sum()
@@ -1041,10 +1041,10 @@ class CCCPlan():
 
         self.normalize = cp.RawKernel(r'''
 extern "C" __global__
-void normalize( float* volume, const float* mask, float mean, float stdV, int n ){
+void normalize( float* volume, const float* mask, float mean, float std_v, int n ){
      int tid = blockDim.x * blockIdx.x + threadIdx.x;
      
-     if (tid < n) { volume[tid] = ((volume[tid] - mean)/ stdV) * mask[tid];}
+     if (tid < n) { volume[tid] = ((volume[tid] - mean)/ std_v) * mask[tid];}
 }
 ''', 'normalize')
 
@@ -1272,8 +1272,6 @@ void normalize( float* volume, const float* mask, float mean, float stdV, int n 
         @type template:  L{pytom_volume.vol}
         @param mask: mask to constrain correlation
         @type mask: L{pytom_volume.vol}
-        @param volumeIsNormalized: speed up if volume is already normalized
-        @type volumeIsNormalized: L{bool}
         @return: A value between -1 and 1
         @raise exception: Raises a runtime error if volume and template have a different size.
         @author: Thomas Hrabe

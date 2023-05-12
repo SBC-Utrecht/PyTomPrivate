@@ -23,7 +23,7 @@ def Vol_G_Val(volume,value):
         
     return volume > value
 
-def weightedCoefficient(self,volume,reference,mask=None,stdV=None):
+def weightedCoefficient(self,volume,reference,mask=None,std_v=None):
     """
     weightedCoefficient: Determines the peak coefficient of the scoring function. 
     The distance from the center contributes to the peak value. Must be activated by hand. 
@@ -33,13 +33,13 @@ def weightedCoefficient(self,volume,reference,mask=None,stdV=None):
     @type reference: L{pytom.lib.pytom_volume.vol}
     @param mask: A mask.
     @type mask: L{pytom.lib.pytom_volume.vol}
-    @param stdV: Deviation volume of volume  
-    @type stdV: L{pytom.lib.pytom_volume.vol}
+    @param std_v: Deviation volume of volume  
+    @type std_v: L{pytom.lib.pytom_volume.vol}
     @return: The highest coefficient determined.
     @author: Thomas Hrabe
     """
 
-    resFunction = self.scoringFunction(volume,reference,mask,stdV)
+    resFunction = self.scoringFunction(volume,reference,mask,std_v)
     resFunction = self._peakPrior.apply(resFunction)
     
     return resFunction
@@ -198,7 +198,7 @@ class Score:
         self.setRemoveAutocorrelation( flag=removeAutocorr)
         self._type = 'undefined'
         
-    def score(self, particle, reference, mask=None,stdV=None):
+    def score(self, particle, reference, mask=None,std_v=None):
         """
         returns weighted Coefficient
         @param volume: A volume.
@@ -207,11 +207,11 @@ class Score:
         @type reference: L{pytom.lib.pytom_volume.vol}
         @param mask: A mask.
         @type mask: L{pytom.lib.pytom_volume.vol}
-        @param stdV: Deviation volume of volume  
-        @type stdV: L{pytom.lib.pytom_volume.vol}
+        @param std_v: Deviation volume of volume  
+        @type std_v: L{pytom.lib.pytom_volume.vol}
         @return: The highest coefficient determined.
         """
-        return self.weightedCoefficient(self, particle, reference, mask, stdV)
+        return self.weightedCoefficient(self, particle, reference, mask, std_v)
         
     def getScoreFunc(self):
         """

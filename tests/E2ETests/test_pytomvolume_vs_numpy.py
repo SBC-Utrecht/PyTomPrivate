@@ -88,15 +88,15 @@ class NumericalTest(unittest.TestCase):
         from pytom.lib.pytom_volume import sum
         p = sum(self.mask_vol)
         meanV = meanUnderMask(self.random_vol, self.mask_vol, p)
-        stdV = stdUnderMask(self.random_vol, self.mask_vol, p, meanV)
-        stdV_np = vol2npy(stdV).copy()
-        return stdV_np.astype(np.float32)
+        std_v = stdUnderMask(self.random_vol, self.mask_vol, p, meanV)
+        std_v_np = vol2npy(std_v).copy()
+        return std_v_np.astype(np.float32)
 
     def calcStdvNpCp(self):
         from pytom.agnostic.normalise import meanVolUnderMask, stdVolUnderMask
         meanV = meanVolUnderMask(self.random_np, self.mask_np)
-        stdV = stdVolUnderMask(self.random_np, self.mask_np, meanV)
-        return stdV
+        std_v = stdVolUnderMask(self.random_np, self.mask_np, meanV)
+        return std_v
 
     def rmsd(self, pytomvol, npcp):
         return np.sqrt(((pytomvol - npcp) ** 2).sum() / npcp.size)

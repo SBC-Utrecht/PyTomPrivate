@@ -5135,7 +5135,7 @@ class Alignment:
         self.val = float(-1. * (self.score(volume=self.vol1,
                                            template=self.rotvol2,
                                            mask=self.mask,
-                                           volumeIsNormalized=True)))
+                                           volume_is_normalized=True)))
 
         return self.val
 
