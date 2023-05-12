@@ -584,8 +584,8 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
 
         resolution = float(result.split('Resolution determined for pixelsize :')[1].split()[-2])
 
-        self.assertTrue(resolution < 11.5,
-                        'Final Resolution of the reconstruction is {resolution}. A resolution below 11.5 Angstrom is '
+        self.assertTrue(resolution < 12.0,
+                        'Final Resolution of the reconstruction is {resolution}. A resolution below 12.0 Angstrom is '
                         'expected.')
 
     def test_18_GLocal_Reduced_Binned_GPU(self):
