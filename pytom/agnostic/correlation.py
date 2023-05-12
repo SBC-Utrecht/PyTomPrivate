@@ -275,7 +275,7 @@ def weightedXCC(volume, reference, numberOfBands, wedgeAngle=-1):
     @author: Thomas Hrabe
     """
 
-    from pytom.agnostic.transform import fft, fourier_reduced2full
+    from pytom.agnostic.transform import fourier_reduced2full
     from pytom.basic.structures import WedgeInfo
 
     result = 0
@@ -346,12 +346,10 @@ def weightedXCF(volume, reference, numberOfBands, wedgeAngle=-1):
     """
     from pytom.agnostic.correlation import bandCF
     from pytom.agnostic.transforms import fourier_reduced2full
-    from math import sqrt
-    import pytom.lib.pytom_freqweight as pytom_freqweight
+    from pytom.lib import pytom_freqweight
 
     result = xp.zeros_like(volume)
 
-    q = 0
 
     if wedgeAngle >= 0:
         wedgeFilter = pytom_freqweight.weight(
@@ -483,7 +481,6 @@ def bandCC(volume, reference, band, verbose=False, shared=None, index=None):
         print(index)
 
     from pytom.agnostic.filter import bandpass
-    from pytom.agnostic.correlation import xcf
 
     # from pytom.agnostic.filter import vol_comp
 
@@ -545,9 +542,8 @@ def bandCF(volume, reference, band=[0, 100]):
     """
 
     from math import sqrt
-    from pytom.basic import fourier
     from pytom.agnostic.filter import bandpass as bandpassFilter
-    from pytom.agnostic.transform import fourier_reduced2full, fourier_full2reduced
+    from pytom.agnostic.transform import fourier_reduced2full
 
     vf, vfm = bandpassFilter(
         volume, band[0], band[1], fourierOnly=True, returnMask=True
@@ -607,11 +603,11 @@ def FSC(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=N
 
     from pytom.agnostic.correlation import bandCC
     from pytom.basic.structures import Mask
-    from pytom.agnostic.io import read, write
+    from pytom.agnostic.io import read
     from pytom.agnostic.tools import volumesSameSize
     import time
 
-    t = time.time()
+    time.time()
 
     if not volumesSameSize(volume1, volume2):
         raise RuntimeError("Volumes must have the same size!")
@@ -692,7 +688,6 @@ def FSCSum(volume, reference, numberOfBands, wedgeAngle=-1):
     from pytom.agnostic.correlation import bandCC
 
     result = 0
-    numberVoxels = 0
 
     fvolume = xp.fft.fftn(volume)
     freference = xp.fft.fftn(reference)
@@ -823,9 +818,6 @@ def generate_random_phases_3d(shape, reduced_complex=True):
     @return: returns an array with values between -pi and pi
     @rtype: ndarray
     """
-    from numpy.random import ranf
-    from numpy import pi, rot90
-    from numpy.fft import fftshift
 
     if len(shape) == 3:
         dx, dy, dz = shape
@@ -863,8 +855,6 @@ def randomizePhaseBeyondFreq(volume, frequency):
     @rtype: L{xp.ndarray}
     @author: GvdS"""
 
-    from numpy.fft import ifftn, fftshift, fftn, rfftn, irfftn
-    from numpy import angle, abs, exp, meshgrid, arange, sqrt, pi, rot90
 
     threeD = len(volume.shape) == 3
     twoD = len(volume.shape) == 2
@@ -1135,7 +1125,6 @@ def subPixelMax3D(
     """
 
     from pytom.voltools import transform
-    from pytom.agnostic.io import write
 
     ox, oy, oz = volume.shape
     ib = ignore_border
@@ -1162,7 +1151,7 @@ def subPixelMax3D(
         print(f"initial find max time: \t{time_took:.3f}ms")
         t_start = stream.record()
 
-    b = border = max(0, int(volume.shape[0] // 2 - 4 / k))
+    b = max(0, int(volume.shape[0] // 2 - 4 / k))
     zx, zy, zz = volume.shape
     out = volume[b : zx - b, b : zy - b, b : zz - b]
 
