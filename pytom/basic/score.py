@@ -435,8 +435,8 @@ class nxcfScore(Score):
         __init__ : Assigns the normalized xcf (nxcf) as scoringFunction, peakCoef as scoringCoefficient and Vol_G_Val as scoringCriterion
         @param value: Current value of score
         """
-        from pytom.basic.correlation import nXcf,nxcc
-        self.ctor(nXcf,nxcc,Vol_G_Val)   
+        from pytom.basic.correlation import norm_xcf,nxcc
+        self.ctor(norm_xcf,nxcc,Vol_G_Val)   
         self._type = 'nxcfScore'
         #if value and (isinstance(value, (int, long)) or value.__class__ == float):
         if value and (value.__class__ == int or value.__class__ == int or value.__class__ == float):
@@ -532,8 +532,8 @@ class RScore(Score):
     """
     
     def __init__(self,value=None):
-        from pytom.basic.correlation import nXcf,weightedXCC
-        self.ctor(nXcf,weightedXCC,Vol_G_Val)
+        from pytom.basic.correlation import norm_xcf,weightedXCC
+        self.ctor(norm_xcf,weightedXCC,Vol_G_Val)
         self._type = 'RScore'
         self._numberOfBands=0
         self._wedgeAngle =-1
@@ -607,8 +607,8 @@ class FSCScore(Score):
     FSF = FSFWrapper
     
     def __init__(self):
-        from pytom.basic.correlation import nXcf
-        self.ctor(nXcf,self.FSC,Vol_G_Val)
+        from pytom.basic.correlation import norm_xcf
+        self.ctor(norm_xcf,self.FSC,Vol_G_Val)
         self._type = 'FSCScore'
         self._numberOfBands = 0
         self._wedgeAngle = 0

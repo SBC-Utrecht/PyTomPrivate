@@ -228,7 +228,7 @@ def xcf_mult(
     return result
 
 
-def nXcf(volume, template, mask=None, std_v=None, gpu=False):
+def norm_xcf(volume, template, mask=None, std_v=None, gpu=False):
     """
     nXCF: returns the normalised cross correlation function. Autocorrelation
     of two equal objects would yield a max nxcf peak of 1.
@@ -241,7 +241,7 @@ def nXcf(volume, template, mask=None, std_v=None, gpu=False):
                  same size with the given template.
     @type mask: L{xp.ndarray}
     @param std_v: Will be unused, only for compatibility reasons with FLCF
-    @return: the calculated nXcf volume
+    @return: the calculated norm_xcf volume
     @rtype: L{xp.ndarray}
     @author: Thomas Hrabe
     @change: masking of template implemented

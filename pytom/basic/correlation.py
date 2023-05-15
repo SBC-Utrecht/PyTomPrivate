@@ -134,7 +134,7 @@ def xcf(volume, template, mask=None, std_v=None):
     
     return result
 
-def nXcf(volume,template,mask=None, std_v=None):
+def norm_xcf(volume,template,mask=None, std_v=None):
     """
     nXCF: returns the normalised cross correlation function. Autocorrelation 
     of two equal objects would yield a max nxcf peak of 1.
@@ -145,7 +145,7 @@ def nXcf(volume,template,mask=None, std_v=None):
     @param mask: template mask. If not given, a default sphere mask will be generated which has the same size with the given template.
     @type mask: L{pytom.lib.pytom_volume.vol}
     @param std_v: Will be unused, only for compatibility reasons with flcf
-    @return: the calculated nXcf volume
+    @return: the calculated norm_xcf volume
     @rtype: L{pytom.lib.pytom_volume.vol}
     @author: Thomas Hrabe
     @change: masking of template implemented
@@ -570,7 +570,7 @@ def bandCF(volume,reference,band=[0,100]):
     from math import sqrt
     from pytom.basic import fourier
     from pytom.basic.filter import bandpassFilter
-    from pytom.basic.correlation import nXcf
+    from pytom.basic.correlation import norm_xcf
     
     vf = bandpassFilter(volume,band[0],band[1],fourierOnly=True)
     rf = bandpassFilter(reference,band[0],band[1],vf[1],fourierOnly=True)
