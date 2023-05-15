@@ -261,9 +261,9 @@ def norm_xcf(volume, template, mask=None, std_v=None, gpu=False):
     return result
 
 
-def weightedXCC(volume, reference, numberOfBands, wedgeAngle=-1):
+def weighted_xcc(volume, reference, numberOfBands, wedgeAngle=-1):
     """
-    weightedXCC: Determines the band weighted correlation coefficient for a volume and reference.
+    weighted_xcc: Determines the band weighted correlation coefficient for a volume and reference.
                  Notation according Steward/Grigorieff paper
     @param volume: A volume
     @type volume: L{xp.ndarray}

@@ -508,12 +508,12 @@ class FLCFScore(Score):
         return p[0]
 
 def wXCCWrapper(self,volume,reference,mask=None):
-    from pytom.basic.correlation import weightedXCC
+    from pytom.basic.correlation import weighted_xcc
         
     if self.getNumberOfBands() == 0:
         raise RuntimeError('RScore: Number of bands is Zero! Abort.')
     
-    return weightedXCC(volume,reference,self.getNumberOfBands(),self.getWedgeAngle())
+    return weighted_xcc(volume,reference,self.getNumberOfBands(),self.getWedgeAngle())
 
 def wXCFWrapper(self,volume,reference,mask=None):
     from pytom.basic.correlation import weightedXCF
@@ -532,8 +532,8 @@ class RScore(Score):
     """
     
     def __init__(self,value=None):
-        from pytom.basic.correlation import norm_xcf,weightedXCC
-        self.ctor(norm_xcf,weightedXCC,Vol_G_Val)
+        from pytom.basic.correlation import norm_xcf, weighted_xcc
+        self.ctor(norm_xcf,weighted_xcc,Vol_G_Val)
         self._type = 'RScore'
         self._numberOfBands=0
         self._wedgeAngle =-1

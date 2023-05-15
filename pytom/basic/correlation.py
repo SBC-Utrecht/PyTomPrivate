@@ -429,9 +429,9 @@ def bandCC(volume,reference,band,verbose = False):
     
     return [cc,vf[1]];
     
-def weightedXCC(volume,reference,numberOfBands,wedgeAngle=-1):
+def weighted_xcc(volume,reference,numberOfBands,wedgeAngle=-1):
         """
-        weightedXCC: Determines the band weighted correlation coefficient for a volume and reference. Notation according Steward/Grigorieff paper
+        weighted_xcc: Determines the band weighted correlation coefficient for a volume and reference. Notation according Steward/Grigorieff paper
         @param volume: A volume
         @type volume: L{pytom.lib.pytom_volume.vol}
         @param reference: A reference of same size as volume
