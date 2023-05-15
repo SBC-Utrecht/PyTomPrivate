@@ -261,7 +261,7 @@ def norm_xcf(volume, template, mask=None, std_v=None, gpu=False):
     return result
 
 
-def weighted_xcc(volume, reference, numberOfBands, wedgeAngle=-1):
+def weighted_xcc(volume, reference, number_of_bands, wedgeAngle=-1):
     """
     weighted_xcc: Determines the band weighted correlation coefficient for a volume and reference.
                  Notation according Steward/Grigorieff paper
@@ -269,7 +269,7 @@ def weighted_xcc(volume, reference, numberOfBands, wedgeAngle=-1):
     @type volume: L{xp.ndarray}
     @param reference: A reference of same size as volume
     @type reference: L{xp.ndarray}
-    @param numberOfBands: Number of bands
+    @param number_of_bands: Number of bands
     @param wedgeAngle: A optional wedge angle
     @return: The weighted correlation coefficient
     @rtype: float
@@ -287,7 +287,7 @@ def weighted_xcc(volume, reference, numberOfBands, wedgeAngle=-1):
         volume.shape[0], volume.shape[1], volume.shape[2]
     )
 
-    increment = int(volume.shape[0] / 2 * 1 / numberOfBands)
+    increment = int(volume.shape[0] / 2 * 1 / number_of_bands)
     band = [0, 100]
     for i in range(0, volume.shape[0] / 2, increment):
         band[0] = i
@@ -333,12 +333,12 @@ def weighted_xcc(volume, reference, numberOfBands, wedgeAngle=-1):
     return result * (1 / float(numberVoxels))
 
 
-def weightedXCF(volume, reference, numberOfBands, wedgeAngle=-1):
+def weightedXCF(volume, reference, number_of_bands, wedgeAngle=-1):
     """
     weightedXCF: Determines the weighted correlation function for volume and reference
     @param volume: A volume
     @param reference: A reference
-    @param numberOfBands:Number of bands
+    @param number_of_bands:Number of bands
     @param wedgeAngle: A optional wedge angle
     @return: The weighted correlation function
     @rtype: L{pytom.lib.pytom_volume.vol}
@@ -364,13 +364,13 @@ def weightedXCF(volume, reference, numberOfBands, wedgeAngle=-1):
 
     numberVoxels = 0
 
-    for i in range(numberOfBands):
+    for i in range(number_of_bands):
         """
         notation according Steward/Grigorieff paper
         """
         band = [0, 0]
-        band[0] = i * volume.shape[0] / numberOfBands
-        band[1] = (i + 1) * volume.shape[0] / numberOfBands
+        band[0] = i * volume.shape[0] / number_of_bands
+        band[1] = (i + 1) * volume.shape[0] / number_of_bands
 
         r = bandCF(volume, reference, band)
 
@@ -672,7 +672,7 @@ def FSC(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=N
     return fscResult
 
 
-def FSCSum(volume, reference, numberOfBands, wedgeAngle=-1):
+def FSCSum(volume, reference, number_of_bands, wedgeAngle=-1):
     """
     FSCSum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and
             reference.
@@ -680,7 +680,7 @@ def FSCSum(volume, reference, numberOfBands, wedgeAngle=-1):
     @type volume: L{xp.ndarray}
     @param reference: A reference of same size as volume
     @type reference: L{xp.ndarray}
-    @param numberOfBands: Number of bands
+    @param number_of_bands: Number of bands
     @param wedgeAngle: A optional wedge angle
     @return: The sum FSC coefficient
     @rtype: float
@@ -698,17 +698,17 @@ def FSCSum(volume, reference, numberOfBands, wedgeAngle=-1):
     fvolume *= 1 / float(numelem)
     freference *= 1 / float(numelem)
 
-    for i in range(numberOfBands):
+    for i in range(number_of_bands):
         # process bandCorrelation
         band = []
-        band[0] = i * volume.shape[0] / numberOfBands
-        band[1] = (i + 1) * volume.shape[0] / numberOfBands
+        band[0] = i * volume.shape[0] / number_of_bands
+        band[1] = (i + 1) * volume.shape[0] / number_of_bands
 
         r = bandCC(fvolume, freference, band)
         cc = r[0]
         result = result + cc
 
-    return result * (1 / float(numberOfBands))
+    return result * (1 / float(number_of_bands))
 
 
 def determineResolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=None):

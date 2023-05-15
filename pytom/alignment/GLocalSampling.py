@@ -151,7 +151,7 @@ def mainAlignmentLoop(alignmentJob, verbose=False):
             resolutionBand = getResolutionBandFromFSC(fsc, criterion=alignmentJob.scoringParameters.fsc_criterion)
             resolutionAngstrom = bandToAngstrom( band=resolutionBand,
                             pixelSize=alignmentJob.samplingParameters.sampleInformation.getPixelSize(),
-                            numberOfBands=len(fsc), upscale=1)
+                            number_of_bands=len(fsc), upscale=1)
             # read un-corrected averages back in for compoundWedge
             if alignmentJob.scoringParameters.compoundWedge:
                 from pytom.lib.pytom_volume import read
@@ -301,7 +301,7 @@ def mainAlignmentLoop(alignmentJob, verbose=False):
             resolutionBand = getResolutionBandFromFSC(fsc, criterion=0.143)
             resolutionAngstrom = bandToAngstrom(band=resolutionBand,
                                                 pixelSize=alignmentJob.samplingParameters.sampleInformation.getPixelSize(),
-                                                numberOfBands=len(fsc), upscale=1)
+                                                number_of_bands=len(fsc), upscale=1)
             print(">>>>>>>>>> Final Resolution = %3.2f A." % resolutionAngstrom)
 
             # filter final average according to resolution
@@ -460,7 +460,7 @@ def mainAlignmentLoop(alignmentJob, verbose=False):
             resolutionBand = getResolutionBandFromFSC(fsc, criterion=0.143)
             resolutionAngstrom = bandToAngstrom(band=resolutionBand,
                                                 pixelSize=alignmentJob.samplingParameters.sampleInformation.getPixelSize(),
-                                                numberOfBands=len(fsc), upscale=1)
+                                                number_of_bands=len(fsc), upscale=1)
 
             print(">>>>>>>>>> Final Resolution = %3.2f A." % resolutionAngstrom)
 

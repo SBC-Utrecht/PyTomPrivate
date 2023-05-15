@@ -1200,8 +1200,8 @@ def sequentialStart(exMaxJob,verbose,sendFinishMessage = True):
                 newResolution = resolutionAngstrom * (1 - exMaxJob.getAdaptiveOffset()) #determine better resolution (in ANGSTROM)        
                 newResolutionBand = int( ceil( angstromToBand(resolution=newResolution,
                                                               pixelSize=sampleInfo.getPixelSize(),
-                                                              numberOfBands=numberBands, scale=1))) # FF: fixed bug!
-                                #numberOfBands=numberBands, scale=exMaxJob.getBinning()))) #convert upper value to BANDS
+                                                              number_of_bands=numberBands, scale=1))) # FF: fixed bug!
+                                #number_of_bands=numberBands, scale=exMaxJob.getBinning()))) #convert upper value to BANDS
                 #update job
                 preprocessing.setHighestFrequency(newResolutionBand)
                 exMaxJob.setPreprocessing(preprocessing)
