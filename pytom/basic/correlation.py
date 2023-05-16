@@ -606,9 +606,9 @@ def bandCF(volume,reference,band=[0,100]):
     
     return [result,vf[1]]
 
-def weightedXCF(volume,reference,number_of_bands,wedge_angle=-1):
+def weighted_xcf(volume,reference,number_of_bands,wedge_angle=-1):
     """
-    weightedXCF: Determines the weighted correlation function for volume and reference
+    weighted_xcf: Determines the weighted correlation function for volume and reference
     @param volume: A volume 
     @param reference: A reference 
     @param number_of_bands:Number of bands

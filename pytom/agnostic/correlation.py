@@ -333,9 +333,9 @@ def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
     return result * (1 / float(n_voxels))
 
 
-def weightedXCF(volume, reference, number_of_bands, wedge_angle=-1):
+def weighted_xcf(volume, reference, number_of_bands, wedge_angle=-1):
     """
-    weightedXCF: Determines the weighted correlation function for volume and reference
+    weighted_xcf: Determines the weighted correlation function for volume and reference
     @param volume: A volume
     @param reference: A reference
     @param number_of_bands:Number of bands
