@@ -508,9 +508,9 @@ def weighted_xcc(volume,reference,number_of_bands,wedge_angle=-1):
     
     
     
-def FSCSum(volume,reference,number_of_bands,wedge_angle=-1):
+def fsc_sum(volume,reference,number_of_bands,wedge_angle=-1):
     """
-    FSCSum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and reference. 
+    fsc_sum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and reference. 
     @param volume: A volume
     @type volume: L{pytom.lib.pytom_volume.vol}
     @param reference: A reference of same size as volume

@@ -536,13 +536,13 @@ class RScore(Score):
 
 
 def FSCWrapper(self, volume, reference):
-    from pytom.agnostic.correlation import FSCSum
+    from pytom.agnostic.correlation import fsc_sum
 
     if self.number_of_bands == 0:
         from pytom.basic.exceptions import ParameterError
         raise ParameterError('Bands attribute is empty. Abort.')
 
-    return FSCSum(volume, reference, self.bands, self.wedge_angle)
+    return fsc_sum(volume, reference, self.bands, self.wedge_angle)
 
 
 def FSFWrapper(self, volume, reference):

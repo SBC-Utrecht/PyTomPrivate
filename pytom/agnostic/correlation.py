@@ -672,9 +672,9 @@ def FSC(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=N
     return fscResult
 
 
-def FSCSum(volume, reference, number_of_bands, wedge_angle=-1):
+def fsc_sum(volume, reference, number_of_bands, wedge_angle=-1):
     """
-    FSCSum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and
+    fsc_sum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and
             reference.
     @param volume: A volume
     @type volume: L{xp.ndarray}
