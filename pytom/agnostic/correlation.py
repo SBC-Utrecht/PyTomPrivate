@@ -280,10 +280,10 @@ def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
     from pytom.basic.structures import WedgeInfo
 
     result = 0
-    numberVoxels = 0
+    n_voxels = 0
 
     wedge = WedgeInfo(wedge_angle)
-    wedgeVolume = wedge.returnWedgeVolume(
+    wedge_volume = wedge.returnWedgeVolume(
         volume.shape[0], volume.shape[1], volume.shape[2]
     )
 
@@ -299,22 +299,22 @@ def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
         # print cc;
         filter = r[1]
 
-        # get bandVolume
-        bandVolume = filter.getWeightVolume(True)
+        # get band_volume
+        band_volume = filter.getWeightVolume(True)
 
-        filterVolumeReduced = bandVolume * wedgeVolume
-        filterVolume = fourier_reduced2full(filterVolumeReduced)
+        filter_volume_reduced = band_volume * wedge_volume
+        filter_volume = fourier_reduced2full(filter_volume_reduced)
 
         # determine number of voxels != 0
-        N = (filterVolume != 0).sum()
+        n = (filter_volume != 0).sum()
 
-        w = xp.sqrt(1 / float(N))
+        w = xp.sqrt(1 / float(n))
 
         # add to number of total voxels
-        numberVoxels = numberVoxels + N
+        n_voxels = n_voxels + n
         # print 'w',w;
         # print 'cc',cc;
-        # print 'N',N;
+        # print 'n',n;
 
         cc2 = cc * cc
         # print 'cc2',cc2;
@@ -328,9 +328,9 @@ def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
         # print 'cc',cc;
 
         # add up result
-        result = result + cc * N
+        result = result + cc * n
 
-    return result * (1 / float(numberVoxels))
+    return result * (1 / float(n_voxels))
 
 
 def weightedXCF(volume, reference, number_of_bands, wedge_angle=-1):
@@ -356,13 +356,13 @@ def weightedXCF(volume, reference, number_of_bands, wedge_angle=-1):
         wedgeFilter = pytom_freqweight.weight(
             wedge_angle, 0, volume.sizeX(), volume.sizeY(), volume.sizeZ()
         )
-        wedgeVolume = wedgeFilter.getWeightVolume(True)
+        wedge_volume = wedgeFilter.getWeightVolume(True)
     else:
-        wedgeVolume = xp.ones_like(volume)
+        wedge_volume = xp.ones_like(volume)
 
     w = xp.sqrt(1 / float(volume.size))
 
-    numberVoxels = 0
+    n_voxels = 0
 
     for i in range(number_of_bands):
         """
@@ -377,16 +377,16 @@ def weightedXCF(volume, reference, number_of_bands, wedge_angle=-1):
         cc = r[0]
 
         filter = r[1]
-        # get bandVolume
-        bandVolume = filter.getWeightVolume(True)
+        # get band_volume
+        band_volume = filter.getWeightVolume(True)
 
-        filterVolumeReduced = bandVolume * wedgeVolume
-        filterVolume = fourier_reduced2full(filterVolumeReduced)
+        filter_volume_reduced = band_volume * wedge_volume
+        filter_volume = fourier_reduced2full(filter_volume_reduced)
         # determine number of voxels != 0
-        N = filterVolume[abs(filterVolume) < 1].sum()
+        n = filter_volume[abs(filter_volume) < 1].sum()
 
         # add to number of total voxels
-        numberVoxels = numberVoxels + N
+        n_voxels = n_voxels + n
 
         cc2 = r[0].copy()
 
@@ -398,11 +398,11 @@ def weightedXCF(volume, reference, number_of_bands, wedge_angle=-1):
         ccdiv = ccdiv**3
 
         # abs(ccdiv); as suggested by grigorief
-        ccdiv *= N
+        ccdiv *= n
 
         result = result + ccdiv
 
-    result *= 1 / float(numberVoxels)
+    result *= 1 / float(n_voxels)
 
     return result
 
