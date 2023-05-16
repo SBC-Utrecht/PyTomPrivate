@@ -554,9 +554,9 @@ def FSCSum(volume,reference,number_of_bands,wedge_angle=-1):
     
     return result*(1/float(number_of_bands))
 
-def bandCF(volume,reference,band=[0,100]):
+def band_cf(volume,reference,band=[0,100]):
     """
-    bandCF:
+    band_cf:
     @param volume: The volume
     @param reference: The reference
     @param band: [a,b] - specify the lower and upper end of band. [0,1] if not set.
@@ -618,7 +618,7 @@ def weighted_xcf(volume,reference,number_of_bands,wedge_angle=-1):
     @author: Thomas Hrabe 
     @todo: does not work yet -> test is disabled
     """
-    from pytom.basic.correlation import bandCF
+    from pytom.basic.correlation import band_cf
     import pytom.lib.pytom_volume as pytom_volume
     from math import sqrt
     import pytom.lib.pytom_freqweight as pytom_freqweight
@@ -648,7 +648,7 @@ def weighted_xcf(volume,reference,number_of_bands,wedge_angle=-1):
         band[0] = i*volume.sizeX()/number_of_bands 
         band[1] = (i+1)*volume.sizeX()/number_of_bands
         
-        r = bandCF(volume,reference,band)
+        r = band_cf(volume,reference,band)
         
         cc = r[0]
                 
