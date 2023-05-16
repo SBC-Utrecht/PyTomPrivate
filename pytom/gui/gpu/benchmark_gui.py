@@ -279,8 +279,8 @@ if __name__=='__main__':
         start, end = 0, csize
 
 
-    wedgeAngle = 30
-    wedgeFilter = weight(wedgeAngle,0,end-start, size, size)
+    wedge_angle = 30
+    wedgeFilter = weight(wedge_angle,0,end-start, size, size)
     wedgeVolume = wedgeFilter.getWeightVolume(True)
 
     filterVolume = pytom_volume.reducedToFull(wedgeVolume)

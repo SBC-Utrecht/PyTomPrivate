@@ -261,7 +261,7 @@ def norm_xcf(volume, template, mask=None, std_v=None, gpu=False):
     return result
 
 
-def weighted_xcc(volume, reference, number_of_bands, wedgeAngle=-1):
+def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
     """
     weighted_xcc: Determines the band weighted correlation coefficient for a volume and reference.
                  Notation according Steward/Grigorieff paper
@@ -270,7 +270,7 @@ def weighted_xcc(volume, reference, number_of_bands, wedgeAngle=-1):
     @param reference: A reference of same size as volume
     @type reference: L{xp.ndarray}
     @param number_of_bands: Number of bands
-    @param wedgeAngle: A optional wedge angle
+    @param wedge_angle: A optional wedge angle
     @return: The weighted correlation coefficient
     @rtype: float
     @author: Thomas Hrabe
@@ -282,7 +282,7 @@ def weighted_xcc(volume, reference, number_of_bands, wedgeAngle=-1):
     result = 0
     numberVoxels = 0
 
-    wedge = WedgeInfo(wedgeAngle)
+    wedge = WedgeInfo(wedge_angle)
     wedgeVolume = wedge.returnWedgeVolume(
         volume.shape[0], volume.shape[1], volume.shape[2]
     )
@@ -333,13 +333,13 @@ def weighted_xcc(volume, reference, number_of_bands, wedgeAngle=-1):
     return result * (1 / float(numberVoxels))
 
 
-def weightedXCF(volume, reference, number_of_bands, wedgeAngle=-1):
+def weightedXCF(volume, reference, number_of_bands, wedge_angle=-1):
     """
     weightedXCF: Determines the weighted correlation function for volume and reference
     @param volume: A volume
     @param reference: A reference
     @param number_of_bands:Number of bands
-    @param wedgeAngle: A optional wedge angle
+    @param wedge_angle: A optional wedge angle
     @return: The weighted correlation function
     @rtype: L{pytom.lib.pytom_volume.vol}
     @author: Thomas Hrabe
@@ -352,9 +352,9 @@ def weightedXCF(volume, reference, number_of_bands, wedgeAngle=-1):
     result = xp.zeros_like(volume)
 
 
-    if wedgeAngle >= 0:
+    if wedge_angle >= 0:
         wedgeFilter = pytom_freqweight.weight(
-            wedgeAngle, 0, volume.sizeX(), volume.sizeY(), volume.sizeZ()
+            wedge_angle, 0, volume.sizeX(), volume.sizeY(), volume.sizeZ()
         )
         wedgeVolume = wedgeFilter.getWeightVolume(True)
     else:
@@ -672,7 +672,7 @@ def FSC(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=N
     return fscResult
 
 
-def FSCSum(volume, reference, number_of_bands, wedgeAngle=-1):
+def FSCSum(volume, reference, number_of_bands, wedge_angle=-1):
     """
     FSCSum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and
             reference.
@@ -681,7 +681,7 @@ def FSCSum(volume, reference, number_of_bands, wedgeAngle=-1):
     @param reference: A reference of same size as volume
     @type reference: L{xp.ndarray}
     @param number_of_bands: Number of bands
-    @param wedgeAngle: A optional wedge angle
+    @param wedge_angle: A optional wedge angle
     @return: The sum FSC coefficient
     @rtype: float
     @author: Thomas Hrabe

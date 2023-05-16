@@ -48,7 +48,7 @@ if __name__ == '__main__':
                  ScriptOption2(['-t', '--template'], 'Filename of template', 'file', 'optional'),
                  ScriptOption2(['-m', '--mask'], 'Filename of mask', 'file', 'optional'),
                  ScriptOption2(['-a', '--angles'], 'Filename of angle file defining the sampling', 'file', 'optional'),
-                 ScriptOption2(['-w', '--wedgeAngles'], 'Missing wedge angles', 'float,float', 'optional',[30.,30.]),
+                 ScriptOption2(['-w', '--wedge_angles'], 'Missing wedge angles', 'float,float', 'optional',[30.,30.]),
                  ScriptOption2(['-s', '--scoreFunction'], 'Scoring function used', 'string', 'optional', 'FLCF'),
                  ScriptOption2(['-g', '--gpuID'], 'Index of used GPU', 'int', 'optional'),
                  ScriptOption2(['--startEndXYZ'], 'Region of interest in all dims. [startX, startY, startZ, endX, endY, endZ]', 'int,int,int,int,int,int', 'optional', [0,0,0,0,0,0]),

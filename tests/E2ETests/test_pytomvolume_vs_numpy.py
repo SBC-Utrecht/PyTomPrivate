@@ -49,7 +49,7 @@ class NumericalTest(unittest.TestCase):
     def wedgePyTomVol(self):
         from pytom.basic.structures import Wedge
         from pytom.lib.pytom_numpy import vol2npy
-        w = Wedge(wedgeAngles=self.wedge_angles, cutoffRadius=self.cutoff)
+        w = Wedge(wedge_angles=self.wedge_angles, cutoffRadius=self.cutoff)
         wedge = w.returnWedgeVolume(*self.dims)
         wedge_np = vol2npy(wedge).copy()
         return wedge_np.astype(np.float32)

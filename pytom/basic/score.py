@@ -521,7 +521,7 @@ def wXCFWrapper(self,volume,reference,mask=None):
     if self.getNumberOfBands() == 0:
         raise RuntimeError('RScore: Number of bands is Zero! Abort.')
     
-    return weightedXCF(volume,reference,self.bands,self.wedgeAngle)
+    return weightedXCF(volume,reference,self.bands,self.wedge_angle)
 
 class RScore(Score):
     """
@@ -536,7 +536,7 @@ class RScore(Score):
         self.ctor(norm_xcf,weighted_xcc,Vol_G_Val)
         self._type = 'RScore'
         self._number_of_bands=0
-        self._wedgeAngle =-1
+        self._wedge_angle =-1
 
         if value:
             self.setValue(value)
@@ -550,19 +550,19 @@ class RScore(Score):
         return self._number_of_bands
     
     def getWedgeAngle(self):
-        return self._wedgeAngle
+        return self._wedge_angle
     
     
     
-    def initAttributes(self,number_of_bands=10,wedgeAngle=-1):
+    def initAttributes(self,number_of_bands=10,wedge_angle=-1):
         """
         initBands: Must be called prior to the scoring. Initializes the bands used for wxcf.
         @param number_of_bands:   
-        @param wedgeAngle: 
+        @param wedge_angle: 
         @author: Thomas Hrabe
         """
         self._number_of_bands = number_of_bands
-        self._wedgeAngle = wedgeAngle
+        self._wedge_angle = wedge_angle
         
     def toXML(self,value=-10000000):
         """
@@ -574,7 +574,7 @@ class RScore(Score):
         score_element = etree.Element("Score",Type=self._type,Value = str(self.scoreValue))
         
         score_element.set('NumberBands',str(self._number_of_bands))
-        score_element.set('WedgeAngle',str(self._wedgeAngle))
+        score_element.set('WedgeAngle',str(self._wedge_angle))
         
         return score_element
 
@@ -586,7 +586,7 @@ def FSCWrapper(self,volume,reference):
         from pytom.basic.exceptions import ParameterError
         raise ParameterError('Bands attribute is empty. Abort.')
         
-    return FSCSum(volume,reference,self.bands,self.wedgeAngle)
+    return FSCSum(volume,reference,self.bands,self.wedge_angle)
 
 def FSFWrapper(self,volume,reference):
     from pytom.basic.correlation import weightedXCF
@@ -595,7 +595,7 @@ def FSFWrapper(self,volume,reference):
         from pytom.basic.exceptions import ParameterError
         raise ParameterError('Bands attribute is empty. Abort.')
         
-    return weightedXCF(volume,reference,self.bands,self.wedgeAngle)   
+    return weightedXCF(volume,reference,self.bands,self.wedge_angle)   
 
 
 class FSCScore(Score):
@@ -611,13 +611,13 @@ class FSCScore(Score):
         self.ctor(norm_xcf,self.FSC,Vol_G_Val)
         self._type = 'FSCScore'
         self._number_of_bands = 0
-        self._wedgeAngle = 0
+        self._wedge_angle = 0
         
-    def initAttributes(self,number_of_bands=10,wedgeAngle=-1):
+    def initAttributes(self,number_of_bands=10,wedge_angle=-1):
         """
         initBands: Must be called prior to the scoring. Initialises the bands used for wxcf.
         @param number_of_bands:   
-        @param wedgeAngle: 
+        @param wedge_angle: 
         @author: Thomas Hrabe
         """
         self._number_of_bands = number_of_bands
@@ -626,7 +626,7 @@ class FSCScore(Score):
         for i in range(self._number_of_bands):
             self.bands.append([float(i)/self._number_of_bands*1/2,float(i+1)/self._number_of_bands*1/2])
             
-        self._wedgeAngle = wedgeAngle
+        self._wedge_angle = wedge_angle
         
     def toXML(self,value=-10000000):
         """
@@ -638,7 +638,7 @@ class FSCScore(Score):
         score_element = etree.Element("Score",Type=self._type,Value = str(value))
         
         score_element.set('NumberBands',str(self._number_of_bands))
-        score_element.set('WedgeAngle',str(self._wedgeAngle))
+        score_element.set('WedgeAngle',str(self._wedge_angle))
         
         return score_element
 

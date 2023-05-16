@@ -255,9 +255,9 @@ class GLocalAlignmentPlan():
         # Allocate wedge-related objects
         self.wedge         = wedge
         if wedge._type != 'Wedge3dCTF':
-            self.wedgeAngles = wedge.getWedgeAngle()
+            self.wedge_angles = wedge.getWedgeAngle()
         else:
-            self.wedgeAngles = None
+            self.wedge_angles = None
         wedgePart          = wedge.returnWedgeVolume(*self.volume.shape, humanUnderstandable=True).get()
         self.rotatedWedge  = cp.array(wedgePart, dtype=cp.float32)
         self.wedgePart     = cp.fft.fftshift(wedgePart).astype(cp.float32)
@@ -338,7 +338,7 @@ class GLocalAlignmentPlan():
         del self.wedgePart
         del self.wedgeTex
         del self.rotatedWedge
-        del self.wedgeAngles
+        del self.wedge_angles
 
         del self.referenceTex
         del self.rotatedRef
@@ -608,7 +608,7 @@ class GLocalAlignmentPlan():
         from pytom.voltools import StaticVolume
 
         if wedge._type == 'Wedge3dCTF':
-            self.wedgeAngles = None
+            self.wedge_angles = None
             self.wedge = wedge
             wedgePart = wedge.returnWedgeVolume(*self.volume.shape, humanUnderstandable=True).astype(
                 self.cp.float32).get()
@@ -617,15 +617,15 @@ class GLocalAlignmentPlan():
             self.wedgeTex = StaticVolume(self.rotatedWedge.copy(), device=self.device, interpolation=interpolation)
 
         else:
-            wedgeAngles = wedge.getWedgeAngle()
-            if type(wedgeAngles) == float: wedgeAngles = [wedgeAngles, wedgeAngles]
-            if type(self.wedgeAngles) == float: self.wedgeAngles = [self.wedgeAngles, self.wedgeAngles]
+            wedge_angles = wedge.getWedgeAngle()
+            if type(wedge_angles) == float: wedge_angles = [wedge_angles, wedge_angles]
+            if type(self.wedge_angles) == float: self.wedge_angles = [self.wedge_angles, self.wedge_angles]
 
-            if wedgeAngles[0] == self.wedgeAngles[0] and wedgeAngles[1] == self.wedgeAngles[1]:
+            if wedge_angles[0] == self.wedge_angles[0] and wedge_angles[1] == self.wedge_angles[1]:
                 return
 
             else:
-                self.wedgeAngles  = wedgeAngles
+                self.wedge_angles  = wedge_angles
                 self.wedge        = wedge
                 wedgePart         = wedge.returnWedgeVolume(*self.volume.shape,
                                                             humanUnderstandable=True).astype(self.cp.float32).get()
