@@ -13,7 +13,7 @@ if __name__ == '__main__':
     import sys, os
     from pytom.tools.script_helper import ScriptHelper, ScriptOption
     from pytom.tools.parse_script_options import parse_script_options
-    from pytom.agnostic.correlation import FSC, determineResolution
+    from pytom.agnostic.correlation import FSC, determine_resolution
     from pytom.agnostic.io import read
     
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
@@ -104,9 +104,9 @@ if __name__ == '__main__':
         from pytom.agnostic.io import write
 
         if randomize is None or randomize < 1E-3:
-            r = determineResolution(f, fscCriterion, verbose)
+            r = determine_resolution(f, fscCriterion, verbose)
         else:
-            randomizationFrequency    = np.floor(determineResolution(np.array(f), randomize, verbose)[1])
+            randomizationFrequency    = np.floor(determine_resolution(np.array(f), randomize, verbose)[1])
             oddVolumeRandomizedPhase  = correlation.randomizePhaseBeyondFreq(v1, randomizationFrequency)
             evenVolumeRandomizedPhase = correlation.randomizePhaseBeyondFreq(v2, randomizationFrequency)
             # write(os.path.join(outdir, 'randOdd.mrc'), oddVolumeRandomizedPhase)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
             if verbose:
                 print('FSC_true:\n', fsc_corr)
 
-            r = determineResolution(fsc_corr, fscCriterion, verbose)
+            r = determine_resolution(fsc_corr, fscCriterion, verbose)
             #os.system('rm randOdd.em randEven.em')
 
     elif particleList:
@@ -143,7 +143,7 @@ if __name__ == '__main__':
             pv = p.getVolume()
             numberBands = int(pv.sizeX()/4)
             
-        r = pl.determineResolution(fscCriterion,numberBands,mask,verbose=verbose,plot='',keepHalfsetAverages = True,
+        r = pl.determine_resolution(fscCriterion,numberBands,mask,verbose=verbose,plot='',keepHalfsetAverages = True,
                                    halfsetPrefix=os.path.join(outdir, 'plFSC'), randomize=randomize)
         print(f'Even and odd halfsets were written into {outdir} and stored as plFSCeven / odd .em!')
         

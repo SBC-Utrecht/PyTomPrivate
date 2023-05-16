@@ -711,9 +711,9 @@ def fsc_sum(volume, reference, number_of_bands, wedge_angle=-1):
     return result * (1 / float(number_of_bands))
 
 
-def determineResolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=None):
+def determine_resolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=None):
     """
-    determineResolution: Determines frequency and band where correlation drops below the
+    determine_resolution: Determines frequency and band where correlation drops below the
                          resolutionCriterion. Uses linear interpolation between two positions
     @param fsc: The fsc list determined by L{pytom.basic.correlation.FSC}
     @param resolutionCriterion: A value between 0 and 1

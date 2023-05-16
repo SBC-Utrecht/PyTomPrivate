@@ -757,9 +757,9 @@ def FSC(volume1,volume2,numberBands,mask=None,verbose=False, filename=None):
 
     return fscResult
 
-def determineResolution(fsc,resolutionCriterion,verbose=False):
+def determine_resolution(fsc,resolutionCriterion,verbose=False):
     """
-    determineResolution: Determines frequency and band where correlation drops below the resolutionCriterion. Uses linear interpolation between two positions
+    determine_resolution: Determines frequency and band where correlation drops below the resolutionCriterion. Uses linear interpolation between two positions
     @param fsc: The fsc list determined by L{pytom.basic.correlation.FSC}
     @param resolutionCriterion: A value between 0 and 1
     @return: [resolution,interpolatedBand,numberBands] 

@@ -91,7 +91,7 @@ def multiRef_EXMXAlign(multiRefJob,doFinalize=True,verbose=False):
             for classIterator in range(len(particleLists)):
                 currentParticleList = particleLists[classIterator]
                 if len(currentParticleList) > 1:
-                    [resNyquist,resolutionBand,numberBands] = currentParticleList.determineResolution( criterion= exMaxJob.getFSCCriterion(), numberBands = cubeSize / 2, mask= exMaxJob.getMask(), keepHalfsetAverages = False, halfsetPrefix=iterationDirectory +'resolution/' + 'class'+str(classIterator)+'_fsc-', verbose=verbose )
+                    [resNyquist,resolutionBand,numberBands] = currentParticleList.determine_resolution( criterion= exMaxJob.getFSCCriterion(), numberBands = cubeSize / 2, mask= exMaxJob.getMask(), keepHalfsetAverages = False, halfsetPrefix=iterationDirectory +'resolution/' + 'class'+str(classIterator)+'_fsc-', verbose=verbose )
                 else:
                     continue
                 resolutionAngstrom = bandToAngstrom(resolutionBand,sampleInfo.getPixelSize(),numberBands,1 )
@@ -111,7 +111,7 @@ def multiRef_EXMXAlign(multiRefJob,doFinalize=True,verbose=False):
                 band = minRes
             
             if band == numberBands:   
-                #determineResolution returns numberBands for filter if fsc result is invalid. in that case, use nyquist /2 as filter setting
+                #determine_resolution returns numberBands for filter if fsc result is invalid. in that case, use nyquist /2 as filter setting
                 print('Warning MultiRefAlignment.py: LL 114')
                 print('Warning: Resolution determined for all classes was invalid. Will use Nyquist/2 for current iteration') 
                 band = numberBands / 2

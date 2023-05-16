@@ -854,15 +854,15 @@ class ExMaxManager(PyTomClass):
             msg.setStatus("End")
             pytom_mpi.send(str(msg),i)
     
-    def determineResolution(self,filename,numberShells = None , resolutionCriterion=0.125):
+    def determine_resolution(self,filename,numberShells = None , resolutionCriterion=0.125):
         """
-        determineResolution: determines resolution of current alignment. Sets the L{pytom.alignment.preprocessing} bandpass to current resolution + x.
+        determine_resolution: determines resolution of current alignment. Sets the L{pytom.alignment.preprocessing} bandpass to current resolution + x.
         @param filename: Filenames for FSC 
         @param numberShells: How many shells do we use
         @param resolutionCriterion: 
         @author: Thomas Hrabe
         """
-        from pytom.basic.correlation import FSC,determineResolution
+        from pytom.basic.correlation import FSC,determine_resolution
         from pytom.lib.pytom_volume import read
         from pytom.basic.score import RScore
         self._saveForFSC(self._destination + filename)
@@ -880,7 +880,7 @@ class ExMaxManager(PyTomClass):
         
         fsc = FSC(odd,even,numberShells)
         
-        resolution = determineResolution(fsc,resolutionCriterion)
+        resolution = determine_resolution(fsc,resolutionCriterion)
         
         return resolution
      
@@ -995,7 +995,7 @@ def parallelStart(exMaxJob,verbose,sendFinishMessage = True):
                         print('Determine resolution.')
                     if symmetry.getNFold() == 1:
                         #here we get the current resolution in nyquist / the band  and returns the number of bands used
-                        [resNyquist,resolutionBand,numberBands]  = newParticleList.determineResolution( 
+                        [resNyquist,resolutionBand,numberBands]  = newParticleList.determine_resolution( 
                                                                    criterion=exMaxJob.getFSCCriterion(), numberBands = cubeSize / 2, 
                                                                    mask=exMaxJob.getMask(), keepHalfsetAverages = True, 
                                                                    halfsetPrefix=exMaxJob.getDestination() + 'fsc-'+str(iteration)+'-', 
@@ -1003,7 +1003,7 @@ def parallelStart(exMaxJob,verbose,sendFinishMessage = True):
                     else:
                         if verbose:
                             print('Applying ', symmetry.getNFold(), 'fold symmetry to resolution')
-                        [resNyquist,resolutionBand,numberBands]  = symmetrizedParticleList.determineResolution(
+                        [resNyquist,resolutionBand,numberBands]  = symmetrizedParticleList.determine_resolution(
                                                                    criterion=exMaxJob.getFSCCriterion(), numberBands = cubeSize / 2, 
                                                                    mask=exMaxJob.getMask(), keepHalfsetAverages = True, 
                                                                    halfsetPrefix=exMaxJob.getDestination() + 'fsc-'+str(iteration)+'-', 
@@ -1170,14 +1170,14 @@ def sequentialStart(exMaxJob,verbose,sendFinishMessage = True):
             if verbose:
                 print('Determine resolution.')
             if symmetry.getNFold() == 1:
-                [resNyquist,resolutionBand,numberBands]  = newParticleList.determineResolution(
+                [resNyquist,resolutionBand,numberBands]  = newParticleList.determine_resolution(
                     criterion=exMaxJob.getFSCCriterion(), numberBands=cubeSize/2, mask=exMaxJob.getMask(),
                     keepHalfsetAverages = True, halfsetPrefix=exMaxJob.getDestination() + 'fsc-'+str(iteration)+'-',
                     verbose=verbose )
             else:
                 if verbose:
                     print('Applying ', symmetry.getNFold(), 'fold symmetry to resolution')
-                [resNyquist,resolutionBand,numberBands]  = symmetrizedParticleList.determineResolution(
+                [resNyquist,resolutionBand,numberBands]  = symmetrizedParticleList.determine_resolution(
                     criterion=exMaxJob.getFSCCriterion(), numberBands =cubeSize/2, mask=exMaxJob.getMask(),
                     keepHalfsetAverages=True, halfsetPrefix=exMaxJob.getDestination() + 'fsc-'+str(iteration)+'-',
                     verbose=verbose )

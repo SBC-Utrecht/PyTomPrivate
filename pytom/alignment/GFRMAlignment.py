@@ -455,7 +455,7 @@ class FRMWorker():
     def determine_resolution(self, even, odd, criterion, numberBands, mask, verbose=False):
         """For the master node, determine the resolution.
         """
-        from pytom.basic.correlation import FSC, determineResolution
+        from pytom.basic.correlation import FSC, determine_resolution
         
         if not numberBands:
             numberBands = even.sizeX()/2
@@ -464,7 +464,7 @@ class FRMWorker():
         if verbose:
             print(self.node_name + ': FSC: ' + str(fsc))
         
-        return determineResolution(fsc, criterion, verbose=False)
+        return determine_resolution(fsc, criterion, verbose=False)
     
     def send_job(self, job, dest):
         pytom_mpi.send(str(job), dest)
