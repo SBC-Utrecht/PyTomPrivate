@@ -293,7 +293,7 @@ def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
         band[0] = i
         band[1] = i + increment
 
-        r = bandCC(volume, reference, band)
+        r = band_cc(volume, reference, band)
         cc = r[0]
 
         # print cc;
@@ -465,9 +465,9 @@ def dev(volume, template, mask=None, volume_is_normalized=False):
 # Band correlation
 
 
-def bandCC(volume, reference, band, verbose=False, shared=None, index=None):
+def band_cc(volume, reference, band, verbose=False, shared=None, index=None):
     """
-    bandCC: Determines the normalised correlation coefficient within a band
+    band_cc: Determines the normalised correlation coefficient within a band
     @param volume: The volume
     @type volume: L{xp.ndarray}
     @param reference: The reference
@@ -603,7 +603,7 @@ def FSC(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=N
     @rtype: list[floats]
     """
 
-    from pytom.agnostic.correlation import bandCC
+    from pytom.agnostic.correlation import band_cc
     from pytom.basic.structures import Mask
     from pytom.agnostic.io import read
     from pytom.agnostic.tools import volumesSameSize
@@ -652,7 +652,7 @@ def FSC(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=N
         if verbose:
             print("Band : ", band)
 
-        res = bandCC(fvolume1, fvolume2, band, verbose)
+        res = band_cc(fvolume1, fvolume2, band, verbose)
 
         if i == 0 and increment == 1:
             # force a 1 for correlation of the zero frequency
@@ -687,7 +687,7 @@ def FSCSum(volume, reference, number_of_bands, wedge_angle=-1):
     @author: Thomas Hrabe
     """
 
-    from pytom.agnostic.correlation import bandCC
+    from pytom.agnostic.correlation import band_cc
 
     result = 0
 
@@ -704,7 +704,7 @@ def FSCSum(volume, reference, number_of_bands, wedge_angle=-1):
         band[0] = i * volume.shape[0] / number_of_bands
         band[1] = (i + 1) * volume.shape[0] / number_of_bands
 
-        r = bandCC(fvolume, freference, band)
+        r = band_cc(fvolume, freference, band)
         cc = r[0]
         result = result + cc
 

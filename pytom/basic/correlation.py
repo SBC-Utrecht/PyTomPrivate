@@ -368,9 +368,9 @@ def flcf(volume, template, mask=None, std_v=None, wedge=1):
     return result
 
 
-def bandCC(volume,reference,band,verbose = False):
+def band_cc(volume,reference,band,verbose = False):
     """
-    bandCC: Determines the normalised correlation coefficient within a band
+    band_cc: Determines the normalised correlation coefficient within a band
     @param volume: The volume
     @type volume: L{pytom.lib.pytom_volume.vol}
     @param reference: The reference
@@ -468,7 +468,7 @@ def weighted_xcc(volume,reference,number_of_bands,wedge_angle=-1):
             band[0] = i
             band[1] = i + increment
     
-            r = bandCC(volume,reference,band)
+            r = band_cc(volume,reference,band)
             cc = r[0]
             
             #print cc;
@@ -522,7 +522,7 @@ def FSCSum(volume,reference,number_of_bands,wedge_angle=-1):
     @author: Thomas Hrabe   
     """    
     
-    from pytom.basic.correlation import bandCC
+    from pytom.basic.correlation import band_cc
     import pytom.lib.pytom_volume as pytom_volume
     from pytom.basic.fourier import fft
     from math import sqrt
@@ -546,7 +546,7 @@ def FSCSum(volume,reference,number_of_bands,wedge_angle=-1):
         band[0] = i*volume.sizeX()/number_of_bands 
         band[1] = (i+1)*volume.sizeX()/number_of_bands
         
-        r = bandCC(fvolume,freference,band)
+        r = band_cc(fvolume,freference,band)
         cc = r[0]
         #print cc
         result = result + cc
@@ -699,7 +699,7 @@ def FSC(volume1,volume2,numberBands,mask=None,verbose=False, filename=None):
     @rtype: list[floats]
     """
     
-    from pytom.basic.correlation import bandCC
+    from pytom.basic.correlation import band_cc
     from pytom.tools.macros import volumesSameSize
     from pytom.basic.structures import Mask
     import pytom.lib.pytom_volume as pytom_volume
@@ -738,7 +738,7 @@ def FSC(volume1,volume2,numberBands,mask=None,verbose=False, filename=None):
         if verbose:
             print('Band : ' ,band)
             
-        res = bandCC(volume1,volume2,band,verbose)
+        res = band_cc(volume1,volume2,band,verbose)
         
         if i == 0 and increment == 1:
             #force a 1 for correlation of the zero frequency 
