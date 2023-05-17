@@ -588,16 +588,16 @@ class FRMWorker():
            @param odd: particle list odd
            @type odd: L{pytom.basic.structures.ParticleList}
         """
-        from pytom.basic.correlation import FSC, determine_resolution
+        from pytom.basic.correlation import fsc, determine_resolution
         
         if not numberBands:
             numberBands = even.sizeX()/2
         
-        fsc = FSC(even, odd, numberBands, mask, verbose=False)
+        calc_fsc = fsc(even, odd, numberBands, mask, verbose=False)
         if verbose:
-            print(self.node_name + ': FSC: ' + str(fsc))
+            print(self.node_name + ': FSC: ' + str(calc_fsc))
         
-        return determine_resolution(fsc, criterion, verbose=False)
+        return determine_resolution(calc_fsc, criterion, verbose=False)
     
     def send_job(self, job, dest):
         """

@@ -3057,7 +3057,7 @@ class ParticleList(PyTomClass):
             raise RuntimeError('ParticleList must have at least 2 elements to determine resolution!')
 
         from pytom.agnostic.io import read
-        from pytom.basic.correlation import FSC, determine_resolution
+        from pytom.basic.correlation import fsc, determine_resolution
         import pytom.lib.pytom_mpi as pytom_mpi
         from pytom.lib.pytom_numpy import vol2npy
 
@@ -3106,8 +3106,9 @@ class ParticleList(PyTomClass):
         # oddVolume = vol2npy(oddVolume).copy()
         # evenVolume = vol2npy(evenVolume).copy()
 
-        fsc = FSC(oddVolume, evenVolume, numberBands, mask, verbose)
-
+        calc_fsc = fsc(oddVolume, evenVolume, numberBands, mask, verbose)
+        #TODO: After this the variable f seems to appear (maybe original name of (calc_)fsc)
+        #      This should always have errored out, is this dead code?
         if randomize is None:
             for (ii, fscel) in enumerate(f):
                 f[ii] = 2. * fscel / (1. + fscel)
@@ -3120,7 +3121,7 @@ class ParticleList(PyTomClass):
             write('randEven.mrc', evenVolumeRandomizedPhase)
             oddVolumeRandomizedPhase = read('randOdd.mrc')
             evenVolumeRandomizedPhase = read('randEven.mrc')
-            fsc2 = FSC(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
+            fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
             fsc_true = list(correlation.calc_FSC_true(np.array(f), np.array(fsc2)))
             for (ii, fscel) in enumerate(fsc_true):
                 fsc_true[ii] = 2. * fscel / (1. + fscel)
@@ -3129,17 +3130,17 @@ class ParticleList(PyTomClass):
 
         # oddVolumeRandomizedPhase = randomizePhaseBeyondFreq(oddVolume, randomizationFrequency)
         # evenVolumeRandomizedPhase = randomizePhaseBeyondFreq(oddVolume, randomizationFrequency)
-        # fsc2 = FSC(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
+        # fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
         if verbose:
             print('FSC list:')
-            print(fsc)
+            print(calc_fsc)
             print('FSC_Random:\n', fsc2)
             print('FSC_true:\n', fsc_true)
 
         if not plot == '':
             try:
                 from pytom.plotting.plot import plotFSC
-                plotFSC(fsc, plot)
+                plotFSC(calc_fsc, plot)
             except:
                 pass
 

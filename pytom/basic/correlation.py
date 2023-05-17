@@ -682,7 +682,7 @@ def weighted_xcf(volume,reference,number_of_bands,wedge_angle=-1):
     
     return result
 
-def FSC(volume1,volume2,numberBands,mask=None,verbose=False, filename=None):
+def fsc(volume1,volume2,numberBands,mask=None,verbose=False, filename=None):
     """
     FSC - Calculates the Fourier Shell Correlation for two volumes
     @param volume1: volume one

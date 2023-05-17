@@ -862,7 +862,7 @@ class ExMaxManager(PyTomClass):
         @param resolutionCriterion: 
         @author: Thomas Hrabe
         """
-        from pytom.basic.correlation import FSC,determine_resolution
+        from pytom.basic.correlation import fsc, determine_resolution
         from pytom.lib.pytom_volume import read
         from pytom.basic.score import RScore
         self._saveForFSC(self._destination + filename)
@@ -878,9 +878,9 @@ class ExMaxManager(PyTomClass):
             numberShells = int(odd.sizeX())
             """@ivar numberShells: max. number of shells"""
         
-        fsc = FSC(odd,even,numberShells)
+        calc_fsc = fsc(odd,even,numberShells)
         
-        resolution = determine_resolution(fsc,resolutionCriterion)
+        resolution = determine_resolution(calc_fsc,resolutionCriterion)
         
         return resolution
      

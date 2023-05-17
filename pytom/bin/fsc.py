@@ -13,7 +13,7 @@ if __name__ == '__main__':
     import sys, os
     from pytom.tools.script_helper import ScriptHelper, ScriptOption
     from pytom.tools.parse_script_options import parse_script_options
-    from pytom.agnostic.correlation import FSC, determine_resolution
+    from pytom.agnostic.correlation import fsc, determine_resolution
     from pytom.agnostic.io import read
     
     helper = ScriptHelper(sys.argv[0].split('/')[-1], # script name
@@ -90,7 +90,7 @@ if __name__ == '__main__':
         if not numberBands:
             numberBands = int(v1.shape[0]//2)
         
-        f = FSC(v1,v2,numberBands,mask,verbose)
+        f = fsc(v1,v2,numberBands,mask,verbose)
 
         if combined_resolution:
             for (ii, fscel) in enumerate(f):
@@ -113,7 +113,7 @@ if __name__ == '__main__':
             # write(os.path.join(outdir, 'randEven.mrc'), evenVolumeRandomizedPhase)
             # oddVolumeRandomizedPhase = read(os.path.join(outdir, 'randOdd.mrc'))
             # evenVolumeRandomizedPhase = read(os.path.join(outdir, 'randEven.mrc'))
-            fsc_rand = FSC(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
+            fsc_rand = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
 
             if combined_resolution:
                 for (ii, fscel) in enumerate(fsc_rand):

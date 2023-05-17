@@ -599,7 +599,7 @@ def average2(particleList, weighting=False, norm=False, determine_resolution=Fal
             progressBar.update(numberAlignedParticles)
 
     # determine resolution if needed
-    fsc = None
+    calc_fsc = None
     if determine_resolution:
         # apply spectral weighting to sum
         f_even = fft(even)
@@ -612,8 +612,8 @@ def average2(particleList, weighting=False, norm=False, determine_resolution=Fal
         w_odd = ifft(w_odd)        
         w_odd.shiftscale(0.0,1/float(sizeX*sizeY*sizeZ))
         
-        from pytom.basic.correlation import FSC
-        fsc = FSC(w_even, w_odd, sizeX/2, mask, verbose=False)
+        from pytom.basic.correlation import fsc
+        calc_fsc = fsc(w_even, w_odd, sizeX/2, mask, verbose=False)
     
     # add together
     result = even+odd
@@ -625,7 +625,7 @@ def average2(particleList, weighting=False, norm=False, determine_resolution=Fal
     # do a low pass filter
     #result = lowpassFilter(result, sizeX/2-2, (sizeX/2-1)/10.)[0]
     
-    return (result, fsc)
+    return (result, calc_fsc)
 
 
 def alignTwoVolumes(particle,reference,angleObject,mask,score,preprocessing,progressBar=False):

@@ -3051,7 +3051,7 @@ class ParticleList(PyTomClass):
             raise RuntimeError('ParticleList must have at least 2 elements to determine resolution!')
     
         from pytom.lib.pytom_volume import read
-        from pytom.basic.correlation import FSC, determine_resolution
+        from pytom.basic.correlation import fsc, determine_resolution
         import pytom.lib.pytom_mpi as pytom_mpi
         from pytom.lib.pytom_numpy import vol2npy
 
@@ -3100,26 +3100,26 @@ class ParticleList(PyTomClass):
         #oddVolume = vol2npy(oddVolume).copy()
         #evenVolume = vol2npy(evenVolume).copy()
 
-        fsc = FSC(oddVolume, evenVolume, numberBands, mask, verbose)
+        calc_fsc = fsc(oddVolume, evenVolume, numberBands, mask, verbose)
 
         if randomize is None:
             if combinedResolution:
-                for (ii, fscel) in enumerate(fsc):
-                    fsc[ii] = 2.*fscel/(1.+fscel)
-            r = determine_resolution(fsc, criterion, verbose)
+                for (ii, fscel) in enumerate(calc_fsc):
+                    calc_fsc[ii] = 2.*fscel/(1.+fscel)
+            r = determine_resolution(calc_fsc, criterion, verbose)
         else:
             import numpy as np
             from pytom.agnostic.io import write
             from pytom.agnostic.correlation import randomizePhaseBeyondFreq, calc_FSC_true
-            randomizationFrequency    = np.floor(determine_resolution(fsc, float(randomize), verbose)[1])
+            randomizationFrequency    = np.floor(determine_resolution(calc_fsc, float(randomize), verbose)[1])
             oddVolumeRandomizedPhase  = randomizePhaseBeyondFreq(vol2npy(oddVolume), randomizationFrequency)
             evenVolumeRandomizedPhase = randomizePhaseBeyondFreq(vol2npy(evenVolume), randomizationFrequency)
             write('randOdd.mrc', oddVolumeRandomizedPhase)
             write('randEven.mrc', evenVolumeRandomizedPhase)
             oddVolumeRandomizedPhase = read('randOdd.mrc')
             evenVolumeRandomizedPhase = read('randEven.mrc')
-            fsc2 = FSC(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
-            fsc_true = list(calc_FSC_true(np.array(fsc), np.array(fsc2)))
+            calc_fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
+            fsc_true = list(calc_FSC_true(np.array(calc_fsc), np.array(calc_fsc2)))
             if combinedResolution:
                 for (ii, fscel) in enumerate(fsc_true):
                     fsc_true[ii] = 2.*fscel/(1.+fscel)
@@ -3128,19 +3128,19 @@ class ParticleList(PyTomClass):
 
         #oddVolumeRandomizedPhase = randomizePhaseBeyondFreq(oddVolume, randomizationFrequency)
         #evenVolumeRandomizedPhase = randomizePhaseBeyondFreq(oddVolume, randomizationFrequency)
-        #fsc2 = FSC(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
+        #calc_fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
         if verbose:
             print('FSC list:')
-            print(fsc)
+            print(calc_fsc)
             try:
-                print('FSC_Random:\n', fsc2)
+                print('FSC_Random:\n', calc_fsc2)
                 print('FSC_true:\n', fsc_true)
             except:
                 pass
         if not plot == '':
             try:
                 from pytom.basic.plot import plotFSC
-                plotFSC(fsc, plot)
+                plotFSC(calc_fsc, plot)
             except:
                 pass
         

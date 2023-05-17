@@ -582,7 +582,7 @@ def band_cf(volume, reference, band=[0, 100]):
 # Fourier Shell Correlation and helper functions
 
 
-def FSC(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=None):
+def fsc(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=None):
     """
     FSC - Calculates the Fourier Shell Correlation for two volumes
     @param volume1: volume one
