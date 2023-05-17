@@ -3110,7 +3110,7 @@ class ParticleList(PyTomClass):
         else:
             import numpy as np
             from pytom.agnostic.io import write
-            from pytom.agnostic.correlation import randomizePhaseBeyondFreq, calc_FSC_true
+            from pytom.agnostic.correlation import randomizePhaseBeyondFreq, calc_fsc_true
             randomizationFrequency    = np.floor(determine_resolution(calc_fsc, float(randomize), verbose)[1])
             oddVolumeRandomizedPhase  = randomizePhaseBeyondFreq(vol2npy(oddVolume), randomizationFrequency)
             evenVolumeRandomizedPhase = randomizePhaseBeyondFreq(vol2npy(evenVolume), randomizationFrequency)
@@ -3119,7 +3119,7 @@ class ParticleList(PyTomClass):
             oddVolumeRandomizedPhase = read('randOdd.mrc')
             evenVolumeRandomizedPhase = read('randEven.mrc')
             calc_fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
-            fsc_true = list(calc_FSC_true(np.array(calc_fsc), np.array(calc_fsc2)))
+            fsc_true = list(calc_fsc_true(np.array(calc_fsc), np.array(calc_fsc2)))
             if combinedResolution:
                 for (ii, fscel) in enumerate(fsc_true):
                     fsc_true[ii] = 2.*fscel/(1.+fscel)

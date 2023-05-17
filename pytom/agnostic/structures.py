@@ -3122,7 +3122,7 @@ class ParticleList(PyTomClass):
             oddVolumeRandomizedPhase = read('randOdd.mrc')
             evenVolumeRandomizedPhase = read('randEven.mrc')
             fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
-            fsc_true = list(correlation.calc_FSC_true(np.array(f), np.array(fsc2)))
+            fsc_true = list(correlation.calc_fsc_true(np.array(f), np.array(fsc2)))
             for (ii, fscel) in enumerate(fsc_true):
                 fsc_true[ii] = 2. * fscel / (1. + fscel)
             r = determine_resolution(fsc_true, fscCriterion, verbose)

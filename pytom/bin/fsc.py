@@ -122,7 +122,7 @@ if __name__ == '__main__':
             if verbose:
 
                 print('FSC_Random:\n', fsc_rand)
-            fsc_corr = list(correlation.calc_FSC_true(np.array(f),np.array(fsc_rand)))
+            fsc_corr = list(correlation.calc_fsc_true(np.array(f),np.array(fsc_rand)))
             if verbose:
                 print('FSC_true:\n', fsc_corr)
 

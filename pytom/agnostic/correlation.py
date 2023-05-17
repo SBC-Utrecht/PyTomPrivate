@@ -781,7 +781,7 @@ def determine_resolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=
     return [resolution, interpolatedBand, numberBands]
 
 
-def calc_FSC_true(FSC_t, FSC_n, ring_thickness=1):
+def calc_fsc_true(FSC_t, FSC_n, ring_thickness=1):
     """Calculates the true FSC as defined in Henderson
     @param FSC_t: array with FSC values without randomized phases.
     @type FSC_t: ndarray
