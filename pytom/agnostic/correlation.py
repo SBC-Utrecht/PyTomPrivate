@@ -979,7 +979,9 @@ def sub_pixel_peak(
     @type interpolation: str
     @return: Returns [peak_value,peak_coordinates] with sub pixel accuracy
 
-    last change: 02/07/2013 FF: 2D functionality added
+    change log: 
+    - 02/07/2013 FF: 2D functionality added
+    - 17/05/2023 SR: removed broken 2D functionality
     """
     assert type(interpolation) == str, "sub_pixel_peak: interpolation must be str"
     if (interpolation.lower() == "quadratic") or (interpolation.lower() == "parabolic"):
@@ -991,59 +993,35 @@ def sub_pixel_peak(
     from pytom.lib.pytom_volume import vol, subvolume, rescaleSpline, peak
     from pytom.basic.transformations import resize
 
-    # extend function for 2D
-    twoD = (score_volume.shape) == 2
-
     cubeStart = cube_length // 2
+    # This fails for 2D
     size_x, size_y, size_z = score_volume.shape
 
-    if twoD:
-        if (coordinates[0] - cubeStart < 1 or coordinates[1] - cubeStart < 1) or (
-            coordinates[0] - cubeStart + cube_length >= size_x
-            or coordinates[1] - cubeStart + cube_length >= size_y
-        ):
-            if verbose:
-                print("SubPixelPeak: position too close to border for sub-pixel")
-            return [
-                score_volume(coordinates[0], coordinates[1], coordinates[2]),
-                coordinates,
-            ]
-
-        subVolume = subvolume(
-            score_volume,
-            coordinates[0] - cubeStart,
-            coordinates[1] - cubeStart,
-            0,
-            cube_length,
-            cube_length,
-            1,
+    if any((
+        coordinates[0] - cubeStart < 1,
+        coordinates[1] - cubeStart < 1,
+        coordinates[2] - cubeStart < 1,
+        coordinates[0] - cubeStart + cube_length >= size_x,
+        coordinates[1] - cubeStart + cube_length >= size_y,
+        coordinates[2] - cubeStart + cube_length >= size_z,
         )
-    else:
-        if (
-            coordinates[0] - cubeStart < 1
-            or coordinates[1] - cubeStart < 1
-            or coordinates[2] - cubeStart < 1
-        ) or (
-            coordinates[0] - cubeStart + cube_length >= size_x
-            or coordinates[1] - cubeStart + cube_length >= size_y
-            or coordinates[2] - cubeStart + cube_length >= size_z
-        ):
-            if verbose:
-                print("SubPixelPeak: position too close to border for sub-pixel")
-            return [
-                score_volume(coordinates[0], coordinates[1], coordinates[2]),
-                coordinates,
-            ]
+    ):
+        if verbose:
+            print("SubPixelPeak: position too close to border for sub-pixel")
+        return [
+            score_volume(coordinates[0], coordinates[1], coordinates[2]),
+            coordinates,
+        ]
 
-        subVolume = subvolume(
-            score_volume,
-            coordinates[0] - cubeStart,
-            coordinates[1] - cubeStart,
-            coordinates[2] - cubeStart,
-            cube_length,
-            cube_length,
-            cube_length,
-        )
+    subVolume = subvolume(
+        score_volume,
+        coordinates[0] - cubeStart,
+        coordinates[1] - cubeStart,
+        coordinates[2] - cubeStart,
+        cube_length,
+        cube_length,
+        cube_length,
+    )
 
     # size of interpolated volume
     scaleSize = 10 * cube_length
@@ -1053,10 +1031,7 @@ def sub_pixel_peak(
 
     # resize into bigger volume
     if interpolation == "Spline":
-        if twoD:
-            subVolumeScaled = vol(scaleSize, scaleSize, 1)
-        else:
-            subVolumeScaled = vol(scaleSize, scaleSize, scaleSize)
+        subVolumeScaled = vol(scaleSize, scaleSize, scaleSize)
         rescaleSpline(subVolume, subVolumeScaled)
     else:
         subVolumeScaled = resize(volume=subVolume, factor=10)[0]
@@ -1070,16 +1045,12 @@ def sub_pixel_peak(
     # calculate sub pixel coordinates of interpolated peak
     peak_coordinates[0] = peak_coordinates[0] * scaleRatio - cubeStart + coordinates[0]
     peak_coordinates[1] = peak_coordinates[1] * scaleRatio - cubeStart + coordinates[1]
-    if twoD:
-        peak_coordinates[2] = 0
-    else:
-        peak_coordinates[2] = (
-            peak_coordinates[2] * scaleRatio - cubeStart + coordinates[2]
+    peak_coordinates[2] = peak_coordinates[2] * scaleRatio - cubeStart + coordinates[2]
+    if any((
+        peak_coordinates[0] > score_volume.sizeX(),
+        peak_coordinates[1] > score_volume.sizeY(),
+        peak_coordinates[2] > score_volume.sizeZ(),
         )
-    if (
-        peak_coordinates[0] > score_volume.sizeX()
-        or peak_coordinates[1] > score_volume.sizeY()
-        or peak_coordinates[2] > score_volume.sizeZ()
     ):
         if verbose:
             print("SubPixelPeak: peak position too large :( return input value")
@@ -1088,7 +1059,6 @@ def sub_pixel_peak(
             score_volume(coordinates[0], coordinates[1], coordinates[2]),
             coordinates,
         ]
-
     return [peak_value, peak_coordinates]
 
 
