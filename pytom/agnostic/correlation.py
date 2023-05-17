@@ -711,12 +711,12 @@ def fsc_sum(volume, reference, number_of_bands, wedge_angle=-1):
     return result * (1 / float(number_of_bands))
 
 
-def determine_resolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=None):
+def determine_resolution(fsc, resolution_criterion, verbose=False, randomizedFSC=None):
     """
     determine_resolution: Determines frequency and band where correlation drops below the
-                         resolutionCriterion. Uses linear interpolation between two positions
+                         resolution_criterion. Uses linear interpolation between two positions
     @param fsc: The fsc list determined by L{pytom.basic.correlation.FSC}
-    @param resolutionCriterion: A value between 0 and 1
+    @param resolution_criterion: A value between 0 and 1
     @param verbose: Bool that activate writing of info, default=False
     @param randomizedFSC: A value that sets the start of the calculation of randomized FSC. (0-1).
     @return: [resolution,interpolatedBand,number_bands]
@@ -733,7 +733,7 @@ def determine_resolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=
         randomizedFSC = xp.ones_like(fsc) * (fsc.min() - 0.1)
 
     for i in range(number_bands):
-        if fsc[i] < resolutionCriterion and fsc[i] > randomizedFSC[i]:
+        if fsc[i] < resolution_criterion and fsc[i] > randomizedFSC[i]:
             band = i - 1  # select the band that is still larger than criterion
             break
 
@@ -755,7 +755,7 @@ def determine_resolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=
                 interpolatedBand = (fsc1 - rfsc1) / (rfsc2 - rfsc1 + fsc1 - fsc2)
                 pass
             else:
-                interpolatedBand = (resolutionCriterion - fsc1) / (fsc2 - fsc1) + band
+                interpolatedBand = (resolution_criterion - fsc1) / (fsc2 - fsc1) + band
 
         except ZeroDivisionError:
             interpolatedBand = band

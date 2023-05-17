@@ -854,12 +854,12 @@ class ExMaxManager(PyTomClass):
             msg.setStatus("End")
             pytom_mpi.send(str(msg),i)
     
-    def determine_resolution(self,filename,numberShells = None , resolutionCriterion=0.125):
+    def determine_resolution(self,filename,numberShells = None , resolution_criterion=0.125):
         """
         determine_resolution: determines resolution of current alignment. Sets the L{pytom.alignment.preprocessing} bandpass to current resolution + x.
         @param filename: Filenames for FSC 
         @param numberShells: How many shells do we use
-        @param resolutionCriterion: 
+        @param resolution_criterion: 
         @author: Thomas Hrabe
         """
         from pytom.basic.correlation import fsc, determine_resolution
@@ -880,7 +880,7 @@ class ExMaxManager(PyTomClass):
         
         calc_fsc = fsc(odd,even,numberShells)
         
-        resolution = determine_resolution(calc_fsc,resolutionCriterion)
+        resolution = determine_resolution(calc_fsc,resolution_criterion)
         
         return resolution
      
