@@ -869,20 +869,20 @@ def randomize_phase_beyond_freq(volume, frequency):
     #TODO: why does 2D have the extra terms "+ dx %2" and "+ dy %2" and casting to int?
     if dims == 2:
         dx, dy = volume.shape
-        X, Y = xp.meshgrid(
+        x, y = xp.meshgrid(
             xp.arange(-dx // 2, dx // 2 + dx % 2), xp.arange(-dy // 2, dy // 2 + dy % 2)
         )
-        RF = xp.sqrt(X**2 + Y**2).astype(int)
-        R = xp.fft.fftshift(RF)[:, : dy // 2 + 1]
+        rf = xp.sqrt(x**2 + y**2).astype(int)
+        r = xp.fft.fftshift(rf)[:, : dy // 2 + 1]
     else:
         dx, dy, dz = volume.shape
-        X, Y, Z = xp.meshgrid(
+        x, y, z = xp.meshgrid(
             xp.arange(-dx // 2, dx // 2),
             xp.arange(-dy // 2, dy // 2),
             xp.arange(-dz // 2, dz // 2),
         )
-        RF = xp.sqrt(X**2 + Y**2 + Z**2)  # .astype(int)
-        R = xp.fft.fftshift(RF)[:, :, : dz // 2 + 1]
+        rf = xp.sqrt(x**2 + y**2 + z**2)  # .astype(int)
+        r = xp.fft.fftshift(rf)[:, :, : dz // 2 + 1]
         # centralslice = fftshift(rnda[:,:,0])
         # cc = dx//2
         # ccc= (dx-1)//2
@@ -890,8 +890,8 @@ def randomize_phase_beyond_freq(volume, frequency):
         # centralslice[cc-ccc:cc,cc-ccc:] = rot90(centralslice[-ccc:,cc-ccc:],2)*-1
         # rnda[:,:,0] = fftshift(centralslice)
 
-    rnda[R <= frequency] = 0
-    phase[R > frequency] = 0
+    rnda[r <= frequency] = 0
+    phase[r > frequency] = 0
     phase += rnda
     image = xp.fft.irfftn((amplitude * xp.exp(1j * phase)), s=volume.shape)
 
@@ -913,7 +913,7 @@ def sub_pixel_peak_parabolic(score_volume, coordinates, verbose=False):
     @param coordinates: (x,y,z) coordinates as tuple (!) where the sub pixel peak will be determined
     @param verbose: be talkative
     @type verbose: bool
-    @return: Returns [peakValue,peakCoordinates] with sub pixel accuracy
+    @return: Returns [peak_value,peak_coordinates] with sub pixel accuracy
     @rtype: float, tuple
     """
 
@@ -922,7 +922,7 @@ def sub_pixel_peak_parabolic(score_volume, coordinates, verbose=False):
             print("sub_pixel_peak_parabolic: peak near borders - no interpolation done")
         return [score_volume[coordinates], coordinates]
 
-    peakCoordinates = coordinates
+    peak_coordinates = coordinates
     l = len(coordinates)
     (x, a1, b1) = qint(
         ym1=score_volume[tuple(xp.array(coordinates) - xp.array([1, 0, 0][:l]))],
@@ -940,10 +940,10 @@ def sub_pixel_peak_parabolic(score_volume, coordinates, verbose=False):
             y0=score_volume[coordinates],
             yp1=score_volume[tuple(xp.array(coordinates) + xp.array([0, 0, 1]))],
         )
-        peakCoordinates[0] += x
-        peakCoordinates[1] += y
-        peakCoordinates[2] += z
-        peakValue = (
+        peak_coordinates[0] += x
+        peak_coordinates[1] += y
+        peak_coordinates[2] += z
+        peak_value = (
             score_volume[coordinates]
             + a1 * x**2
             + b1 * x
@@ -953,13 +953,13 @@ def sub_pixel_peak_parabolic(score_volume, coordinates, verbose=False):
             + b3 * z
         )
     else:
-        peakCoordinates[0] += x
-        peakCoordinates[1] += y
-        peakValue = (
+        peak_coordinates[0] += x
+        peak_coordinates[1] += y
+        peak_value = (
             score_volume[coordinates] + a1 * x**2 + b1 * x + a2 * y**2 + b2 * y
         )
     # return coordinates as tuple for indexing
-    return [peakValue, tuple(peakCoordinates)]
+    return [peak_value, tuple(peak_coordinates)]
 
 
 def sub_pixel_peak(
@@ -977,16 +977,16 @@ def sub_pixel_peak(
     @type cube_length: int (even)
     @param interpolation: interpolation type: 'Spline', 'Quadratic', or 'Fourier'
     @type interpolation: str
-    @return: Returns [peakValue,peakCoordinates] with sub pixel accuracy
+    @return: Returns [peak_value,peak_coordinates] with sub pixel accuracy
 
     last change: 02/07/2013 FF: 2D functionality added
     """
     assert type(interpolation) == str, "sub_pixel_peak: interpolation must be str"
     if (interpolation.lower() == "quadratic") or (interpolation.lower() == "parabolic"):
-        (peakValue, peakCoordinates) = sub_pixel_peak_parabolic(
+        (peak_value, peak_coordinates) = sub_pixel_peak_parabolic(
             score_volume=score_volume, coordinates=coordinates, verbose=verbose
         )
-        return [peakValue, peakCoordinates]
+        return [peak_value, peak_coordinates]
 
     from pytom.lib.pytom_volume import vol, subvolume, rescaleSpline, peak
     from pytom.basic.transformations import resize
@@ -995,12 +995,12 @@ def sub_pixel_peak(
     twoD = (score_volume.shape) == 2
 
     cubeStart = cube_length // 2
-    sizeX, sizeY, sizeZ = score_volume.shape
+    size_x, size_y, size_z = score_volume.shape
 
     if twoD:
         if (coordinates[0] - cubeStart < 1 or coordinates[1] - cubeStart < 1) or (
-            coordinates[0] - cubeStart + cube_length >= sizeX
-            or coordinates[1] - cubeStart + cube_length >= sizeY
+            coordinates[0] - cubeStart + cube_length >= size_x
+            or coordinates[1] - cubeStart + cube_length >= size_y
         ):
             if verbose:
                 print("SubPixelPeak: position too close to border for sub-pixel")
@@ -1024,9 +1024,9 @@ def sub_pixel_peak(
             or coordinates[1] - cubeStart < 1
             or coordinates[2] - cubeStart < 1
         ) or (
-            coordinates[0] - cubeStart + cube_length >= sizeX
-            or coordinates[1] - cubeStart + cube_length >= sizeY
-            or coordinates[2] - cubeStart + cube_length >= sizeZ
+            coordinates[0] - cubeStart + cube_length >= size_x
+            or coordinates[1] - cubeStart + cube_length >= size_y
+            or coordinates[2] - cubeStart + cube_length >= size_z
         ):
             if verbose:
                 print("SubPixelPeak: position too close to border for sub-pixel")
@@ -1061,25 +1061,25 @@ def sub_pixel_peak(
     else:
         subVolumeScaled = resize(volume=subVolume, factor=10)[0]
 
-    peakCoordinates = peak(subVolumeScaled)
+    peak_coordinates = peak(subVolumeScaled)
 
-    peakValue = subVolumeScaled(
-        peakCoordinates[0], peakCoordinates[1], peakCoordinates[2]
+    peak_value = subVolumeScaled(
+        peak_coordinates[0], peak_coordinates[1], peak_coordinates[2]
     )
 
     # calculate sub pixel coordinates of interpolated peak
-    peakCoordinates[0] = peakCoordinates[0] * scaleRatio - cubeStart + coordinates[0]
-    peakCoordinates[1] = peakCoordinates[1] * scaleRatio - cubeStart + coordinates[1]
+    peak_coordinates[0] = peak_coordinates[0] * scaleRatio - cubeStart + coordinates[0]
+    peak_coordinates[1] = peak_coordinates[1] * scaleRatio - cubeStart + coordinates[1]
     if twoD:
-        peakCoordinates[2] = 0
+        peak_coordinates[2] = 0
     else:
-        peakCoordinates[2] = (
-            peakCoordinates[2] * scaleRatio - cubeStart + coordinates[2]
+        peak_coordinates[2] = (
+            peak_coordinates[2] * scaleRatio - cubeStart + coordinates[2]
         )
     if (
-        peakCoordinates[0] > score_volume.sizeX()
-        or peakCoordinates[1] > score_volume.sizeY()
-        or peakCoordinates[2] > score_volume.sizeZ()
+        peak_coordinates[0] > score_volume.sizeX()
+        or peak_coordinates[1] > score_volume.sizeY()
+        or peak_coordinates[2] > score_volume.sizeZ()
     ):
         if verbose:
             print("SubPixelPeak: peak position too large :( return input value")
@@ -1089,7 +1089,7 @@ def sub_pixel_peak(
             coordinates,
         ]
 
-    return [peakValue, peakCoordinates]
+    return [peak_value, peak_coordinates]
 
 
 def sub_pixel_max_3d(
@@ -1178,7 +1178,7 @@ def sub_pixel_max_3d(
     )
     x2, y2, z2 = xp.unravel_index(max_id[fast_sum.argmax()], zoomed.shape)
 
-    peakValue = zoomed[x2][y2][z2]
+    peak_value = zoomed[x2][y2][z2]
     peakShift = [
         x + (x2 - zoomed.shape[0] // 2) * k - volume.shape[0] // 2,
         y + (y2 - zoomed.shape[1] // 2) * k - volume.shape[1] // 2,
@@ -1194,7 +1194,7 @@ def sub_pixel_max_3d(
         t_start = stream.record()
         print()
 
-    return [peakValue, peakShift]
+    return [peak_value, peakShift]
 
 
 def max_index(volume, num_threads=1024):
