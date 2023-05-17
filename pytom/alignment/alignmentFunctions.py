@@ -946,7 +946,7 @@ def bestAlignmentGPU(particle, rotations, plan, preprocessing=None, wedgeInfo=No
         plan.cross_correlation()
 
         # Find sub_pixel_peak
-        # [peakValue, peakShifts] = plan.subPixelMax3D(ignore_border=border, k=0.1, profile=profile)
+        # [peakValue, peakShifts] = plan.sub_pixel_max_3d(ignore_border=border, k=0.1, profile=profile)
         peakValue, peakShifts = plan.subPixelMaxSpline()
         newPeak = Peak(float(peakValue), Rotation(currentRotation), Shift(*peakShifts))
 

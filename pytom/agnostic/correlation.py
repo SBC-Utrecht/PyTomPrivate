@@ -1100,7 +1100,7 @@ def sub_pixel_peak(
     return [peakValue, peakCoordinates]
 
 
-def subPixelMax3D(
+def sub_pixel_max_3d(
     volume,
     k=0.01,
     ignore_border=50,

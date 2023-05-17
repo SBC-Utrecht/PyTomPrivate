@@ -443,7 +443,7 @@ class GLocalAlignmentPlan():
         # return as list
         return peak_value, peak_shift
 
-    def subPixelMax3D(self, ignore_border=1, k=0.1, profile=False, check=True):
+    def sub_pixel_max_3d(self, ignore_border=1, k=0.1, profile=False, check=True):
 
         from pytom.voltools import transform
 
