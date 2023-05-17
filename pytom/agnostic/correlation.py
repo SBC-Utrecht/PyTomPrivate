@@ -351,7 +351,6 @@ def weighted_xcf(volume, reference, number_of_bands, wedge_angle=-1):
 
     result = xp.zeros_like(volume)
 
-
     if wedge_angle >= 0:
         wedge_filter = pytom_freqweight.weight(
             wedge_angle, 0, volume.sizeX(), volume.sizeY(), volume.sizeZ()
@@ -544,9 +543,7 @@ def band_cf(volume, reference, band=[0, 100]):
     from pytom.agnostic.filter import bandpass
     from pytom.agnostic.transform import fourier_reduced2full
 
-    vf, vfm = bandpass(
-        volume, band[0], band[1], fourierOnly=True, returnMask=True
-    )
+    vf, vfm = bandpass(volume, band[0], band[1], fourierOnly=True, returnMask=True)
     rf = bandpass(reference, band[0], band[1], vf[1], fourierOnly=True)
 
     v = fourier_reduced2full(vf)
@@ -854,9 +851,8 @@ def randomize_phase_beyond_freq(volume, frequency):
     @rtype: L{xp.ndarray}
     @author: GvdS"""
 
-
     dims = len(volume.shape)
-    if dims not in {2,3}:
+    if dims not in {2, 3}:
         raise Exception("Invalid volume dimensions: either supply 3D or 2D ndarray")
 
     ft = xp.fft.rfftn(volume)
@@ -866,7 +862,7 @@ def randomize_phase_beyond_freq(volume, frequency):
     rnda = generate_random_phases_3d(
         amplitude.shape, reduced_complex=True
     )  # (ranf((dx,dy,dz//2+1)) * pi * 2) - pi
-    #TODO: why does 2D have the extra terms "+ dx %2" and "+ dy %2" and casting to int?
+    # TODO: why does 2D have the extra terms "+ dx %2" and "+ dy %2" and casting to int?
     if dims == 2:
         dx, dy = volume.shape
         x, y = xp.meshgrid(
@@ -979,7 +975,7 @@ def sub_pixel_peak(
     @type interpolation: str
     @return: Returns [peak_value,peak_coordinates] with sub pixel accuracy
 
-    change log: 
+    change log:
     - 02/07/2013 FF: 2D functionality added
     - 17/05/2023 SR: removed broken 2D functionality
     """
@@ -993,17 +989,18 @@ def sub_pixel_peak(
     from pytom.lib.pytom_volume import vol, subvolume, rescaleSpline, peak
     from pytom.basic.transformations import resize
 
-    cubeStart = cube_length // 2
+    cube_start = cube_length // 2
     # This fails for 2D
     size_x, size_y, size_z = score_volume.shape
 
-    if any((
-        coordinates[0] - cubeStart < 1,
-        coordinates[1] - cubeStart < 1,
-        coordinates[2] - cubeStart < 1,
-        coordinates[0] - cubeStart + cube_length >= size_x,
-        coordinates[1] - cubeStart + cube_length >= size_y,
-        coordinates[2] - cubeStart + cube_length >= size_z,
+    if any(
+        (
+            coordinates[0] - cube_start < 1,
+            coordinates[1] - cube_start < 1,
+            coordinates[2] - cube_start < 1,
+            coordinates[0] - cube_start + cube_length >= size_x,
+            coordinates[1] - cube_start + cube_length >= size_y,
+            coordinates[2] - cube_start + cube_length >= size_z,
         )
     ):
         if verbose:
@@ -1013,43 +1010,50 @@ def sub_pixel_peak(
             coordinates,
         ]
 
-    subVolume = subvolume(
+    sub_volume = subvolume(
         score_volume,
-        coordinates[0] - cubeStart,
-        coordinates[1] - cubeStart,
-        coordinates[2] - cubeStart,
+        coordinates[0] - cube_start,
+        coordinates[1] - cube_start,
+        coordinates[2] - cube_start,
         cube_length,
         cube_length,
         cube_length,
     )
 
     # size of interpolated volume
-    scaleSize = 10 * cube_length
+    scale_size = 10 * cube_length
 
     # ratio between interpolation area and large volume
-    scaleRatio = 1.0 * cube_length / scaleSize
+    scale_ratio = 1.0 * cube_length / scale_size
 
     # resize into bigger volume
     if interpolation == "Spline":
-        subVolumeScaled = vol(scaleSize, scaleSize, scaleSize)
-        rescaleSpline(subVolume, subVolumeScaled)
+        sub_volume_scaled = vol(scale_size, scale_size, scale_size)
+        rescaleSpline(sub_volume, sub_volume_scaled)
     else:
-        subVolumeScaled = resize(volume=subVolume, factor=10)[0]
+        sub_volume_scaled = resize(volume=sub_volume, factor=10)[0]
 
-    peak_coordinates = peak(subVolumeScaled)
+    peak_coordinates = peak(sub_volume_scaled)
 
-    peak_value = subVolumeScaled(
+    peak_value = sub_volume_scaled(
         peak_coordinates[0], peak_coordinates[1], peak_coordinates[2]
     )
 
     # calculate sub pixel coordinates of interpolated peak
-    peak_coordinates[0] = peak_coordinates[0] * scaleRatio - cubeStart + coordinates[0]
-    peak_coordinates[1] = peak_coordinates[1] * scaleRatio - cubeStart + coordinates[1]
-    peak_coordinates[2] = peak_coordinates[2] * scaleRatio - cubeStart + coordinates[2]
-    if any((
-        peak_coordinates[0] > score_volume.sizeX(),
-        peak_coordinates[1] > score_volume.sizeY(),
-        peak_coordinates[2] > score_volume.sizeZ(),
+    peak_coordinates[0] = (
+        peak_coordinates[0] * scale_ratio - cube_start + coordinates[0]
+    )
+    peak_coordinates[1] = (
+        peak_coordinates[1] * scale_ratio - cube_start + coordinates[1]
+    )
+    peak_coordinates[2] = (
+        peak_coordinates[2] * scale_ratio - cube_start + coordinates[2]
+    )
+    if any(
+        (
+            peak_coordinates[0] > score_volume.sizeX(),
+            peak_coordinates[1] > score_volume.sizeY(),
+            peak_coordinates[2] > score_volume.sizeZ(),
         )
     ):
         if verbose:
@@ -1149,7 +1153,7 @@ def sub_pixel_max_3d(
     x2, y2, z2 = xp.unravel_index(max_id[fast_sum.argmax()], zoomed.shape)
 
     peak_value = zoomed[x2][y2][z2]
-    peakShift = [
+    peak_shift = [
         x + (x2 - zoomed.shape[0] // 2) * k - volume.shape[0] // 2,
         y + (y2 - zoomed.shape[1] // 2) * k - volume.shape[1] // 2,
         z + (z2 - zoomed.shape[2] // 2) * k - volume.shape[2] // 2,
@@ -1164,7 +1168,7 @@ def sub_pixel_max_3d(
         t_start = stream.record()
         print()
 
-    return [peak_value, peakShift]
+    return [peak_value, peak_shift]
 
 
 def max_index(volume, num_threads=1024):
