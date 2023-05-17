@@ -70,8 +70,8 @@ def peakCoef(self, volume, reference, mask=None):
     
     pcoarse = peak(resFunction)
     
-    p = sub_pixel_peak(scoreVolume=resFunction, coordinates=pcoarse)
-    #p = sub_pixel_peak(scoreVolume=resFunction, coordinates=[centerX,centerY,centerZ])
+    p = sub_pixel_peak(score_volume=resFunction, coordinates=pcoarse)
+    #p = sub_pixel_peak(score_volume=resFunction, coordinates=[centerX,centerY,centerZ])
     
     #if euclidianDistance([centerX,centerY,centerZ],p[1]) <= 1.4142135623730951:
     #    c = p[0]
@@ -499,8 +499,8 @@ class FLCFScore(Score):
 
         pcoarse = peak(resFunction)
 
-        p = sub_pixel_peak(scoreVolume=resFunction, coordinates=pcoarse)
-        # p = sub_pixel_peak(scoreVolume=resFunction, coordinates=[centerX,centerY,centerZ])
+        p = sub_pixel_peak(score_volume=resFunction, coordinates=pcoarse)
+        # p = sub_pixel_peak(score_volume=resFunction, coordinates=[centerX,centerY,centerZ])
 
         # if euclidianDistance([centerX,centerY,centerZ],p[1]) <= 1.4142135623730951:
         #    c = p[0]

@@ -914,10 +914,10 @@ def randomize_phase_beyond_freq(volume, frequency):
 # Sub Pixel Peak Methods
 
 
-def sub_pixel_peak_parabolic(scoreVolume, coordinates, verbose=False):
+def sub_pixel_peak_parabolic(score_volume, coordinates, verbose=False):
     """
     quadratic interpolation of three adjacent samples
-    @param scoreVolume: The score volume
+    @param score_volume: The score volume
     @param coordinates: (x,y,z) coordinates as tuple (!) where the sub pixel peak will be determined
     @param verbose: be talkative
     @type verbose: bool
@@ -925,34 +925,34 @@ def sub_pixel_peak_parabolic(scoreVolume, coordinates, verbose=False):
     @rtype: float, tuple
     """
 
-    if is_border_voxel(scoreVolume, coordinates):
+    if is_border_voxel(score_volume, coordinates):
         if verbose:
             print("sub_pixel_peak_parabolic: peak near borders - no interpolation done")
-        return [scoreVolume[coordinates], coordinates]
+        return [score_volume[coordinates], coordinates]
 
     peakCoordinates = coordinates
     l = len(coordinates)
     (x, a1, b1) = qint(
-        ym1=scoreVolume[tuple(xp.array(coordinates) - xp.array([1, 0, 0][:l]))],
-        y0=scoreVolume[coordinates],
-        yp1=scoreVolume[tuple(xp.array(coordinates) + xp.array([1, 0, 0][:l]))],
+        ym1=score_volume[tuple(xp.array(coordinates) - xp.array([1, 0, 0][:l]))],
+        y0=score_volume[coordinates],
+        yp1=score_volume[tuple(xp.array(coordinates) + xp.array([1, 0, 0][:l]))],
     )
     (y, a2, b2) = qint(
-        ym1=scoreVolume[tuple(xp.array(coordinates) - xp.array([0, 1, 0][:l]))],
-        y0=scoreVolume[coordinates],
-        yp1=scoreVolume[tuple(xp.array(coordinates) + xp.array([0, 1, 0][:l]))],
+        ym1=score_volume[tuple(xp.array(coordinates) - xp.array([0, 1, 0][:l]))],
+        y0=score_volume[coordinates],
+        yp1=score_volume[tuple(xp.array(coordinates) + xp.array([0, 1, 0][:l]))],
     )
     if l > 2:
         (z, a3, b3) = qint(
-            ym1=scoreVolume[tuple(xp.array(coordinates) - xp.array([0, 0, 1]))],
-            y0=scoreVolume[coordinates],
-            yp1=scoreVolume[tuple(xp.array(coordinates) + xp.array([0, 0, 1]))],
+            ym1=score_volume[tuple(xp.array(coordinates) - xp.array([0, 0, 1]))],
+            y0=score_volume[coordinates],
+            yp1=score_volume[tuple(xp.array(coordinates) + xp.array([0, 0, 1]))],
         )
         peakCoordinates[0] += x
         peakCoordinates[1] += y
         peakCoordinates[2] += z
         peakValue = (
-            scoreVolume[coordinates]
+            score_volume[coordinates]
             + a1 * x**2
             + b1 * x
             + a2 * y**2
@@ -964,14 +964,14 @@ def sub_pixel_peak_parabolic(scoreVolume, coordinates, verbose=False):
         peakCoordinates[0] += x
         peakCoordinates[1] += y
         peakValue = (
-            scoreVolume[coordinates] + a1 * x**2 + b1 * x + a2 * y**2 + b2 * y
+            score_volume[coordinates] + a1 * x**2 + b1 * x + a2 * y**2 + b2 * y
         )
     # return coordinates as tuple for indexing
     return [peakValue, tuple(peakCoordinates)]
 
 
 def sub_pixel_peak(
-    scoreVolume, coordinates, cubeLength=8, interpolation="Spline", verbose=False
+    score_volume, coordinates, cubeLength=8, interpolation="Spline", verbose=False
 ):
     """
     sub_pixel_peak: Will determine the sub pixel area of peak. Utilizes spline, fourier or
@@ -979,7 +979,7 @@ def sub_pixel_peak(
 
     @param verbose: be talkative
     @type verbose: L{str}
-    @param scoreVolume: The score volume
+    @param score_volume: The score volume
     @param coordinates: [x,y,z] coordinates where the sub pixel peak will be determined
     @param cubeLength: length of cube - only used for Spline and Fourier interpolation
     @type cubeLength: int (even)
@@ -992,7 +992,7 @@ def sub_pixel_peak(
     assert type(interpolation) == str, "sub_pixel_peak: interpolation must be str"
     if (interpolation.lower() == "quadratic") or (interpolation.lower() == "parabolic"):
         (peakValue, peakCoordinates) = sub_pixel_peak_parabolic(
-            scoreVolume=scoreVolume, coordinates=coordinates, verbose=verbose
+            score_volume=score_volume, coordinates=coordinates, verbose=verbose
         )
         return [peakValue, peakCoordinates]
 
@@ -1000,10 +1000,10 @@ def sub_pixel_peak(
     from pytom.basic.transformations import resize
 
     # extend function for 2D
-    twoD = (scoreVolume.shape) == 2
+    twoD = (score_volume.shape) == 2
 
     cubeStart = cubeLength // 2
-    sizeX, sizeY, sizeZ = scoreVolume.shape
+    sizeX, sizeY, sizeZ = score_volume.shape
 
     if twoD:
         if (coordinates[0] - cubeStart < 1 or coordinates[1] - cubeStart < 1) or (
@@ -1013,12 +1013,12 @@ def sub_pixel_peak(
             if verbose:
                 print("SubPixelPeak: position too close to border for sub-pixel")
             return [
-                scoreVolume(coordinates[0], coordinates[1], coordinates[2]),
+                score_volume(coordinates[0], coordinates[1], coordinates[2]),
                 coordinates,
             ]
 
         subVolume = subvolume(
-            scoreVolume,
+            score_volume,
             coordinates[0] - cubeStart,
             coordinates[1] - cubeStart,
             0,
@@ -1039,12 +1039,12 @@ def sub_pixel_peak(
             if verbose:
                 print("SubPixelPeak: position too close to border for sub-pixel")
             return [
-                scoreVolume(coordinates[0], coordinates[1], coordinates[2]),
+                score_volume(coordinates[0], coordinates[1], coordinates[2]),
                 coordinates,
             ]
 
         subVolume = subvolume(
-            scoreVolume,
+            score_volume,
             coordinates[0] - cubeStart,
             coordinates[1] - cubeStart,
             coordinates[2] - cubeStart,
@@ -1085,15 +1085,15 @@ def sub_pixel_peak(
             peakCoordinates[2] * scaleRatio - cubeStart + coordinates[2]
         )
     if (
-        peakCoordinates[0] > scoreVolume.sizeX()
-        or peakCoordinates[1] > scoreVolume.sizeY()
-        or peakCoordinates[2] > scoreVolume.sizeZ()
+        peakCoordinates[0] > score_volume.sizeX()
+        or peakCoordinates[1] > score_volume.sizeY()
+        or peakCoordinates[2] > score_volume.sizeZ()
     ):
         if verbose:
             print("SubPixelPeak: peak position too large :( return input value")
         # something went awfully wrong here. return regular value
         return [
-            scoreVolume(coordinates[0], coordinates[1], coordinates[2]),
+            score_volume(coordinates[0], coordinates[1], coordinates[2]),
             coordinates,
         ]
 

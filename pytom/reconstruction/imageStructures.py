@@ -374,7 +374,7 @@ class ImageStack(PyTomClass):
                 ccf = norm_xcf(volume=self.images[ii].data,
                            template=self.subtractImageFromAverage(ii=ii, mask=mask))
                 pos = peak(ccf)
-                peakinfo = sub_pixel_peak(scoreVolume=ccf, coordinates=pos,
+                peakinfo = sub_pixel_peak(score_volume=ccf, coordinates=pos,
                                         cubeLength=8, verbose=self.verbose)
                 peakval = peakinfo[0]
                 pos = peakinfo[1]

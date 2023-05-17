@@ -815,9 +815,9 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
         pk = peak(scoringResult)
 
         # with sub_pixel_peak
-        [peakValue,peakPosition] = sub_pixel_peak(scoreVolume=scoringResult, coordinates=pk,
+        [peakValue,peakPosition] = sub_pixel_peak(score_volume=scoringResult, coordinates=pk,
                                                interpolation='Quadratic', verbose=False)
-        #[peakValue,peakPosition] = sub_pixel_peak_parabolic(scoreVolume=scoringResult, coordinates=pk, verbose=False)
+        #[peakValue,peakPosition] = sub_pixel_peak_parabolic(score_volume=scoringResult, coordinates=pk, verbose=False)
 
         # determine shift relative to center
         shiftX = (peakPosition[0] - centerX) * binning
@@ -861,7 +861,7 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
         scoreObject._peakPrior.reset_weight()
         scoringResult = scoreObject.score(particle=particleUnbinned, reference=simulatedVol, mask=m, std_v=std_v)
         pk = peak(scoringResult)
-        [peakValue,peakPosition] = sub_pixel_peak(scoreVolume=scoringResult, coordinates=pk, interpolation='Quadratic',
+        [peakValue,peakPosition] = sub_pixel_peak(score_volume=scoringResult, coordinates=pk, interpolation='Quadratic',
                                                 verbose=False)
         shiftX = (peakPosition[0] - centerX)
         shiftY = (peakPosition[1] - centerY)
