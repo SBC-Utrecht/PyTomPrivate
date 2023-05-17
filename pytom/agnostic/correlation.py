@@ -855,16 +855,9 @@ def randomize_phase_beyond_freq(volume, frequency):
     @author: GvdS"""
 
 
-    threeD = len(volume.shape) == 3
-    twoD = len(volume.shape) == 2
-
-    if not twoD and not threeD:
+    dims = len(volume.shape)
+    if dims not in {2,3}:
         raise Exception("Invalid volume dimensions: either supply 3D or 2D ndarray")
-
-    if twoD:
-        dx, dy = volume.shape
-    else:
-        dx, dy, dz = volume.shape
 
     ft = xp.fft.rfftn(volume)
     phase = xp.angle(ft)
@@ -873,14 +866,16 @@ def randomize_phase_beyond_freq(volume, frequency):
     rnda = generate_random_phases_3d(
         amplitude.shape, reduced_complex=True
     )  # (ranf((dx,dy,dz//2+1)) * pi * 2) - pi
-
-    if twoD:
+    #TODO: why does 2D have the extra terms "+ dx %2" and "+ dy %2" and casting to int?
+    if dims == 2:
+        dx, dy = volume.shape
         X, Y = xp.meshgrid(
             xp.arange(-dx // 2, dx // 2 + dx % 2), xp.arange(-dy // 2, dy // 2 + dy % 2)
         )
         RF = xp.sqrt(X**2 + Y**2).astype(int)
         R = xp.fft.fftshift(RF)[:, : dy // 2 + 1]
     else:
+        dx, dy, dz = volume.shape
         X, Y, Z = xp.meshgrid(
             xp.arange(-dx // 2, dx // 2),
             xp.arange(-dy // 2, dy // 2),
