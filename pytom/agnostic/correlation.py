@@ -970,11 +970,11 @@ def sub_pixel_peak_parabolic(scoreVolume, coordinates, verbose=False):
     return [peakValue, tuple(peakCoordinates)]
 
 
-def subPixelPeak(
+def sub_pixel_peak(
     scoreVolume, coordinates, cubeLength=8, interpolation="Spline", verbose=False
 ):
     """
-    subPixelPeak: Will determine the sub pixel area of peak. Utilizes spline, fourier or
+    sub_pixel_peak: Will determine the sub pixel area of peak. Utilizes spline, fourier or
     parabolic interpolation.
 
     @param verbose: be talkative
@@ -989,7 +989,7 @@ def subPixelPeak(
 
     last change: 02/07/2013 FF: 2D functionality added
     """
-    assert type(interpolation) == str, "subPixelPeak: interpolation must be str"
+    assert type(interpolation) == str, "sub_pixel_peak: interpolation must be str"
     if (interpolation.lower() == "quadratic") or (interpolation.lower() == "parabolic"):
         (peakValue, peakCoordinates) = sub_pixel_peak_parabolic(
             scoreVolume=scoreVolume, coordinates=coordinates, verbose=verbose

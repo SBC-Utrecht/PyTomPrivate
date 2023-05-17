@@ -887,9 +887,9 @@ def qint(ym1, y0, yp1):
     #b = y0 - a*(p**2)
     return p, y, a
             
-def subPixelPeak(scoreVolume, coordinates, cubeLength=8, interpolation='Spline', verbose=False):
+def sub_pixel_peak(scoreVolume, coordinates, cubeLength=8, interpolation='Spline', verbose=False):
     """
-    subPixelPeak: Will determine the sub pixel area of peak. Utilizes spline, fourier or parabolic interpolation.
+    sub_pixel_peak: Will determine the sub pixel area of peak. Utilizes spline, fourier or parabolic interpolation.
 
     @param verbose: be talkative
     @type verbose: L{str}
@@ -903,7 +903,7 @@ def subPixelPeak(scoreVolume, coordinates, cubeLength=8, interpolation='Spline',
 
     last change: 02/07/2013 FF: 2D functionality added
     """
-    assert type(interpolation) == str, 'subPixelPeak: interpolation must be str'
+    assert type(interpolation) == str, 'sub_pixel_peak: interpolation must be str'
     if (interpolation.lower() == 'quadratic') or (interpolation.lower() == 'parabolic'):
         (peakValue,peakCoordinates) = sub_pixel_peak_parabolic(scoreVolume=scoreVolume, coordinates=coordinates, verbose=verbose)
         return [peakValue,peakCoordinates]

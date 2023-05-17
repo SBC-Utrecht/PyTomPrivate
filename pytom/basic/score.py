@@ -56,7 +56,7 @@ def peakCoef(self, volume, reference, mask=None):
     """
     from pytom.lib.pytom_volume import peak
     from pytom.tools.maths import euclidianDistance
-    from pytom.basic.correlation import subPixelPeak
+    from pytom.basic.correlation import sub_pixel_peak
     
     if mask is None:
         resFunction = self.scoringFunction(volume,reference)
@@ -70,8 +70,8 @@ def peakCoef(self, volume, reference, mask=None):
     
     pcoarse = peak(resFunction)
     
-    p = subPixelPeak(scoreVolume=resFunction, coordinates=pcoarse)
-    #p = subPixelPeak(scoreVolume=resFunction, coordinates=[centerX,centerY,centerZ])
+    p = sub_pixel_peak(scoreVolume=resFunction, coordinates=pcoarse)
+    #p = sub_pixel_peak(scoreVolume=resFunction, coordinates=[centerX,centerY,centerZ])
     
     #if euclidianDistance([centerX,centerY,centerZ],p[1]) <= 1.4142135623730951:
     #    c = p[0]
@@ -485,7 +485,7 @@ class FLCFScore(Score):
         """
         from pytom.lib.pytom_volume import peak
         from pytom.tools.maths import euclidianDistance
-        from pytom.basic.correlation import subPixelPeak
+        from pytom.basic.correlation import sub_pixel_peak
 
         if mask is None:
             resFunction = self.scoringFunction(volume, reference)
@@ -499,8 +499,8 @@ class FLCFScore(Score):
 
         pcoarse = peak(resFunction)
 
-        p = subPixelPeak(scoreVolume=resFunction, coordinates=pcoarse)
-        # p = subPixelPeak(scoreVolume=resFunction, coordinates=[centerX,centerY,centerZ])
+        p = sub_pixel_peak(scoreVolume=resFunction, coordinates=pcoarse)
+        # p = sub_pixel_peak(scoreVolume=resFunction, coordinates=[centerX,centerY,centerZ])
 
         # if euclidianDistance([centerX,centerY,centerZ],p[1]) <= 1.4142135623730951:
         #    c = p[0]

@@ -711,7 +711,7 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
     @return: Returns the best rotation for particle and the corresponding scoring result.
     @author: Thomas Hrabe
     """
-    from pytom.basic.correlation import subPixelPeak, sub_pixel_peak_parabolic
+    from pytom.basic.correlation import sub_pixel_peak, sub_pixel_peak_parabolic
     from pytom.alignment.structures import Peak
     from pytom.lib.pytom_volume import peak, vol, vol_comp
     from pytom.basic.filter import filter,rotateWeighting
@@ -814,8 +814,8 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
 
         pk = peak(scoringResult)
 
-        # with subPixelPeak
-        [peakValue,peakPosition] = subPixelPeak(scoreVolume=scoringResult, coordinates=pk,
+        # with sub_pixel_peak
+        [peakValue,peakPosition] = sub_pixel_peak(scoreVolume=scoringResult, coordinates=pk,
                                                interpolation='Quadratic', verbose=False)
         #[peakValue,peakPosition] = sub_pixel_peak_parabolic(scoreVolume=scoringResult, coordinates=pk, verbose=False)
 
@@ -861,7 +861,7 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
         scoreObject._peakPrior.reset_weight()
         scoringResult = scoreObject.score(particle=particleUnbinned, reference=simulatedVol, mask=m, std_v=std_v)
         pk = peak(scoringResult)
-        [peakValue,peakPosition] = subPixelPeak(scoreVolume=scoringResult, coordinates=pk, interpolation='Quadratic',
+        [peakValue,peakPosition] = sub_pixel_peak(scoreVolume=scoringResult, coordinates=pk, interpolation='Quadratic',
                                                 verbose=False)
         shiftX = (peakPosition[0] - centerX)
         shiftY = (peakPosition[1] - centerY)
@@ -945,7 +945,7 @@ def bestAlignmentGPU(particle, rotations, plan, preprocessing=None, wedgeInfo=No
         # Calculate normalized crosscorrelation
         plan.cross_correlation()
 
-        # Find subPixelPeak
+        # Find sub_pixel_peak
         # [peakValue, peakShifts] = plan.subPixelMax3D(ignore_border=border, k=0.1, profile=profile)
         peakValue, peakShifts = plan.subPixelMaxSpline()
         newPeak = Peak(float(peakValue), Rotation(currentRotation), Shift(*peakShifts))
