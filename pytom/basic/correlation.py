@@ -887,7 +887,7 @@ def qint(ym1, y0, yp1):
     #b = y0 - a*(p**2)
     return p, y, a
             
-def sub_pixel_peak(score_volume, coordinates, cubeLength=8, interpolation='Spline', verbose=False):
+def sub_pixel_peak(score_volume, coordinates, cube_length=8, interpolation='Spline', verbose=False):
     """
     sub_pixel_peak: Will determine the sub pixel area of peak. Utilizes spline, fourier or parabolic interpolation.
 
@@ -895,8 +895,8 @@ def sub_pixel_peak(score_volume, coordinates, cubeLength=8, interpolation='Splin
     @type verbose: L{str}
     @param score_volume: The score volume
     @param coordinates: [x,y,z] coordinates where the sub pixel peak will be determined
-    @param cubeLength: length of cube - only used for Spline and Fourier interpolation
-    @type cubeLength: int (even)
+    @param cube_length: length of cube - only used for Spline and Fourier interpolation
+    @type cube_length: int (even)
     @param interpolation: interpolation type: 'Spline', 'Quadratic', or 'Fourier'
     @type interpolation: str
     @return: Returns [peakValue,peakCoordinates] with sub pixel accuracy
@@ -915,35 +915,35 @@ def sub_pixel_peak(score_volume, coordinates, cubeLength=8, interpolation='Splin
     if score_volume.sizeZ() == 1:
         twoD = True
 
-    cubeStart = cubeLength//2
+    cubeStart = cube_length//2
     sizeX = score_volume.sizeX()
     sizeY = score_volume.sizeY()
     sizeZ = score_volume.sizeZ()
     
     if twoD:
         if (coordinates[0]-cubeStart < 1 or coordinates[1]-cubeStart < 1) or\
-            (coordinates[0]-cubeStart + cubeLength >= sizeX or coordinates[1]-cubeStart + cubeLength >= sizeY):
+            (coordinates[0]-cubeStart + cube_length >= sizeX or coordinates[1]-cubeStart + cube_length >= sizeY):
             if verbose:
                 print ("SubPixelPeak: position too close to border for sub-pixel")
             return [score_volume(coordinates[0],coordinates[1],coordinates[2]),coordinates]
 
-        subVolume = subvolume(score_volume,coordinates[0]-cubeStart,coordinates[1]-cubeStart,0,cubeLength,cubeLength,1)
+        subVolume = subvolume(score_volume,coordinates[0]-cubeStart,coordinates[1]-cubeStart,0,cube_length,cube_length,1)
     else:
         if (coordinates[0]-cubeStart < 1 or coordinates[1]-cubeStart < 1 or coordinates[2]-cubeStart < 1) or \
-                (coordinates[0]-cubeStart + cubeLength >= sizeX or coordinates[1]-cubeStart + cubeLength >= sizeY or \
-                 coordinates[2]-cubeStart + cubeLength >= sizeZ):
+                (coordinates[0]-cubeStart + cube_length >= sizeX or coordinates[1]-cubeStart + cube_length >= sizeY or \
+                 coordinates[2]-cubeStart + cube_length >= sizeZ):
             if verbose:
                 print ("SubPixelPeak: position too close to border for sub-pixel")
             return [score_volume(coordinates[0],coordinates[1],coordinates[2]),coordinates]
 
         subVolume = subvolume(score_volume,coordinates[0]-cubeStart,coordinates[1]-cubeStart,coordinates[2]-cubeStart,
-                              cubeLength,cubeLength,cubeLength)
+                              cube_length,cube_length,cube_length)
     
     #size of interpolated volume
-    scaleSize = 10*cubeLength
+    scaleSize = 10*cube_length
 
     #ratio between interpolation area and large volume
-    scaleRatio = 1.0 * cubeLength / scaleSize
+    scaleRatio = 1.0 * cube_length / scaleSize
     
     #resize into bigger volume
     if interpolation=='Spline':

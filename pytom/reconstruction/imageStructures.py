@@ -375,7 +375,7 @@ class ImageStack(PyTomClass):
                            template=self.subtractImageFromAverage(ii=ii, mask=mask))
                 pos = peak(ccf)
                 peakinfo = sub_pixel_peak(score_volume=ccf, coordinates=pos,
-                                        cubeLength=8, verbose=self.verbose)
+                                        cube_length=8, verbose=self.verbose)
                 peakval = peakinfo[0]
                 pos = peakinfo[1]
                 self.images[ii].shiftX = float(pos[0] - self.dimX)
