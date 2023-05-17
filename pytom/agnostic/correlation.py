@@ -16,9 +16,12 @@ from pytom.agnostic.normalise import (
     mean0std1,
 )
 from pytom.agnostic.tools import create_circle, create_sphere
+#Typing imports
+from pytom.gpu.initialize import xptyping as xpt
+from typing import Optional, Tuple
 
 
-def flcf(volume, template, mask=None, std_v=None):
+def flcf(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, std_v: Optional[float]=None) -> float:
     """Fast local correlation function
 
     @param volume: target volume
@@ -55,7 +58,7 @@ def flcf(volume, template, mask=None, std_v=None):
     return res
 
 
-def xcc(volume, template, mask=None, volume_is_normalized=False):
+def xcc(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, volume_is_normalized: bool=False) -> float:
     """
     xcc: Calculates the cross correlation coefficient in real space
     @param volume: A volume
@@ -88,7 +91,7 @@ def xcc(volume, template, mask=None, volume_is_normalized=False):
     return cc
 
 
-def nxcc(volume, template, mask=None, volume_is_normalized=False):
+def nxcc(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, volume_is_normalized: bool=False) -> float:
     """
     nxcc: Calculates the normalized cross correlation coefficient in real space
     @param volume: A volume
@@ -138,11 +141,11 @@ def nxcc(volume, template, mask=None, volume_is_normalized=False):
 
 
 def xcf(
-    volume,
-    template,
-    mask=None,
-    std_v=None,
-):
+        volume: xpt.NDArray,
+        template: xpt.NDArray,
+        mask: Optional[xpt.NDArray]=None,
+        std_v: Optional[float]=None,
+) -> float:
     """
     XCF: returns the non-normalised cross correlation function. The xcf
     result is scaled only by the square of the number of elements.
@@ -187,11 +190,11 @@ def xcf(
 
 
 def xcf_mult(
-    volume,
-    template,
-    mask,
-    std_v=None,
-):
+        volume: xpt.NDArray,
+        template: xpt.NDArray,
+        mask: xpt.NDArray,
+        std_v: Optional[float]=None,
+) -> float:
     """
     XCF: returns the non-normalised cross correlation function. The xcf
     result is scaled only by the square of the number of elements.
@@ -228,7 +231,7 @@ def xcf_mult(
     return result
 
 
-def norm_xcf(volume, template, mask=None, std_v=None, gpu=False):
+def norm_xcf(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, std_v: Optional[float]=None, gpu: bool=False) ->  float:
     """
     nXCF: returns the normalised cross correlation function. Autocorrelation
     of two equal objects would yield a max nxcf peak of 1.
@@ -261,7 +264,7 @@ def norm_xcf(volume, template, mask=None, std_v=None, gpu=False):
     return result
 
 
-def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
+def weighted_xcc(volume: xpt.NDArray, reference: xpt.NDArray, number_of_bands: int, wedge_angle: float=-1) -> float:
     """
     weighted_xcc: Determines the band weighted correlation coefficient for a volume and reference.
                  Notation according Steward/Grigorieff paper
@@ -282,7 +285,8 @@ def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
     result = 0
     n_voxels = 0
 
-    wedge = WedgeInfo(wedge_angle)
+    #TODO: this line currently fails for the default of -1, we should drop the default and update it to use non-deprecated class
+    wedge = WedgeInfo(wedge_angle) 
     wedge_volume = wedge.returnWedgeVolume(
         volume.shape[0], volume.shape[1], volume.shape[2]
     )
@@ -292,9 +296,10 @@ def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
     for i in range(0, volume.shape[0] / 2, increment):
         band[0] = i
         band[1] = i + increment
-
-        r = band_cc(volume, reference, band)
-        cc = r[0]
+        
+        # TODO: This code also fails, as band_cc returns a float
+        r = band_cc(volume, reference, tuple(band))
+        cc = r[0] 
 
         # print cc;
         filter = r[1]
@@ -333,7 +338,7 @@ def weighted_xcc(volume, reference, number_of_bands, wedge_angle=-1):
     return result * (1 / float(n_voxels))
 
 
-def weighted_xcf(volume, reference, number_of_bands, wedge_angle=-1):
+def weighted_xcf(volume: xpt.NDArray, reference: xpt.NDArray, number_of_bands: int, wedge_angle: float=-1) -> float:
     """
     weighted_xcf: Determines the weighted correlation function for volume and reference
     @param volume: A volume
@@ -345,9 +350,10 @@ def weighted_xcf(volume, reference, number_of_bands, wedge_angle=-1):
     @author: Thomas Hrabe
     @todo: does not work yet -> test is disabled
     """
+    #TODO is this dead code? pytom.agnostic.transforms does not exist, only pytom.agnostic.transform
     from pytom.agnostic.correlation import band_cf
-    from pytom.agnostic.transforms import fourier_reduced2full
-    from pytom.lib import pytom_freqweight
+    from pytom.agnostic.transforms import fourier_reduced2full # type: ignore
+    from pytom.lib import pytom_freqweight # type: ignore
 
     result = xp.zeros_like(volume)
 
@@ -371,7 +377,7 @@ def weighted_xcf(volume, reference, number_of_bands, wedge_angle=-1):
         band[0] = i * volume.shape[0] / number_of_bands
         band[1] = (i + 1) * volume.shape[0] / number_of_bands
 
-        r = band_cf(volume, reference, band)
+        r = band_cf(volume, reference, tuple(band))
 
         cc = r[0]
 
@@ -406,7 +412,7 @@ def weighted_xcf(volume, reference, number_of_bands, wedge_angle=-1):
     return result
 
 
-def soc(volume, reference, mask=None, std_v=None):
+def soc(volume: xpt.NDArray, reference: xpt.NDArray, mask: Optional[xpt.NDArray]=None, std_v: Optional[float]=None) -> float:
     """
     soc : Second Order Correlation. Correlation of correlation peaks.
     @param volume: The volume
@@ -422,7 +428,7 @@ def soc(volume, reference, mask=None, std_v=None):
     return flcf(peaks, reference_peak, mask)
 
 
-def dev(volume, template, mask=None, volume_is_normalized=False):
+def dev(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, volume_is_normalized: bool=False) -> float:
     """
     dev: Calculates the squared deviation of volume and template in real space
     @param volume: A volume
@@ -464,7 +470,7 @@ def dev(volume, template, mask=None, volume_is_normalized=False):
 # Band correlation
 
 
-def band_cc(volume, reference, band, verbose=False, shared=None, index=None):
+def band_cc(volume: xpt.NDArray, reference: xpt.NDArray, band: Tuple[float, float], verbose: bool=False, shared: None=None, index: None=None)-> float:
     """
     band_cc: Determines the normalised correlation coefficient within a band
     @param volume: The volume
@@ -477,7 +483,7 @@ def band_cc(volume, reference, band, verbose=False, shared=None, index=None):
     @author: GS
     """
 
-    if not index is None:
+    if index is not None:
         print(index)
 
     from pytom.agnostic.filter import bandpass
@@ -526,7 +532,7 @@ def band_cc(volume, reference, band, verbose=False, shared=None, index=None):
     return float(cc)
 
 
-def band_cf(volume, reference, band=[0, 100]):
+def band_cf(volume: xpt.NDArray, reference: xpt.NDArray, band: Tuple[float, float]=(0, 100)) -> Tuple[xpt.NDArray, xpt.NDArray]:
     """
     band_cf:
     @param volume: The volume
@@ -570,7 +576,7 @@ def band_cf(volume, reference, band=[0, 100]):
 
     result *= 1 / float(sqrt(sum_v * sum_r))
 
-    return [result, vfm]
+    return result, vfm
 
 
 # Fourier Shell Correlation and helper functions
@@ -986,7 +992,7 @@ def sub_pixel_peak(
         )
         return [peak_value, peak_coordinates]
 
-    from pytom.lib.pytom_volume import vol, subvolume, rescaleSpline, peak
+    from pytom.lib.pytom_volume import vol, subvolume, rescaleSpline, peak # type: ignore
     from pytom.basic.transformations import resize
 
     cube_start = cube_length // 2
