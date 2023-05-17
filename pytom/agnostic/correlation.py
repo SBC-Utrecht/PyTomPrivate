@@ -925,7 +925,7 @@ def sub_pixel_peak_parabolic(scoreVolume, coordinates, verbose=False):
     @rtype: float, tuple
     """
 
-    if isBorderVoxel(scoreVolume, coordinates):
+    if is_border_voxel(scoreVolume, coordinates):
         if verbose:
             print("sub_pixel_peak_parabolic: peak near borders - no interpolation done")
         return [scoreVolume[coordinates], coordinates]
@@ -1223,7 +1223,7 @@ def max_index(volume, num_threads=1024):
     return indices
 
 
-def isBorderVoxel(volume, coordinates):
+def is_border_voxel(volume, coordinates):
     shape = volume.shape
     for n, pos in enumerate(coordinates):
         if pos < 1 or pos >= shape[n] - 1:
