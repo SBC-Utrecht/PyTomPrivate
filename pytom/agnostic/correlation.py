@@ -582,15 +582,15 @@ def band_cf(volume, reference, band=[0, 100]):
 # Fourier Shell Correlation and helper functions
 
 
-def fsc(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=None):
+def fsc(volume1, volume2, number_bands=None, mask=None, verbose=False, filename=None):
     """
     FSC - Calculates the Fourier Shell Correlation for two volumes
     @param volume1: volume one
     @type volume1: L{xp.ndarray}
     @param volume2: volume two
     @type volume2: L{xp.ndarray}
-    @param numberBands: number of shells for FSC
-    @type numberBands: int
+    @param number_bands: number of shells for FSC
+    @type number_bands: int
     @param mask: mask
     @type mask: L{xp.ndarray}
     @param verbose: flag to activate printing of info
@@ -614,7 +614,7 @@ def fsc(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=N
     if not volumesSameSize(volume1, volume2):
         raise RuntimeError("Volumes must have the same size!")
 
-    numberBands = volume1.shape[0] // 2 if numberBands is None else numberBands
+    number_bands = volume1.shape[0] // 2 if number_bands is None else number_bands
 
     if not mask is None:
         if mask.__class__ == xp.array([0]).__class__:
@@ -639,7 +639,7 @@ def fsc(volume1, volume2, numberBands=None, mask=None, verbose=False, filename=N
     fscResult = []
     band = [-1, -1]
 
-    increment = int(volume1.shape[0] / 2 * 1 / numberBands)
+    increment = int(volume1.shape[0] / 2 * 1 / number_bands)
     import time
 
     fvolume1 = xp.fft.fftn(volume1)
@@ -719,20 +719,20 @@ def determine_resolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=
     @param resolutionCriterion: A value between 0 and 1
     @param verbose: Bool that activate writing of info, default=False
     @param randomizedFSC: A value that sets the start of the calculation of randomized FSC. (0-1).
-    @return: [resolution,interpolatedBand,numberBands]
+    @return: [resolution,interpolatedBand,number_bands]
     @author: Thomas Hrabe
     @todo: Add test!
     """
 
     fsc = xp.array(fsc)
-    numberBands = len(fsc)
+    number_bands = len(fsc)
 
-    band = numberBands
+    band = number_bands
 
     if randomizedFSC is None:
         randomizedFSC = xp.ones_like(fsc) * (fsc.min() - 0.1)
 
-    for i in range(numberBands):
+    for i in range(number_bands):
         if fsc[i] < resolutionCriterion and fsc[i] > randomizedFSC[i]:
             band = i - 1  # select the band that is still larger than criterion
             break
@@ -743,7 +743,7 @@ def determine_resolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=
     if band == -1:
         raise RuntimeError("Please check your resolution criterion or you FSC!")
 
-    elif band < numberBands:
+    elif band < number_bands:
         fsc1 = fsc[band]
         fsc2 = fsc[band + 1]
 
@@ -766,11 +766,11 @@ def determine_resolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=
     if verbose:
         print("Band interpolated to ", interpolatedBand)
 
-    resolution = (interpolatedBand + 1) / float(numberBands)
+    resolution = (interpolatedBand + 1) / float(number_bands)
 
     if resolution < 0:
         resolution = 1
-        interpolatedBand = numberBands
+        interpolatedBand = number_bands
         print(
             "Warning: PyTom determined a resolution < 0 for your data. "
             'Please check "mass" in data is positive or negative for all cubes.'
@@ -778,7 +778,7 @@ def determine_resolution(fsc, resolutionCriterion, verbose=False, randomizedFSC=
         print(f"Warning: Setting resolution to 1 and {interpolatedBand}")
         print("")
 
-    return [resolution, interpolatedBand, numberBands]
+    return [resolution, interpolatedBand, number_bands]
 
 
 def calc_fsc_true(FSC_t, FSC_n, ring_thickness=1):

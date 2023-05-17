@@ -682,15 +682,15 @@ def weighted_xcf(volume,reference,number_of_bands,wedge_angle=-1):
     
     return result
 
-def fsc(volume1,volume2,numberBands,mask=None,verbose=False, filename=None):
+def fsc(volume1,volume2,number_bands,mask=None,verbose=False, filename=None):
     """
     FSC - Calculates the Fourier Shell Correlation for two volumes
     @param volume1: volume one
     @type volume1: L{pytom.lib.pytom_volume.vol}
     @param volume2: volume two
     @type volume2: L{pytom.lib.pytom_volume.vol}
-    @param numberBands: number of shells for FSC
-    @type numberBands: int
+    @param number_bands: number of shells for FSC
+    @type number_bands: int
     @param filename: write FSC to ascii file if specified
     @type filename: string
 
@@ -725,10 +725,10 @@ def fsc(volume1,volume2,numberBands,mask=None,verbose=False, filename=None):
         
     fscResult = []
     band = [-1,-1]
-    if type(numberBands) == tuple:
-        numberBands = tuple[0]
+    if type(number_bands) == tuple:
+        number_bands = tuple[0]
     
-    increment = int(volume1.sizeX()/2 * 1/numberBands)
+    increment = int(volume1.sizeX()/2 * 1/number_bands)
     
     for i in range(0,volume1.sizeX()//2, increment):
         
@@ -762,15 +762,15 @@ def determine_resolution(fsc,resolutionCriterion,verbose=False):
     determine_resolution: Determines frequency and band where correlation drops below the resolutionCriterion. Uses linear interpolation between two positions
     @param fsc: The fsc list determined by L{pytom.basic.correlation.FSC}
     @param resolutionCriterion: A value between 0 and 1
-    @return: [resolution,interpolatedBand,numberBands] 
+    @return: [resolution,interpolatedBand,number_bands] 
     @author: Thomas Hrabe 
     @todo: Add test! 
     """
-    numberBands = len(fsc)
+    number_bands = len(fsc)
     
-    band = numberBands
+    band = number_bands
 
-    for i in range(numberBands):
+    for i in range(number_bands):
         if fsc[i] < resolutionCriterion:     
             band = i-1  #select the band that is still larger than criterion
             break
@@ -781,7 +781,7 @@ def determine_resolution(fsc,resolutionCriterion,verbose=False):
     if band == -1:
         raise RuntimeError("Please check your resolution criterion or you FSC!")
             
-    elif band < numberBands:
+    elif band < number_bands:
         fsc1 = fsc[band]
         fsc2 = fsc[band+1]
         
@@ -797,16 +797,16 @@ def determine_resolution(fsc,resolutionCriterion,verbose=False):
     if verbose:
         print('Band interpolated to ', interpolatedBand)
         
-    resolution = (interpolatedBand+1) / float(numberBands)
+    resolution = (interpolatedBand+1) / float(number_bands)
     
     if resolution < 0 :
         resolution = 1
-        interpolatedBand = numberBands
+        interpolatedBand = number_bands
         print('Warning: PyTom determined a resolution < 0 for your data. Please check "mass" in data is positive or negative for all cubes.')
         print('Warning: Setting resolution to 1 and ',interpolatedBand)
         print('')
         
-    return [resolution,interpolatedBand,numberBands]
+    return [resolution,interpolatedBand,number_bands]
 
 
 def soc(volume,reference,mask=None, std_v=None):

@@ -296,7 +296,7 @@ def alignVolumesAndFilterByFSC(vol1, vol2, mask=None, nband=None, iniRot=None, i
     from pytom.voltools import transform
 
     # filter volumes prior to alignment according to SNR
-    calc_fsc = fsc(volume1=vol1, volume2=vol2, numberBands=nband)
+    calc_fsc = fsc(volume1=vol1, volume2=vol2, number_bands=nband)
     fil = design_fsc_filter(fsc=calc_fsc, fildim=int(vol2.shape[2]//2))
     #filter only one volume so that resulting CCC is weighted by SNR only once
     filvol2 = filter_volume_by_profile(volume=vol2, profile=fil)
@@ -324,7 +324,7 @@ def alignVolumesAndFilterByFSC(vol1, vol2, mask=None, nband=None, iniRot=None, i
     # finally compute FSC and filter of both volumes
     if not nband:
         nband = int(vol2.sizeX()/2)
-    calc_fsc = fsc(volume1=vol1, volume2=vol2_alig, numberBands=nband)
+    calc_fsc = fsc(volume1=vol1, volume2=vol2_alig, number_bands=nband)
     fil = design_fsc_filter(fsc=calc_fsc, fildim=int(vol2.shape[0]//2), fsc_criterion=fsc_criterion)
     filvol1 = filter_volume_by_profile(volume=vol1, profile=fil)
     #filvol2 = filter_volume_by_profile( volume=vol2_alig, profile=fil)

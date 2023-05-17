@@ -3036,12 +3036,12 @@ class ParticleList(PyTomClass):
                 self._particleList[ii] = odd[iodd]
                 iodd = iodd + 1
 
-    def determine_resolution(self, criterion=0.5, numberBands=None, mask=None, verbose=False, plot='',
+    def determine_resolution(self, criterion=0.5, number_bands=None, mask=None, verbose=False, plot='',
                             keepHalfsetAverages=False, halfsetPrefix='', parallel=True, randomize=0.8):
         """
         determine_resolution
         @param criterion: The resolution criterion
-        @param numberBands: Will use cubesizeX / 2 as default if not specified
+        @param number_bands: Will use cubesizeX / 2 as default if not specified
         @param mask: A mask used for specifying location of particle. Can be None
         @param verbose: Verbose mode. Default -> False
         @param plot: Plot FSC curve to disk? Provide svg or png filename here. Default is '' -> no plot!
@@ -3050,7 +3050,7 @@ class ParticleList(PyTomClass):
         @param parallel: If True (default), this function will enable parallel averaging if possible.
         @param randomize: if you want to correct your resolution using phases randomization set this variable to a value between 0 and 1.
         @type randomize: float
-        @return: [Resolution in Nyquist , resolution in band, numberBands]
+        @return: [Resolution in Nyquist , resolution in band, number_bands]
         @todo: Change return type to L{pytom.agnostic.structures.resolution} to make it clearer.
         """
         if len(self) < 2:
@@ -3097,16 +3097,16 @@ class ParticleList(PyTomClass):
             os.system('rm ' + halfsetPrefix + 'even-PreWedge.em')
             os.system('rm ' + halfsetPrefix + 'even-WedgeSumUnscaled.em')
 
-        if not numberBands:
-            numberBands = oddVolume.sizeX() / 2
+        if not number_bands:
+            number_bands = oddVolume.sizeX() / 2
 
         if verbose:
-            print('Using ', numberBands, ' shells for FSC')
+            print('Using ', number_bands, ' shells for FSC')
 
         # oddVolume = vol2npy(oddVolume).copy()
         # evenVolume = vol2npy(evenVolume).copy()
 
-        calc_fsc = fsc(oddVolume, evenVolume, numberBands, mask, verbose)
+        calc_fsc = fsc(oddVolume, evenVolume, number_bands, mask, verbose)
         #TODO: After this the variable f seems to appear (maybe original name of (calc_)fsc)
         #      This should always have errored out, is this dead code?
         if randomize is None:
@@ -3121,7 +3121,7 @@ class ParticleList(PyTomClass):
             write('randEven.mrc', evenVolumeRandomizedPhase)
             oddVolumeRandomizedPhase = read('randOdd.mrc')
             evenVolumeRandomizedPhase = read('randEven.mrc')
-            fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
+            fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, number_bands, mask, verbose)
             fsc_true = list(correlation.calc_fsc_true(np.array(f), np.array(fsc2)))
             for (ii, fscel) in enumerate(fsc_true):
                 fsc_true[ii] = 2. * fscel / (1. + fscel)
@@ -3130,7 +3130,7 @@ class ParticleList(PyTomClass):
 
         # oddVolumeRandomizedPhase = randomize_phase_beyond_freq(oddVolume, randomizationFrequency)
         # evenVolumeRandomizedPhase = randomize_phase_beyond_freq(oddVolume, randomizationFrequency)
-        # fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
+        # fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, number_bands, mask, verbose)
         if verbose:
             print('FSC list:')
             print(calc_fsc)

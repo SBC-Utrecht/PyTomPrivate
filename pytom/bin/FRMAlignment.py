@@ -345,7 +345,7 @@ class FRMWorker():
                 # apply symmetries before determine resolution
                 even = job.symmetries.applyToParticle(even)
                 odd = job.symmetries.applyToParticle(odd)
-                resNyquist, resolutionBand, numberBands = self.determine_resolution(even, odd, job.fsc_criterion, None, job.mask, verbose)
+                resNyquist, resolutionBand, number_bands = self.determine_resolution(even, odd, job.fsc_criterion, None, job.mask, verbose)
                 
                 # write the half set to the disk
                 even.write(os.path.join(self.destination, 'fsc_'+str(i)+'_even.em'))
@@ -354,7 +354,7 @@ class FRMWorker():
                 # determine the resolution
                 if verbose:
                     print(self.node_name + ': determining the resolution ...')
-                current_resolution = bandToAngstrom(resolutionBand, job.sampleInformation.getPixelSize(), numberBands, 1)
+                current_resolution = bandToAngstrom(resolutionBand, job.sampleInformation.getPixelSize(), number_bands, 1)
                 if verbose:
                     print(self.node_name + ': current resolution ' + str(current_resolution), resNyquist)
                 
@@ -393,7 +393,7 @@ class FRMWorker():
                         old_freq = new_freq
                 else:
                     old_freq = new_freq
-                if new_freq >= numberBands:
+                if new_freq >= number_bands:
                     print(self.node_name + ': New frequency too high. Terminate!')
                     break
                 
@@ -581,7 +581,7 @@ class FRMWorker():
         
         return average
     
-    def determine_resolution(self, even, odd, criterion, numberBands, mask, verbose=False):
+    def determine_resolution(self, even, odd, criterion, number_bands, mask, verbose=False):
         """For the master node, determine the resolution.
            @param even: particle list even
            @type even: L{pytom.basic.structures.ParticleList}
@@ -590,10 +590,10 @@ class FRMWorker():
         """
         from pytom.basic.correlation import fsc, determine_resolution
         
-        if not numberBands:
-            numberBands = even.sizeX()/2
+        if not number_bands:
+            number_bands = even.sizeX()/2
         
-        calc_fsc = fsc(even, odd, numberBands, mask, verbose=False)
+        calc_fsc = fsc(even, odd, number_bands, mask, verbose=False)
         if verbose:
             print(self.node_name + ': FSC: ' + str(calc_fsc))
         

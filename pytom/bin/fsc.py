@@ -23,7 +23,7 @@ if __name__ == '__main__':
                                    ScriptOption('--v2', 'Second volume path.', arg=True, optional=True),
                                    ScriptOption('--pl', 'A particleList if v1 and v2 are not available.', arg=True, optional=True),
                                    ScriptOption('--fsc', 'The FSC criterion. Value between 0.0 and 1.0. Standard values are 0.5 or 0.3', arg=True, optional=False),
-                                   ScriptOption('--numberBands', 'Number of bands (optional). If not set, numberBands = cubesize/4.', arg=True, optional=True),
+                                   ScriptOption('--number_bands', 'Number of bands (optional). If not set, number_bands = cubesize/4.', arg=True, optional=True),
                                    ScriptOption(['-m','--mask'], 'Mask (optional, but recomended).', arg=True, optional=True),
                                    ScriptOption('--pixelsize', 'Pixelsize in Angstrom (optional). Will return resolution in Angstrom. ', arg=True, optional=False),
                                    ScriptOption('--xml', 'Output in XML. (optional) ', arg=False, optional=True),
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         print(helper)
         sys.exit()
     try:
-        v1Filename, v2Filename, particleList, fscCriterion, numberBands, mask, pixelSize, xml, randomize, plot, outdir, \
+        v1Filename, v2Filename, particleList, fscCriterion, number_bands, mask, pixelSize, xml, randomize, plot, outdir, \
         combined_resolution, verbose, gpuIDs, help = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print(e)
@@ -67,10 +67,10 @@ if __name__ == '__main__':
         mask = None
     
     try:
-        if numberBands:
-            numberBands = int(numberBands)
+        if number_bands:
+            number_bands = int(number_bands)
     except ValueError:
-        raise ValueError('The value for numberBands must be a integer!')
+        raise ValueError('The value for number_bands must be a integer!')
 
     try:
         if randomize is None:
@@ -87,10 +87,10 @@ if __name__ == '__main__':
         v1  = read(v1Filename)
         v2  = read(v2Filename)
         
-        if not numberBands:
-            numberBands = int(v1.shape[0]//2)
+        if not number_bands:
+            number_bands = int(v1.shape[0]//2)
         
-        f = fsc(v1,v2,numberBands,mask,verbose)
+        f = fsc(v1,v2,number_bands,mask,verbose)
 
         if combined_resolution:
             for (ii, fscel) in enumerate(f):
@@ -113,7 +113,7 @@ if __name__ == '__main__':
             # write(os.path.join(outdir, 'randEven.mrc'), evenVolumeRandomizedPhase)
             # oddVolumeRandomizedPhase = read(os.path.join(outdir, 'randOdd.mrc'))
             # evenVolumeRandomizedPhase = read(os.path.join(outdir, 'randEven.mrc'))
-            fsc_rand = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
+            fsc_rand = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, number_bands, mask, verbose)
 
             if combined_resolution:
                 for (ii, fscel) in enumerate(fsc_rand):
@@ -138,12 +138,12 @@ if __name__ == '__main__':
         if len(pl) <= 1:
             raise RuntimeError('There is only 1 or less particles in the particle list. Need at least two! Abort!')
         
-        if not numberBands:
+        if not number_bands:
             p = pl[0]
             pv = p.getVolume()
-            numberBands = int(pv.sizeX()/4)
+            number_bands = int(pv.sizeX()/4)
             
-        r = pl.determine_resolution(fscCriterion,numberBands,mask,verbose=verbose,plot='',keepHalfsetAverages = True,
+        r = pl.determine_resolution(fscCriterion,number_bands,mask,verbose=verbose,plot='',keepHalfsetAverages = True,
                                    halfsetPrefix=os.path.join(outdir, 'plFSC'), randomize=randomize)
         print(f'Even and odd halfsets were written into {outdir} and stored as plFSCeven / odd .em!')
         
@@ -158,7 +158,7 @@ if __name__ == '__main__':
             
         print('')
         print('FSC Criterion:   ', fscCriterion)
-        print('Number of Bands: ', numberBands)
+        print('Number of Bands: ', number_bands)
         print('')
         print('Nyquist: ', r[0])
         print('Band:    ', r[1])
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         
         if pixelSize:
             from pytom.basic.resolution import bandToAngstrom
-            resolution = bandToAngstrom(r[1], pixelSize, numberBands)
+            resolution = bandToAngstrom(r[1], pixelSize, number_bands)
             print('Resolution determined for pixelsize : ', pixelSize , ' at ', resolution, ' Angstrom')
     
     else:

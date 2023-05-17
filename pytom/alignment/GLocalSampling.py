@@ -292,7 +292,7 @@ def mainAlignmentLoop(alignmentJob, verbose=False):
                                             setParticleNodesRatio=setParticleNodesRatio)
             from pytom.basic.correlation import fsc
             fsc = fsc(volume1=evenAverage.getVolume(), volume2=oddAverage.getVolume(),
-                      numberBands=int(evenAverage.getVolume().sizeX()/2))
+                      number_bands=int(evenAverage.getVolume().sizeX()/2))
             #resolution hokus pokus -> estimate fsc for all particles
             for (ii, fscel) in enumerate(fsc):
                 fsc[ii] = 2.*fscel/(1.+fscel)
@@ -446,7 +446,7 @@ def mainAlignmentLoop(alignmentJob, verbose=False):
             from pytom.agnostic.correlation import fsc
 
             fsc = fsc(volume1=cvols['Even'], volume2=oddAverage,
-                      numberBands=int(cvols['Even'].shape[0]// 2))
+                      number_bands=int(cvols['Even'].shape[0]// 2))
 
             # resolution hokus pokus -> estimate fsc for all particles (this is what RELION does)
             for (ii, fscel) in enumerate(fsc):
