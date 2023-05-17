@@ -711,7 +711,7 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
     @return: Returns the best rotation for particle and the corresponding scoring result.
     @author: Thomas Hrabe
     """
-    from pytom.basic.correlation import subPixelPeak, subPixelPeakParabolic
+    from pytom.basic.correlation import subPixelPeak, sub_pixel_peak_parabolic
     from pytom.alignment.structures import Peak
     from pytom.lib.pytom_volume import peak, vol, vol_comp
     from pytom.basic.filter import filter,rotateWeighting
@@ -817,7 +817,7 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
         # with subPixelPeak
         [peakValue,peakPosition] = subPixelPeak(scoreVolume=scoringResult, coordinates=pk,
                                                interpolation='Quadratic', verbose=False)
-        #[peakValue,peakPosition] = subPixelPeakParabolic(scoreVolume=scoringResult, coordinates=pk, verbose=False)
+        #[peakValue,peakPosition] = sub_pixel_peak_parabolic(scoreVolume=scoringResult, coordinates=pk, verbose=False)
 
         # determine shift relative to center
         shiftX = (peakPosition[0] - centerX) * binning

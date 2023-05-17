@@ -914,7 +914,7 @@ def randomize_phase_beyond_freq(volume, frequency):
 # Sub Pixel Peak Methods
 
 
-def subPixelPeakParabolic(scoreVolume, coordinates, verbose=False):
+def sub_pixel_peak_parabolic(scoreVolume, coordinates, verbose=False):
     """
     quadratic interpolation of three adjacent samples
     @param scoreVolume: The score volume
@@ -927,7 +927,7 @@ def subPixelPeakParabolic(scoreVolume, coordinates, verbose=False):
 
     if isBorderVoxel(scoreVolume, coordinates):
         if verbose:
-            print("subPixelPeakParabolic: peak near borders - no interpolation done")
+            print("sub_pixel_peak_parabolic: peak near borders - no interpolation done")
         return [scoreVolume[coordinates], coordinates]
 
     peakCoordinates = coordinates
@@ -991,7 +991,7 @@ def subPixelPeak(
     """
     assert type(interpolation) == str, "subPixelPeak: interpolation must be str"
     if (interpolation.lower() == "quadratic") or (interpolation.lower() == "parabolic"):
-        (peakValue, peakCoordinates) = subPixelPeakParabolic(
+        (peakValue, peakCoordinates) = sub_pixel_peak_parabolic(
             scoreVolume=scoreVolume, coordinates=coordinates, verbose=verbose
         )
         return [peakValue, peakCoordinates]
