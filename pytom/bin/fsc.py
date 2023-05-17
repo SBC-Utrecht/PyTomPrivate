@@ -107,8 +107,8 @@ if __name__ == '__main__':
             r = determine_resolution(f, fscCriterion, verbose)
         else:
             randomizationFrequency    = np.floor(determine_resolution(np.array(f), randomize, verbose)[1])
-            oddVolumeRandomizedPhase  = correlation.randomizePhaseBeyondFreq(v1, randomizationFrequency)
-            evenVolumeRandomizedPhase = correlation.randomizePhaseBeyondFreq(v2, randomizationFrequency)
+            oddVolumeRandomizedPhase  = correlation.randomize_phase_beyond_freq(v1, randomizationFrequency)
+            evenVolumeRandomizedPhase = correlation.randomize_phase_beyond_freq(v2, randomizationFrequency)
             # write(os.path.join(outdir, 'randOdd.mrc'), oddVolumeRandomizedPhase)
             # write(os.path.join(outdir, 'randEven.mrc'), evenVolumeRandomizedPhase)
             # oddVolumeRandomizedPhase = read(os.path.join(outdir, 'randOdd.mrc'))

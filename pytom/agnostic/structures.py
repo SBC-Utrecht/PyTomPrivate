@@ -3115,8 +3115,8 @@ class ParticleList(PyTomClass):
             r = determine_resolution(f, fscCriterion, verbose)
         else:
             randomizationFrequency = np.floor(determine_resolution(np.array(f), float(randomize), verbose)[1])
-            oddVolumeRandomizedPhase = correlation.randomizePhaseBeyondFreq(vol2npy(v1), randomizationFrequency)
-            evenVolumeRandomizedPhase = correlation.randomizePhaseBeyondFreq(vol2npy(v2), randomizationFrequency)
+            oddVolumeRandomizedPhase = correlation.randomize_phase_beyond_freq(vol2npy(v1), randomizationFrequency)
+            evenVolumeRandomizedPhase = correlation.randomize_phase_beyond_freq(vol2npy(v2), randomizationFrequency)
             write('randOdd.mrc', oddVolumeRandomizedPhase)
             write('randEven.mrc', evenVolumeRandomizedPhase)
             oddVolumeRandomizedPhase = read('randOdd.mrc')
@@ -3128,8 +3128,8 @@ class ParticleList(PyTomClass):
             r = determine_resolution(fsc_true, fscCriterion, verbose)
         # randomizationFrequency = np.floor(determine_resolution(fsc, 0.8, verbose)[1])
 
-        # oddVolumeRandomizedPhase = randomizePhaseBeyondFreq(oddVolume, randomizationFrequency)
-        # evenVolumeRandomizedPhase = randomizePhaseBeyondFreq(oddVolume, randomizationFrequency)
+        # oddVolumeRandomizedPhase = randomize_phase_beyond_freq(oddVolume, randomizationFrequency)
+        # evenVolumeRandomizedPhase = randomize_phase_beyond_freq(oddVolume, randomizationFrequency)
         # fsc2 = fsc(oddVolumeRandomizedPhase, evenVolumeRandomizedPhase, numberBands, mask, verbose)
         if verbose:
             print('FSC list:')

@@ -845,7 +845,7 @@ def generate_random_phases_3d(shape, reduced_complex=True):
     return rnda
 
 
-def randomizePhaseBeyondFreq(volume, frequency):
+def randomize_phase_beyond_freq(volume, frequency):
     """This function randomizes the phases beyond a given frequency,
     while preserving the Friedel symmetry.
     @param volume: target volume
