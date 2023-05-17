@@ -781,12 +781,12 @@ def determine_resolution(fsc, resolution_criterion, verbose=False, randomized_fs
     return [resolution, interpolatedBand, number_bands]
 
 
-def calc_fsc_true(fsc_t, FSC_n, ring_thickness=1):
+def calc_fsc_true(fsc_t, fsc_n, ring_thickness=1):
     """Calculates the true FSC as defined in Henderson
     @param fsc_t: array with FSC values without randomized phases.
     @type fsc_t: ndarray
-    @param FSC_n: array with FSC values without randomized phases.
-    @type FSC_n: ndarray
+    @param fsc_n: array with FSC values without randomized phases.
+    @type fsc_n: ndarray
 
     @return: return the fsc_true array
     @rtype: ndarray
@@ -794,18 +794,18 @@ def calc_fsc_true(fsc_t, FSC_n, ring_thickness=1):
 
     from numpy import zeros_like
 
-    if len(fsc_t) != len(FSC_n):
+    if len(fsc_t) != len(fsc_n):
         raise Exception("FSC arrays are not of equal length.")
     fsc_true = zeros_like(fsc_t)
     steps = 0
     for i in range(len(fsc_t)):
-        if abs(fsc_t[i] - FSC_n[i]) < 1e-1:
+        if abs(fsc_t[i] - fsc_n[i]) < 1e-1:
             fsc_true[i] = fsc_t[i]
         elif steps < ring_thickness:
             fsc_true[i] = fsc_t[i]
             steps += 1
         else:
-            fsc_true[i] = (fsc_t[i] - max(0, FSC_n[i])) / (1 - max(0, FSC_n[i]))
+            fsc_true[i] = (fsc_t[i] - max(0, fsc_n[i])) / (1 - max(0, fsc_n[i]))
 
     return fsc_true
 
