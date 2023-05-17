@@ -1136,7 +1136,7 @@ def sub_pixel_max_3d(
         stream = xp.cuda.Stream.null
         t_start = stream.record()
 
-    # x,y,z = xp.array(maxIndex(cropped_volume)) + ignore_border
+    # x,y,z = xp.array(max_index(cropped_volume)) + ignore_border
     x, y, z = (
         xp.array(xp.unravel_index(cropped_volume.argmax(), cropped_volume.shape))
         + ignore_border
@@ -1205,7 +1205,7 @@ def sub_pixel_max_3d(
     return [peakValue, peakShift]
 
 
-def maxIndex(volume, num_threads=1024):
+def max_index(volume, num_threads=1024):
     nblocks = int(xp.ceil(volume.size / num_threads / 2))
     fast_sum = -1000000 * xp.ones((nblocks), dtype=xp.float32)
     max_id = xp.zeros((nblocks), dtype=xp.int32)

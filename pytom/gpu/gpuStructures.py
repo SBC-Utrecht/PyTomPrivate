@@ -454,7 +454,7 @@ class GLocalAlignmentPlan():
             stream = self.cp.cuda.Stream.null
             t_start = stream.record()
 
-        # x,y,z = self.cp.array(maxIndex(cropped_volume)) + ignore_border
+        # x,y,z = self.cp.array(max_index(cropped_volume)) + ignore_border
         x, y, z = self.cp.array(self.cp.unravel_index(cropped_volume.argmax(), cropped_volume.shape)) + ignore_border
 
         dx, dy, dz = self.ccc_map.shape
@@ -531,7 +531,7 @@ class GLocalAlignmentPlan():
 
         return [peakValue, peakShift]
 
-    def maxIndex(self, volume, num_threads=1024):
+    def max_index(self, volume, num_threads=1024):
         nblocks = int(self.cp.ceil(volume.size / num_threads / 2))
         fast_sum = -1000000 * self.cp.ones((nblocks), dtype=self.cp.float32)
         max_id = self.cp.zeros((nblocks), dtype=self.cp.int32)
