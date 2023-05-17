@@ -353,10 +353,10 @@ def weighted_xcf(volume, reference, number_of_bands, wedge_angle=-1):
 
 
     if wedge_angle >= 0:
-        wedgeFilter = pytom_freqweight.weight(
+        wedge_filter = pytom_freqweight.weight(
             wedge_angle, 0, volume.sizeX(), volume.sizeY(), volume.sizeZ()
         )
-        wedge_volume = wedgeFilter.getWeightVolume(True)
+        wedge_volume = wedge_filter.getWeightVolume(True)
     else:
         wedge_volume = xp.ones_like(volume)
 
@@ -417,10 +417,10 @@ def soc(volume, reference, mask=None, std_v=None):
     @author: Thomas Hrabe
     """
 
-    referencePeak = flcf(reference, reference, mask)
+    reference_peak = flcf(reference, reference, mask)
     peaks = flcf(volume, reference, mask)
 
-    return flcf(peaks, referencePeak, mask)
+    return flcf(peaks, reference_peak, mask)
 
 
 def dev(volume, template, mask=None, volume_is_normalized=False):
@@ -490,37 +490,34 @@ def band_cc(volume, reference, band, verbose=False, shared=None, index=None):
 
     vf, m = bandpass(volume, band[0], band[1], returnMask=True, fourierOnly=True)
     rf = bandpass(reference, band[0], band[1], mask=m, fourierOnly=True)  # ,vf[1])
-    # ccVolume = vol_comp(rf[0].shape[0],rf[0].shape[1],rf[0].shape[2])
-    # ccVolume.copyVolume(rf[0])
 
     vf = vf.astype(xp.complex128)
-    ccVolume = rf.astype(vf.dtype)
+    cc_volume = rf.astype(vf.dtype)
 
-    ccVolume = ccVolume * xp.conj(vf)
-    # pytom_volume.conj_mult(ccVolume,vf[0])
+    cc_volume = cc_volume * xp.conj(vf)
 
-    cc = ccVolume.sum()
+    cc = cc_volume.sum()
 
     cc = cc.real
     v = vf
     r = rf
 
-    absV = xp.abs(v)
-    absR = xp.abs(r)
+    abs_v = xp.abs(v)
+    abs_r = xp.abs(r)
 
-    sumV = xp.sum(absV**2)
-    sumR = xp.sum(absR**2)
+    sum_v = xp.sum(abs_v**2)
+    sum_r = xp.sum(abs_r**2)
 
-    sumV = xp.abs(sumV)
-    sumR = xp.abs(sumR)
+    sum_v = xp.abs(sum_v)
+    sum_r = xp.abs(sum_r)
 
-    if sumV == 0:
-        sumV = 1
+    if sum_v == 0:
+        sum_v = 1
 
-    if sumR == 0:
-        sumR = 1
+    if sum_r == 0:
+        sum_r = 1
 
-    cc = cc / (xp.sqrt(sumV * sumR))
+    cc = cc / (xp.sqrt(sum_v * sum_r))
 
     # numerical errors will be punished with nan
     nan_treshold = 1.1
@@ -544,28 +541,28 @@ def band_cf(volume, reference, band=[0, 100]):
     """
 
     from math import sqrt
-    from pytom.agnostic.filter import bandpass as bandpassFilter
+    from pytom.agnostic.filter import bandpass
     from pytom.agnostic.transform import fourier_reduced2full
 
-    vf, vfm = bandpassFilter(
+    vf, vfm = bandpass(
         volume, band[0], band[1], fourierOnly=True, returnMask=True
     )
-    rf = bandpassFilter(reference, band[0], band[1], vf[1], fourierOnly=True)
+    rf = bandpass(reference, band[0], band[1], vf[1], fourierOnly=True)
 
     v = fourier_reduced2full(vf)
     r = fourier_reduced2full(rf)
 
-    absV = xp.abs(v) ** 2
-    absR = xp.abs(r) ** 2
+    abs_v = xp.abs(v) ** 2
+    abs_r = xp.abs(r) ** 2
 
-    sumV = abs(xp.sum(absV))
-    sumR = abs(xp.sum(absR))
+    sum_v = abs(xp.sum(abs_v))
+    sum_r = abs(xp.sum(abs_r))
 
-    if sumV == 0:
-        sumV = 1
+    if sum_v == 0:
+        sum_v = 1
 
-    if sumR == 0:
-        sumR = 1
+    if sum_r == 0:
+        sum_r = 1
 
     xp.conj(rf[0])
 
@@ -574,7 +571,7 @@ def band_cf(volume, reference, band=[0, 100]):
     # transform back to real space
     result = xp.fft.ifftshift(xp.fft.ifftn(fresult)).real
 
-    result *= 1 / float(sqrt(sumV * sumR))
+    result *= 1 / float(sqrt(sum_v * sum_r))
 
     return [result, vfm]
 
@@ -636,7 +633,7 @@ def fsc(volume1, volume2, number_bands=None, mask=None, verbose=False, filename=
                 "FSC: Mask must be a volume OR a Mask object OR a string path to a mask!"
             )
 
-    fscResult = []
+    fsc_result = []
     band = [-1, -1]
 
     increment = int(volume1.shape[0] / 2 * 1 / number_bands)
@@ -661,15 +658,15 @@ def fsc(volume1, volume2, number_bands=None, mask=None, verbose=False, filename=
         if verbose:
             print("Correlation ", res)
 
-        fscResult.append(res)
+        fsc_result.append(res)
 
     if filename:
         f = open(filename, "w")
-        for item in fscResult:
+        for item in fsc_result:
             f.write("%s\n" % item)
         f.close()
 
-    return fscResult
+    return fsc_result
 
 
 def fsc_sum(volume, reference, number_of_bands, wedge_angle=-1):
@@ -719,7 +716,7 @@ def determine_resolution(fsc, resolution_criterion, verbose=False, randomized_fs
     @param resolution_criterion: A value between 0 and 1
     @param verbose: Bool that activate writing of info, default=False
     @param randomized_fsc: A value that sets the start of the calculation of randomized FSC. (0-1).
-    @return: [resolution,interpolatedBand,number_bands]
+    @return: [resolution,interpolated_band,number_bands]
     @author: Thomas Hrabe
     @todo: Add test!
     """
@@ -752,33 +749,33 @@ def determine_resolution(fsc, resolution_criterion, verbose=False, randomized_fs
 
         try:
             if fsc2 < rfsc2:
-                interpolatedBand = (fsc1 - rfsc1) / (rfsc2 - rfsc1 + fsc1 - fsc2)
+                interpolated_band = (fsc1 - rfsc1) / (rfsc2 - rfsc1 + fsc1 - fsc2)
                 pass
             else:
-                interpolatedBand = (resolution_criterion - fsc1) / (fsc2 - fsc1) + band
+                interpolated_band = (resolution_criterion - fsc1) / (fsc2 - fsc1) + band
 
         except ZeroDivisionError:
-            interpolatedBand = band
+            interpolated_band = band
 
     else:
-        interpolatedBand = band
+        interpolated_band = band
 
     if verbose:
-        print("Band interpolated to ", interpolatedBand)
+        print("Band interpolated to ", interpolated_band)
 
-    resolution = (interpolatedBand + 1) / float(number_bands)
+    resolution = (interpolated_band + 1) / float(number_bands)
 
     if resolution < 0:
         resolution = 1
-        interpolatedBand = number_bands
+        interpolated_band = number_bands
         print(
             "Warning: PyTom determined a resolution < 0 for your data. "
             'Please check "mass" in data is positive or negative for all cubes.'
         )
-        print(f"Warning: Setting resolution to 1 and {interpolatedBand}")
+        print(f"Warning: Setting resolution to 1 and {interpolated_band}")
         print("")
 
-    return [resolution, interpolatedBand, number_bands]
+    return [resolution, interpolated_band, number_bands]
 
 
 def calc_fsc_true(fsc_t, fsc_n, ring_thickness=1):
