@@ -4,13 +4,11 @@
 from pytom.gpu.initialize import xp, device
 import numpy as np
 from pytom.agnostic.transform import resize as RESIZE
-# Typing imports
-from pytom.gpu.initialize import xptyping as xpt
 
 epsilon = 1E-8
 
 
-def create_sphere(size, radius=-1, sigma=0, num_sigma=2, center=None, gpu=False) -> xpt.NDArray:
+def create_sphere(size, radius=-1, sigma=0, num_sigma=2, center=None, gpu=False) -> xp.ndarray[float]:
     """Create a 3D sphere volume.
     @param size: size of the resulting volume.
     @param radius: radius of the sphere inside the volume.
@@ -39,7 +37,7 @@ def create_sphere(size, radius=-1, sigma=0, num_sigma=2, center=None, gpu=False)
 
     return sphere
 
-def create_circle(size, radius=-1, sigma=0, num_sigma=3, center=None) -> xpt.NDArray:
+def create_circle(size, radius=-1, sigma=0, num_sigma=3, center=None) -> xp.ndarray[float]:
     """Create a 3D sphere volume.
 
     @param size: size of the resulting volume.
