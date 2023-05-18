@@ -7,6 +7,9 @@ restructured by @sroet in May 2023
 """
 from pytom.gpu.initialize import xp, device
 from pytom.gpu.gpuFunctions import argmax
+from pytom.agnostic.filter import bandpass
+from pytom.agnostic.io import read
+from pytom.agnostic.macros import volumesSameSize
 from pytom.agnostic.normalise import (
     meanUnderMask,
     meanVolUnderMask,
@@ -16,12 +19,14 @@ from pytom.agnostic.normalise import (
     mean0std1,
 )
 from pytom.agnostic.tools import create_circle, create_sphere
+from pytom.agnostic.transform import fourier_reduced2full
+from pytom.basic.transformations import resize
+import pytom.lib.pytom_volume as pytom_volume
 #Typing imports
-from pytom.gpu.initialize import xptyping as xpt
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any, List, Union, cast
 
 
-def flcf(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, std_v: Optional[float]=None) -> float:
+def flcf(volume: xp.ndarray[float], template: xp.ndarray[float], mask: Optional[xp.ndarray[float]]=None, std_v: Optional[float]=None) -> xp.ndarray[float]:
     """Fast local correlation function
 
     @param volume: target volume
@@ -58,7 +63,7 @@ def flcf(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]
     return res
 
 
-def xcc(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, volume_is_normalized: bool=False) -> float:
+def xcc(volume: xp.ndarray[float], template: xp.ndarray[float], mask: Optional[xp.ndarray[float]]=None, volume_is_normalized: bool=False) -> float:
     """
     xcc: Calculates the cross correlation coefficient in real space
     @param volume: A volume
@@ -74,8 +79,6 @@ def xcc(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=
     @author: Thomas Hrabe
     """
 
-    from pytom.agnostic.macros import volumesSameSize
-
     if not volumesSameSize(volume, template):
         raise RuntimeError("Volume and template must have same size!")
 
@@ -84,14 +87,14 @@ def xcc(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=
     else:
         result = volume * template
 
-    cc = result.sum()
+    cc: float = result.sum()
 
     cc = cc / float(volume.size)
 
     return cc
 
 
-def nxcc(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, volume_is_normalized: bool=False) -> float:
+def nxcc(volume: xp.ndarray[float], template: xp.ndarray[float], mask: Optional[xp.ndarray[float]]=None, volume_is_normalized: bool=False) -> float:
     """
     nxcc: Calculates the normalized cross correlation coefficient in real space
     @param volume: A volume
@@ -107,8 +110,6 @@ def nxcc(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]
     @author: Thomas Hrabe
     @change: flag for pre-normalized volume, FF
     """
-
-    from pytom.agnostic.macros import volumesSameSize
 
     if not volumesSameSize(volume, template):
         raise RuntimeError("Volume and template must have same size!")
@@ -141,11 +142,11 @@ def nxcc(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]
 
 
 def xcf(
-        volume: xpt.NDArray,
-        template: xpt.NDArray,
-        mask: Optional[xpt.NDArray]=None,
-        std_v: Optional[float]=None,
-) -> float:
+        volume: xp.ndarray[float, complex],
+        template: xp.ndarray[float, complex],
+        mask: Any=None,
+        std_v: Any=None,
+) -> xp.ndarray[float]:
     """
     XCF: returns the non-normalised cross correlation function. The xcf
     result is scaled only by the square of the number of elements.
@@ -190,11 +191,11 @@ def xcf(
 
 
 def xcf_mult(
-        volume: xpt.NDArray,
-        template: xpt.NDArray,
-        mask: xpt.NDArray,
-        std_v: Optional[float]=None,
-) -> float:
+        volume: xp.ndarray[float],
+        template: xp.ndarray[float],
+        mask: Any=None,
+        std_v: Any=None,
+) -> xp.ndarray[float]:
     """
     XCF: returns the non-normalised cross correlation function. The xcf
     result is scaled only by the square of the number of elements.
@@ -231,7 +232,7 @@ def xcf_mult(
     return result
 
 
-def norm_xcf(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, std_v: Optional[float]=None, gpu: bool=False) ->  float:
+def norm_xcf(volume: xp.ndarray[float], template: xp.ndarray[float], mask: Optional[xp.ndarray[float]]=None, std_v: Optional[float]=None, gpu: bool=False) ->  xp.ndarray[float]:
     """
     nXCF: returns the normalised cross correlation function. Autocorrelation
     of two equal objects would yield a max nxcf peak of 1.
@@ -265,7 +266,7 @@ def norm_xcf(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDAr
 
 
 
-def soc(volume: xpt.NDArray, reference: xpt.NDArray, mask: Optional[xpt.NDArray]=None, std_v: Optional[float]=None) -> float:
+def soc(volume: xp.ndarray[float], reference: xp.ndarray[float], mask: Optional[xp.ndarray[float]]=None, std_v: Optional[float]=None) -> xp.ndarray[float]:
     """
     soc : Second Order Correlation. Correlation of correlation peaks.
     @param volume: The volume
@@ -281,7 +282,7 @@ def soc(volume: xpt.NDArray, reference: xpt.NDArray, mask: Optional[xpt.NDArray]
     return flcf(peaks, reference_peak, mask)
 
 
-def dev(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=None, volume_is_normalized: bool=False) -> float:
+def dev(volume: xp.ndarray[float], template: xp.ndarray[float], mask: Optional[xp.ndarray[float]]=None, volume_is_normalized: bool=False) -> float:
     """
     dev: Calculates the squared deviation of volume and template in real space
     @param volume: A volume
@@ -296,8 +297,6 @@ def dev(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=
     @raise exception: Raises a runtime error if volume and template have a different size.
     @author: FF
     """
-
-    from pytom.agnostic.tools import volumesSameSize
 
     assert volume.__class__ == xp.ndarray, "dev: volume has to be of type xp.ndarray!"
     assert (
@@ -314,7 +313,7 @@ def dev(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=
         p = xp.sum(mask)
         result = (volume - template) * mask
 
-    deviat = sum(result**2)
+    deviat: float = sum(result**2)
     deviat = deviat / float(p)
 
     return deviat
@@ -323,7 +322,7 @@ def dev(volume: xpt.NDArray, template: xpt.NDArray, mask: Optional[xpt.NDArray]=
 # Band correlation
 
 
-def band_cc(volume: xpt.NDArray, reference: xpt.NDArray, band: Tuple[float, float], verbose: bool=False, shared: None=None, index: None=None)-> float:
+def band_cc(volume: xp.ndarray[float], reference: xp.ndarray[float], band: Tuple[float, float], verbose: bool=False, shared: None=None, index: None=None)-> float:
     """
     band_cc: Determines the normalised correlation coefficient within a band
     @param volume: The volume
@@ -339,7 +338,6 @@ def band_cc(volume: xpt.NDArray, reference: xpt.NDArray, band: Tuple[float, floa
     if index is not None:
         print(index)
 
-    from pytom.agnostic.filter import bandpass
 
     # from pytom.agnostic.filter import vol_comp
 
@@ -347,16 +345,15 @@ def band_cc(volume: xpt.NDArray, reference: xpt.NDArray, band: Tuple[float, floa
         print("lowest freq : ", band[0], " highest freq", band[1])
 
     vf, m = bandpass(volume, band[0], band[1], returnMask=True, fourierOnly=True)
-    rf = bandpass(reference, band[0], band[1], mask=m, fourierOnly=True)  # ,vf[1])
+    rf: xp.ndarray = bandpass(reference, band[0], band[1], mask=m, fourierOnly=True)  # ,vf[1])
 
     vf = vf.astype(xp.complex128)
     cc_volume = rf.astype(vf.dtype)
 
     cc_volume = cc_volume * xp.conj(vf)
 
-    cc = cc_volume.sum()
+    cc:float = cc_volume.sum().real
 
-    cc = cc.real
     v = vf
     r = rf
 
@@ -385,7 +382,7 @@ def band_cc(volume: xpt.NDArray, reference: xpt.NDArray, band: Tuple[float, floa
     return float(cc)
 
 
-def band_cf(volume: xpt.NDArray, reference: xpt.NDArray, band: Tuple[float, float]=(0, 100)) -> Tuple[xpt.NDArray, xpt.NDArray]:
+def band_cf(volume: xp.ndarray[float], reference: xp.ndarray[float], band: Tuple[float, float]=(0, 100)) -> Tuple[xp.ndarray[float], xp.ndarray[float]]:
     """
     band_cf:
     @param volume: The volume
@@ -399,8 +396,6 @@ def band_cf(volume: xpt.NDArray, reference: xpt.NDArray, band: Tuple[float, floa
     """
 
     from math import sqrt
-    from pytom.agnostic.filter import bandpass
-    from pytom.agnostic.transform import fourier_reduced2full
 
     vf, vfm = bandpass(volume, band[0], band[1], fourierOnly=True, returnMask=True)
     rf = bandpass(reference, band[0], band[1], vf[1], fourierOnly=True)
@@ -435,7 +430,8 @@ def band_cf(volume: xpt.NDArray, reference: xpt.NDArray, band: Tuple[float, floa
 # Fourier Shell Correlation and helper functions
 
 
-def fsc(volume1, volume2, number_bands=None, mask=None, verbose=False, filename=None):
+def fsc(volume1: xp.ndarray[float], volume2: xp.ndarray[float], number_bands: Optional[int]=None, 
+        mask: Optional[xp.ndarray[float]]=None, verbose: bool=False, filename: Optional[str]=None) -> List[float]:
     """
     FSC - Calculates the Fourier Shell Correlation for two volumes
     @param volume1: volume one
@@ -458,8 +454,6 @@ def fsc(volume1, volume2, number_bands=None, mask=None, verbose=False, filename=
 
     from pytom.agnostic.correlation import band_cc
     from pytom.basic.structures import Mask
-    from pytom.agnostic.io import read
-    from pytom.agnostic.tools import volumesSameSize
     import time
 
     time.time()
@@ -490,7 +484,6 @@ def fsc(volume1, volume2, number_bands=None, mask=None, verbose=False, filename=
             )
 
     fsc_result = []
-    band = [-1, -1]
 
     increment = int(volume1.shape[0] / 2 * 1 / number_bands)
     import time
@@ -499,9 +492,9 @@ def fsc(volume1, volume2, number_bands=None, mask=None, verbose=False, filename=
     fvolume2 = xp.fft.fftn(volume2)
 
     for n, i in enumerate(range(0, volume1.shape[0] // 2, increment)):
-        band[0] = i
-        band[1] = i + increment
-
+        band_l = i
+        band_r = i + increment
+        band = (band_l, band_r)
         if verbose:
             print("Band : ", band)
 
@@ -525,7 +518,8 @@ def fsc(volume1, volume2, number_bands=None, mask=None, verbose=False, filename=
     return fsc_result
 
 
-def fsc_sum(volume, reference, number_of_bands, wedge_angle=-1):
+def fsc_sum(volume: xp.ndarray[float], reference: xp.ndarray[float], number_of_bands: int, 
+            wedge_angle: int=-1) -> float:
     """
     fsc_sum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and
             reference.
@@ -539,6 +533,7 @@ def fsc_sum(volume, reference, number_of_bands, wedge_angle=-1):
     @rtype: float
     @author: Thomas Hrabe
     """
+    # TODO: this function can't run and is probably dead code
 
     from pytom.agnostic.correlation import band_cc
 
@@ -553,10 +548,9 @@ def fsc_sum(volume, reference, number_of_bands, wedge_angle=-1):
 
     for i in range(number_of_bands):
         # process bandCorrelation
-        band = []
-        band[0] = i * volume.shape[0] / number_of_bands
-        band[1] = (i + 1) * volume.shape[0] / number_of_bands
-
+        band_l = i * volume.shape[0] / number_of_bands
+        band_r = (i + 1) * volume.shape[0] / number_of_bands
+        band = (band_l, band_r)
         r = band_cc(fvolume, freference, band)
         cc = r[0]
         result = result + cc
@@ -564,7 +558,8 @@ def fsc_sum(volume, reference, number_of_bands, wedge_angle=-1):
     return result * (1 / float(number_of_bands))
 
 
-def determine_resolution(fsc, resolution_criterion, verbose=False, randomized_fsc=None):
+def determine_resolution(fsc: List[float], resolution_criterion: float, verbose: bool=False, 
+        randomized_fsc: Optional[List[float]]=None) -> Tuple[float, float, int]:
     """
     determine_resolution: Determines frequency and band where correlation drops below the
                          resolution_criterion. Uses linear interpolation between two positions
@@ -577,16 +572,21 @@ def determine_resolution(fsc, resolution_criterion, verbose=False, randomized_fs
     @todo: Add test!
     """
 
-    fsc = xp.array(fsc)
+    fsc_arr: xp.ndarray = xp.array(fsc)
     number_bands = len(fsc)
 
     band = number_bands
 
+    randomized_fsc_arr: xp.ndarray
     if randomized_fsc is None:
-        randomized_fsc = xp.ones_like(fsc) * (fsc.min() - 0.1)
+        randomized_fsc_arr = xp.ones_like(fsc_arr) * (fsc_arr.min() - 0.1)
+    else:
+        randomized_fsc_arr = xp.array(randomized_fsc)
+    if len(randomized_fsc_arr) < number_bands:
+        raise ValueError("Input randomized_fsc should be at least as long as the fsc")
 
     for i in range(number_bands):
-        if fsc[i] < resolution_criterion and fsc[i] > randomized_fsc[i]:
+        if fsc_arr[i] < resolution_criterion and fsc_arr[i] > randomized_fsc_arr[i]:
             band = i - 1  # select the band that is still larger than criterion
             break
 
@@ -597,11 +597,11 @@ def determine_resolution(fsc, resolution_criterion, verbose=False, randomized_fs
         raise RuntimeError("Please check your resolution criterion or you FSC!")
 
     elif band < number_bands:
-        fsc1 = fsc[band]
-        fsc2 = fsc[band + 1]
+        fsc1 = fsc_arr[band]
+        fsc2 = fsc_arr[band + 1]
 
-        rfsc1 = randomized_fsc[band]
-        rfsc2 = randomized_fsc[band + 1]
+        rfsc1 = randomized_fsc_arr[band]
+        rfsc2 = randomized_fsc_arr[band + 1]
 
         try:
             if fsc2 < rfsc2:
@@ -631,10 +631,10 @@ def determine_resolution(fsc, resolution_criterion, verbose=False, randomized_fs
         print(f"Warning: Setting resolution to 1 and {interpolated_band}")
         print("")
 
-    return [resolution, interpolated_band, number_bands]
+    return resolution, interpolated_band, number_bands
 
 
-def calc_fsc_true(fsc_t, fsc_n, ring_thickness=1):
+def calc_fsc_true(fsc_t: xp.ndarray[float], fsc_n: xp.ndarray[float], ring_thickness: int=1) -> xp.ndarray:
     """Calculates the true FSC as defined in Henderson
     @param fsc_t: array with FSC values without randomized phases.
     @type fsc_t: ndarray
@@ -663,7 +663,8 @@ def calc_fsc_true(fsc_t, fsc_n, ring_thickness=1):
     return fsc_true
 
 
-def generate_random_phases_3d(shape, reduced_complex=True):
+def generate_random_phases_3d(shape: Union[Tuple[int, int], Tuple[int, int, int]],
+        reduced_complex: bool=True) -> xp.ndarray[float]:
     """This function returns a set of random phases (between -pi and pi), optionally centrosymmetric
     @shape: shape of array
     @type: tuple
@@ -674,10 +675,11 @@ def generate_random_phases_3d(shape, reduced_complex=True):
     @rtype: ndarray
     """
 
+    # Using 'cast' to get arround mypy errors for now
     if len(shape) == 3:
-        dx, dy, dz = shape
+        dx, dy, dz = cast(Tuple[int, int, int], shape)
     else:
-        dx, dy = shape
+        dx, dy = cast(Tuple[int, int], shape)
         dz = max(dx, dy)
 
     rnda = (xp.random.ranf(shape) * xp.pi * 2) - xp.pi
@@ -698,7 +700,7 @@ def generate_random_phases_3d(shape, reduced_complex=True):
     return rnda
 
 
-def randomize_phase_beyond_freq(volume, frequency):
+def randomize_phase_beyond_freq(volume: xp.ndarray, frequency: int) -> xp.ndarray:
     """This function randomizes the phases beyond a given frequency,
     while preserving the Friedel symmetry.
     @param volume: target volume
@@ -761,7 +763,9 @@ def randomize_phase_beyond_freq(volume, frequency):
 # Sub Pixel Peak Methods
 
 
-def sub_pixel_peak_parabolic(score_volume, coordinates, verbose=False):
+def sub_pixel_peak_parabolic(score_volume: xp.ndarray[float], 
+        coordinates: Union[Tuple[int, int, int], Tuple[int, int]], 
+        verbose: bool=False) -> Tuple[float, Union[Tuple[float, float, float], Tuple[float, float]]]:
     """
     quadratic interpolation of three adjacent samples
     @param score_volume: The score volume
@@ -775,9 +779,9 @@ def sub_pixel_peak_parabolic(score_volume, coordinates, verbose=False):
     if is_border_voxel(score_volume, coordinates):
         if verbose:
             print("sub_pixel_peak_parabolic: peak near borders - no interpolation done")
-        return [score_volume[coordinates], coordinates]
+        return score_volume[coordinates], coordinates
 
-    peak_coordinates = coordinates
+
     l = len(coordinates)
     (x, a1, b1) = qint(
         ym1=score_volume[tuple(xp.array(coordinates) - xp.array([1, 0, 0][:l]))],
@@ -789,15 +793,30 @@ def sub_pixel_peak_parabolic(score_volume, coordinates, verbose=False):
         y0=score_volume[coordinates],
         yp1=score_volume[tuple(xp.array(coordinates) + xp.array([0, 1, 0][:l]))],
     )
-    if l > 2:
+    # some ealry declarations to help with typing
+    peak_value: float
+    peak_x: float
+    peak_y: float
+    peak_z: float 
+    peak_coordinates: Union[Tuple[float, float, float], Tuple[float, float]]
+    if l == 2:
+        peak_x, peak_y = cast(Tuple[int, int], coordinates)
+        peak_x += x
+        peak_y += y
+        peak_value = (
+            score_volume[coordinates] + a1 * x**2 + b1 * x + a2 * y**2 + b2 * y
+        )
+        peak_coordinates = (peak_x, peak_y)
+    else:
+        peak_x, peak_y, peak_z = cast(Tuple[int, int, int], coordinates)
         (z, a3, b3) = qint(
             ym1=score_volume[tuple(xp.array(coordinates) - xp.array([0, 0, 1]))],
             y0=score_volume[coordinates],
             yp1=score_volume[tuple(xp.array(coordinates) + xp.array([0, 0, 1]))],
         )
-        peak_coordinates[0] += x
-        peak_coordinates[1] += y
-        peak_coordinates[2] += z
+        peak_x += x
+        peak_y += y
+        peak_z += z
         peak_value = (
             score_volume[coordinates]
             + a1 * x**2
@@ -807,19 +826,14 @@ def sub_pixel_peak_parabolic(score_volume, coordinates, verbose=False):
             + a3 * z**2
             + b3 * z
         )
-    else:
-        peak_coordinates[0] += x
-        peak_coordinates[1] += y
-        peak_value = (
-            score_volume[coordinates] + a1 * x**2 + b1 * x + a2 * y**2 + b2 * y
-        )
+        peak_coordinates = (peak_x, peak_y, peak_z)
     # return coordinates as tuple for indexing
-    return [peak_value, tuple(peak_coordinates)]
+    return peak_value, peak_coordinates
 
 
 def sub_pixel_peak(
-    score_volume, coordinates, cube_length=8, interpolation="Spline", verbose=False
-):
+        score_volume: pytom_volume.vol, coordinates: Tuple[float, float, float], cube_length: int=8, interpolation: str="Spline", verbose: bool=False
+) -> Tuple[float, Tuple[float, float, float]]:
     """
     sub_pixel_peak: Will determine the sub pixel area of peak. Utilizes spline, fourier or
     parabolic interpolation.
@@ -845,8 +859,7 @@ def sub_pixel_peak(
         )
         return [peak_value, peak_coordinates]
 
-    from pytom.lib.pytom_volume import vol, subvolume, rescaleSpline, peak # type: ignore
-    from pytom.basic.transformations import resize
+    from pytom.lib.pytom_volume import vol, subvolume, rescaleSpline, peak 
 
     cube_start = cube_length // 2
     # This fails for 2D
@@ -869,7 +882,7 @@ def sub_pixel_peak(
             coordinates,
         ]
 
-    sub_volume = subvolume(
+    sub_volume = pytom_volume.subvolume(
         score_volume,
         coordinates[0] - cube_start,
         coordinates[1] - cube_start,
@@ -887,12 +900,12 @@ def sub_pixel_peak(
 
     # resize into bigger volume
     if interpolation == "Spline":
-        sub_volume_scaled = vol(scale_size, scale_size, scale_size)
+        sub_volume_scaled = pytom_volume.vol(scale_size, scale_size, scale_size)
         rescaleSpline(sub_volume, sub_volume_scaled)
     else:
         sub_volume_scaled = resize(volume=sub_volume, factor=10)[0]
 
-    peak_coordinates = peak(sub_volume_scaled)
+    peak_coordinates = pytom_volume.peak(sub_volume_scaled)
 
     peak_value = sub_volume_scaled(
         peak_coordinates[0], peak_coordinates[1], peak_coordinates[2]
@@ -922,7 +935,7 @@ def sub_pixel_peak(
             score_volume(coordinates[0], coordinates[1], coordinates[2]),
             coordinates,
         ]
-    return [peak_value, peak_coordinates]
+    return peak_value, peak_coordinates
 
 
 def sub_pixel_max_3d(
@@ -1048,7 +1061,7 @@ def max_index(volume, num_threads=1024):
     return indices
 
 
-def is_border_voxel(volume, coordinates):
+def is_border_voxel(volume: xp.ndarray, coordinates: Tuple[int, ...]) -> bool:
     shape = volume.shape
     for n, pos in enumerate(coordinates):
         if pos < 1 or pos >= shape[n] - 1:
@@ -1056,7 +1069,7 @@ def is_border_voxel(volume, coordinates):
     return False
 
 
-def qint(ym1, y0, yp1):
+def qint(ym1: float, y0: float, yp1: float) -> Tuple[float, float, float]:
     """
     quadratic interpolation of three adjacent samples
 
