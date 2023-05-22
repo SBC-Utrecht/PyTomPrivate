@@ -1,0 +1,21 @@
+name: pytom_env
+channels:
+- conda-forge
+dependencies:
+- python=3
+- numpy
+- lxml
+- scipy
+- boost
+- pyqt
+- pyqtgraph
+- mrcfile
+- openmpi
+- openmpi-mpicc 
+- openmpi-mpicxx
+- openmpi-mpifort
+- numba
+- tqdm
+- mpi4py
+- joblib
+- cupy
