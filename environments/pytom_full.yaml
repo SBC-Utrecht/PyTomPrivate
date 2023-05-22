@@ -21,3 +21,4 @@ dependencies:
 - cupy
 - matplotlib
 - scikit-image
+- swig
