@@ -19,3 +19,5 @@ dependencies:
 - mpi4py
 - joblib
 - cupy
+- matplotlib
+- scikit-image
