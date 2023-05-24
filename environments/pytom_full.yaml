@@ -22,4 +22,4 @@ dependencies:
 - matplotlib
 - scikit-image
 - swig
-- fftw-mpi
+- fftw[build=*openmpi*]
