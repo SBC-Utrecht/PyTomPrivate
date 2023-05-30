@@ -21,7 +21,7 @@ from pytom.agnostic.normalise import (
 from pytom.agnostic.tools import create_circle, create_sphere
 from pytom.agnostic.transform import fourier_reduced2full
 from pytom.basic.transformations import resize
-import pytom.lib.pytom_volume as pytom_volume
+from pytom.lib import pytom_volume
 #Typing imports
 from typing import Optional, Tuple, Any, List, Union, cast
 
@@ -463,7 +463,7 @@ def fsc(volume1: xp.ndarray[float], volume2: xp.ndarray[float], number_bands: Op
 
     number_bands = volume1.shape[0] // 2 if number_bands is None else number_bands
 
-    if not mask is None:
+    if mask is not None:
         if mask.__class__ == xp.array([0]).__class__:
             volume1 = volume1 * mask
             volume2 = volume2 * mask
@@ -687,7 +687,7 @@ def generate_random_phases_3d(shape: Union[Tuple[int, int], Tuple[int, int, int]
     cc = dx // 2
     ccc = (dx - 1) // 2
 
-    loc = (dz // 2) * (reduced_complex == False)
+    loc = (dz // 2) * (reduced_complex is False)
     centralslice = rnda[:, :, loc]
 
     centralslice[cc, cc - ccc : cc] = centralslice[cc, -ccc:][::-1] * -1
@@ -764,7 +764,7 @@ def randomize_phase_beyond_freq(volume: xp.ndarray, frequency: int) -> xp.ndarra
 
 
 def sub_pixel_peak_parabolic(score_volume: xp.ndarray[float], 
-        coordinates: Union[Tuple[int, int, int], Tuple[int, int]], 
+        coordinates: Union[Tuple[float, float, float], Tuple[float, float]], 
         verbose: bool=False) -> Tuple[float, Union[Tuple[float, float, float], Tuple[float, float]]]:
     """
     quadratic interpolation of three adjacent samples
@@ -782,16 +782,16 @@ def sub_pixel_peak_parabolic(score_volume: xp.ndarray[float],
         return score_volume[coordinates], coordinates
 
 
-    l = len(coordinates)
+    dim = len(coordinates)
     (x, a1, b1) = qint(
-        ym1=score_volume[tuple(xp.array(coordinates) - xp.array([1, 0, 0][:l]))],
+        ym1=score_volume[tuple(xp.array(coordinates) - xp.array([1, 0, 0][:dim]))],
         y0=score_volume[coordinates],
-        yp1=score_volume[tuple(xp.array(coordinates) + xp.array([1, 0, 0][:l]))],
+        yp1=score_volume[tuple(xp.array(coordinates) + xp.array([1, 0, 0][:dim]))],
     )
     (y, a2, b2) = qint(
-        ym1=score_volume[tuple(xp.array(coordinates) - xp.array([0, 1, 0][:l]))],
+        ym1=score_volume[tuple(xp.array(coordinates) - xp.array([0, 1, 0][:dim]))],
         y0=score_volume[coordinates],
-        yp1=score_volume[tuple(xp.array(coordinates) + xp.array([0, 1, 0][:l]))],
+        yp1=score_volume[tuple(xp.array(coordinates) + xp.array([0, 1, 0][:dim]))],
     )
     # some ealry declarations to help with typing
     peak_value: float
@@ -799,8 +799,8 @@ def sub_pixel_peak_parabolic(score_volume: xp.ndarray[float],
     peak_y: float
     peak_z: float 
     peak_coordinates: Union[Tuple[float, float, float], Tuple[float, float]]
-    if l == 2:
-        peak_x, peak_y = cast(Tuple[int, int], coordinates)
+    if dim == 2:
+        peak_x, peak_y = cast(Tuple[float, float], coordinates)
         peak_x += x
         peak_y += y
         peak_value = (
@@ -808,7 +808,7 @@ def sub_pixel_peak_parabolic(score_volume: xp.ndarray[float],
         )
         peak_coordinates = (peak_x, peak_y)
     else:
-        peak_x, peak_y, peak_z = cast(Tuple[int, int, int], coordinates)
+        peak_x, peak_y, peak_z = cast(Tuple[float, float, float], coordinates)
         (z, a3, b3) = qint(
             ym1=score_volume[tuple(xp.array(coordinates) - xp.array([0, 0, 1]))],
             y0=score_volume[coordinates],
@@ -832,7 +832,7 @@ def sub_pixel_peak_parabolic(score_volume: xp.ndarray[float],
 
 
 def sub_pixel_peak(
-        score_volume: pytom_volume.vol, coordinates: Tuple[float, float, float], cube_length: int=8, interpolation: str="Spline", verbose: bool=False
+        score_volume: xp.ndarray, coordinates: Tuple[float, float, float], cube_length: int=8, interpolation: str="Spline", verbose: bool=False
 ) -> Tuple[float, Tuple[float, float, float]]:
     """
     sub_pixel_peak: Will determine the sub pixel area of peak. Utilizes spline, fourier or
@@ -852,17 +852,18 @@ def sub_pixel_peak(
     - 02/07/2013 FF: 2D functionality added
     - 17/05/2023 SR: removed broken 2D functionality
     """
-    assert type(interpolation) == str, "sub_pixel_peak: interpolation must be str"
-    if (interpolation.lower() == "quadratic") or (interpolation.lower() == "parabolic"):
+    # Help with typing
+    if interpolation.lower() in ("quadratic", "parabolic"):
         (peak_value, peak_coordinates) = sub_pixel_peak_parabolic(
             score_volume=score_volume, coordinates=coordinates, verbose=verbose
         )
-        return [peak_value, peak_coordinates]
+        # Using 'cast' to get arround mypy errors for now
+        peak_coordinates = cast(Tuple[float, float, float], peak_coordinates)
 
-    from pytom.lib.pytom_volume import vol, subvolume, rescaleSpline, peak 
+        return peak_value, peak_coordinates
 
     cube_start = cube_length // 2
-    # This fails for 2D
+    # This fails for 2D and for pytom_volume.vol
     size_x, size_y, size_z = score_volume.shape
 
     if any(
@@ -877,10 +878,10 @@ def sub_pixel_peak(
     ):
         if verbose:
             print("SubPixelPeak: position too close to border for sub-pixel")
-        return [
+        return (
             score_volume(coordinates[0], coordinates[1], coordinates[2]),
             coordinates,
-        ]
+            )
 
     sub_volume = pytom_volume.subvolume(
         score_volume,
@@ -901,7 +902,7 @@ def sub_pixel_peak(
     # resize into bigger volume
     if interpolation == "Spline":
         sub_volume_scaled = pytom_volume.vol(scale_size, scale_size, scale_size)
-        rescaleSpline(sub_volume, sub_volume_scaled)
+        pytom_volume.rescaleSpline(sub_volume, sub_volume_scaled)
     else:
         sub_volume_scaled = resize(volume=sub_volume, factor=10)[0]
 
@@ -1061,7 +1062,7 @@ def max_index(volume, num_threads=1024):
     return indices
 
 
-def is_border_voxel(volume: xp.ndarray, coordinates: Tuple[int, ...]) -> bool:
+def is_border_voxel(volume: xp.ndarray, coordinates: Tuple[float, ...]) -> bool:
     shape = volume.shape
     for n, pos in enumerate(coordinates):
         if pos < 1 or pos >= shape[n] - 1:
