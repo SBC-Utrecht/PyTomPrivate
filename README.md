@@ -8,7 +8,7 @@ PyTom is a toolbox developed for interpreting cryo electron tomography data. All
 
 ### Prerequisites
 
-PyTomGUI is designed to run on linux systems. All required packages are managed via conda. For further info see the wiki [installation page](https://github.com/FridoF/PyTom/wiki/Installation).
+PyTomGUI is designed to run on linux systems. All required packages are managed via conda. For further info see the wiki [installation page](https://github.com/SBC-Utrecht/PyTom/wiki/Installation).
 
 If you want to make use of PyTomGUI interfacing with motioncor2 and IMOD's ctf correction, you will need to install these:
 
@@ -36,7 +36,7 @@ bash installMiniconda.sh
 Now we are ready to create the conda environment for pytom (solving all the dependencies might take a moment):
 
 ```
-conda env create -f environments/pytom_py3.8_cu10.6_full.yaml --name pytom_env
+conda env create -f environments/pytom_full.yaml --name pytom_env
 ```
 
 Activate the environment and run the pytom installation scripts to compile the backend (will take ~5 minutes):
