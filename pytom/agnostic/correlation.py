@@ -518,46 +518,6 @@ def fsc(volume1: xp.ndarray[float], volume2: xp.ndarray[float], number_bands: Op
     return fsc_result
 
 
-def fsc_sum(volume: xp.ndarray[float], reference: xp.ndarray[float], number_of_bands: int, 
-            wedge_angle: int=-1) -> float:
-    """
-    fsc_sum: Determines the sum of the Fourier Shell Correlation coefficient for a volume and
-            reference.
-    @param volume: A volume
-    @type volume: L{xp.ndarray}
-    @param reference: A reference of same size as volume
-    @type reference: L{xp.ndarray}
-    @param number_of_bands: Number of bands
-    @param wedge_angle: A optional wedge angle
-    @return: The sum FSC coefficient
-    @rtype: float
-    @author: Thomas Hrabe
-    """
-    # TODO: this function can't run and is probably dead code
-
-    from pytom.agnostic.correlation import band_cc
-
-    result = 0
-
-    fvolume = xp.fft.fftn(volume)
-    freference = xp.fft.fftn(reference)
-    numelem = volume.size
-
-    fvolume *= 1 / float(numelem)
-    freference *= 1 / float(numelem)
-
-    for i in range(number_of_bands):
-        # process bandCorrelation
-        band_l = i * volume.shape[0] / number_of_bands
-        band_r = (i + 1) * volume.shape[0] / number_of_bands
-        band = (band_l, band_r)
-        r = band_cc(fvolume, freference, band)
-        cc = r[0]
-        result = result + cc
-
-    return result * (1 / float(number_of_bands))
-
-
 def determine_resolution(fsc: List[float], resolution_criterion: float, verbose: bool=False, 
         randomized_fsc: Optional[List[float]]=None) -> Tuple[float, float, int]:
     """
