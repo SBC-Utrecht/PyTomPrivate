@@ -938,7 +938,6 @@ def sub_pixel_peak(
         sub_volume_scaled = resize(volume=sub_volume, factor=10)[0]
 
     peak_coordinates = pytom_volume.peak(sub_volume_scaled)
-    # cast to help with mypy errors
     peak_value = sub_volume_scaled(
         peak_coordinates[0], peak_coordinates[1], peak_coordinates[2]
     )
@@ -974,7 +973,7 @@ def sub_pixel_peak(
     )
     return peak_value, out_peak_coordinates
 
-def max_index(volume: xp.ndarray, num_threads: int=1024) -> Tuple[xp.ndarray, ...]:
+def max_index(volume: xp.ndarray, num_threads: int=1024) -> Tuple[int, ...]:
     nblocks = int(xp.ceil(volume.size / num_threads / 2))
     fast_sum = -1000000 * xp.ones((nblocks), dtype=xp.float32)
     max_id = xp.zeros((nblocks), dtype=xp.int32)
@@ -988,6 +987,9 @@ def max_index(volume: xp.ndarray, num_threads: int=1024) -> Tuple[xp.ndarray, ..
         shared_mem=16 * num_threads,
     )
     mm = min(max_id[fast_sum.argmax()], volume.size - 1)
+
+    # predefine to help with mypy typing
+    indices: Tuple[int, ...]
     indices = xp.unravel_index(mm, volume.shape)
     return indices
 
