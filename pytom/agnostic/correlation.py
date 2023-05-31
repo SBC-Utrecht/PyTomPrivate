@@ -832,7 +832,7 @@ def sub_pixel_peak_parabolic(score_volume: xp.ndarray[float],
 
 
 def sub_pixel_peak(
-        score_volume: xp.ndarray, coordinates: Tuple[float, float, float], cube_length: int=8, interpolation: str="Spline", verbose: bool=False
+        score_volume: xp.ndarray, coordinates: Tuple[int, int, int], cube_length: int=8, interpolation: str="Spline", verbose: bool=False
 ) -> Tuple[float, Tuple[float, float, float]]:
     """
     sub_pixel_peak: Will determine the sub pixel area of peak. Utilizes spline, fourier or
@@ -907,36 +907,37 @@ def sub_pixel_peak(
         sub_volume_scaled = resize(volume=sub_volume, factor=10)[0]
 
     peak_coordinates = pytom_volume.peak(sub_volume_scaled)
-
+    # cast to help with mypy errors
     peak_value = sub_volume_scaled(
         peak_coordinates[0], peak_coordinates[1], peak_coordinates[2]
     )
 
     # calculate sub pixel coordinates of interpolated peak
-    peak_coordinates[0] = (
+    out_peak_coordinates_0 = (
         peak_coordinates[0] * scale_ratio - cube_start + coordinates[0]
     )
-    peak_coordinates[1] = (
+    out_peak_coordinates_1 = (
         peak_coordinates[1] * scale_ratio - cube_start + coordinates[1]
     )
-    peak_coordinates[2] = (
+    out_peak_coordinates_2 = (
         peak_coordinates[2] * scale_ratio - cube_start + coordinates[2]
     )
     if any(
         (
-            peak_coordinates[0] > score_volume.sizeX(),
-            peak_coordinates[1] > score_volume.sizeY(),
-            peak_coordinates[2] > score_volume.sizeZ(),
+            out_peak_coordinates_0 > score_volume.sizeX(),
+            out_peak_coordinates_1 > score_volume.sizeY(),
+            out_peak_coordinates_2 > score_volume.sizeZ(),
         )
     ):
         if verbose:
             print("SubPixelPeak: peak position too large :( return input value")
         # something went awfully wrong here. return regular value
-        return [
+        return (
             score_volume(coordinates[0], coordinates[1], coordinates[2]),
             coordinates,
-        ]
-    return peak_value, peak_coordinates
+        )
+    out_peak_coordinates = (out_peak_coordinates_0, out_peak_coordinates_1, out_peak_coordinates_2)
+    return peak_value, out_peak_coordinates
 
 
 def sub_pixel_max_3d(
