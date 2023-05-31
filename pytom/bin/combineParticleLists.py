@@ -34,7 +34,7 @@ if __name__ == '__main__':
         print(helper)
         sys.exit()
     try:
-        directory, outname, XMLfnames, wedgeangles, help = parse_script_options(sys.argv[1:], helper)
+        directory, outname, XMLfnames, wedge_angles, help = parse_script_options(sys.argv[1:], helper)
         #print(directory, outname, XMLfnames, wedgeangles)
     except Exception as e:
         print(e)
@@ -47,7 +47,6 @@ if __name__ == '__main__':
 
 
     fnames = []
-
     if wedge_angles:
         wedge_angles = wedge_angles.split(',')
     else:
