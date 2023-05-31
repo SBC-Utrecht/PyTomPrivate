@@ -5,7 +5,7 @@ Created: unknown date
 
 restructured by @sroet in May 2023
 """
-from pytom.gpu.initialize import xp, device
+from pytom.gpu.initialize import xp
 from pytom.gpu.gpuFunctions import argmax
 from pytom.agnostic.filter import bandpass
 from pytom.agnostic.io import read
