@@ -581,7 +581,7 @@ def determine_resolution(
     randomized_fsc: Optional[List[float]] = None,
 ) -> Tuple[float, float, int]:
     """
-    determine_resolution: Determines frequency and band where correlation drops below 
+    determine_resolution: Determines frequency and band where correlation drops below
                           the resolution_criterion. Uses linear interpolation between
                           two positions
     @param fsc: The fsc list determined by L{pytom.basic.correlation.FSC}
@@ -690,7 +690,7 @@ def calc_fsc_true(
 def generate_random_phases_3d(
     shape: Union[Tuple[int, int], Tuple[int, int, int]], reduced_complex: bool = True
 ) -> xp.ndarray[float]:
-    """This function returns a set of random phases (between -pi and pi), 
+    """This function returns a set of random phases (between -pi and pi),
        optionally centrosymmetric
     @shape: shape of array
     @type: tuple
@@ -866,7 +866,7 @@ def sub_pixel_peak(
     verbose: bool = False,
 ) -> Tuple[float, Tuple[float, float, float]]:
     """
-    sub_pixel_peak: Will determine the sub pixel area of peak. 
+    sub_pixel_peak: Will determine the sub pixel area of peak.
                     Utilizes spline, fourier or parabolic interpolation.
 
     @param verbose: be talkative
@@ -973,7 +973,8 @@ def sub_pixel_peak(
     )
     return peak_value, out_peak_coordinates
 
-def max_index(volume: xp.ndarray, num_threads: int=1024) -> Tuple[int, ...]:
+
+def max_index(volume: xp.ndarray, num_threads: int = 1024) -> Tuple[int, ...]:
     nblocks = int(xp.ceil(volume.size / num_threads / 2))
     fast_sum = -1000000 * xp.ones((nblocks), dtype=xp.float32)
     max_id = xp.zeros((nblocks), dtype=xp.int32)
