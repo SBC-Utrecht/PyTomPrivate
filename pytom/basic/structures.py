@@ -15,7 +15,6 @@ from pytom.lib.pytom_numpy import vol2npy
 from pytom.basic.fourier import convolute, ftshift
 analytWedge=False
 
-
 class PyTomClassError(Exception):
        
     def __init__(self,value):
@@ -230,7 +229,7 @@ class Mask(PyTomClass):
         """
         self.setBinning(scaleFactor)
          
-    def getVolume(self,rotation=None,bufferedRead = False):
+    def getVolume(self,rotation=None,bufferedRead = False) -> vol:
         """
         getVolume: Returns this mask's volume. The volume returned is rotated only 
         if rotation is set and self._isSphere == False.
@@ -1873,7 +1872,7 @@ class Particle(PyTomClass):
     def getInfoGUI(self):
         return self._infoGUI
 
-    def getVolume(self, binning=1):
+    def getVolume(self, binning=1) -> vol:
         """
         read Volume from disk. If specified volume will be resized in Fourier space
         @param binning: binning factor (e.g., 2 makes it 2 times smaller in each dim)

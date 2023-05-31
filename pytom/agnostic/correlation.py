@@ -21,6 +21,7 @@ from pytom.agnostic.normalise import (
 from pytom.agnostic.tools import create_circle, create_sphere
 from pytom.agnostic.transform import fourier_reduced2full
 from pytom.basic.transformations import resize
+from pytom.basic.structures import Mask
 from pytom.lib import pytom_volume
 
 # Typing imports
@@ -36,10 +37,11 @@ def flcf(
     """Fast local correlation function
 
     @param volume: target volume
-    @param template: template to be searched. It can have smaller size then target volume.
+    @param template: template to be searched.
+                     It can have a smaller size then target volume.
     @param mask: template mask. If not given, a default sphere mask will be used.
-    @param std_v: standard deviation of the target volume under mask, which do not need to be
-                  calculated again when the mask is identical.
+    @param std_v: standard deviation of the target volume under mask, which do not need
+                  to be calculated again when the mask is identical.
 
     @return: the local correlation function
     """
@@ -79,14 +81,16 @@ def xcc(
     xcc: Calculates the cross correlation coefficient in real space
     @param volume: A volume
     @type volume:  L{xp.ndarray}
-    @param template: A template that is searched in volume. Must be of same size as volume.
+    @param template: A template that is searched in volume.
+                     Must have the same size as volume.
     @type template:  L{xp.ndarray}
     @param mask: mask to constrain correlation
     @type mask: L{xp.ndarray}
     @param volume_is_normalized: only used for compatibility with nxcc - not used
     @type volume_is_normalized: L{bool}
     @return: An unscaled value
-    @raise exception: Raises a runtime error if volume and template have a different size.
+    @raise exception: Raises a runtime error if volume and template have a different
+                      size.
     @author: Thomas Hrabe
     """
 
@@ -115,14 +119,16 @@ def nxcc(
     nxcc: Calculates the normalized cross correlation coefficient in real space
     @param volume: A volume
     @type volume:  L{xp.ndarray}
-    @param template: A template that is searched in volume. Must be of same size as volume.
+    @param template: A template that is searched in volume.
+                     Must have the same size as volume.
     @type template:  L{xp.ndarray}
     @param mask: mask to constrain correlation
     @type mask: L{xp.ndarray}
     @param volume_is_normalized: speed up if volume is already normalized
     @type volume_is_normalized: L{bool}
     @return: A value between -1 and 1
-    @raise exception: Raises a runtime error if volume and template have a different size.
+    @raise exception: Raises a runtime error if volume and template have a different
+                      size.
     @author: Thomas Hrabe
     @change: flag for pre-normalized volume, FF
     """
@@ -263,8 +269,8 @@ def norm_xcf(
     @param template: The template searched (this one will be used for conjugate complex
                                             multiplication)
     @type template: L{xp.ndarray}
-    @param mask: template mask. If not given, a default sphere mask will be generated which has the
-                 same size with the given template.
+    @param mask: template mask. If not given, a default sphere mask will be generated
+                 which has the same size with the given template.
     @type mask: L{xp.ndarray}
     @param std_v: Will be unused, only for compatibility reasons with FLCF
     @return: the calculated norm_xcf volume
@@ -318,14 +324,16 @@ def dev(
     dev: Calculates the squared deviation of volume and template in real space
     @param volume: A volume
     @type volume:  L{xp.ndarray}
-    @param template: A template that is searched in volume. Must be of same size as volume.
+    @param template: A template that is searched in volume. Must be of same size as
+                     volume.
     @type template:  L{xp.ndarray}
     @param mask: mask to constrain correlation
     @type mask: L{xp.ndarray}
     @param volume_is_normalized: speed up if volume is already normalized
     @type volume_is_normalized: L{bool}
     @return: deviation
-    @raise exception: Raises a runtime error if volume and template have a different size.
+    @raise exception: Raises a runtime error if volume and template have a different
+                      size.
     @author: FF
     """
 
@@ -477,7 +485,7 @@ def fsc(
     volume1: xp.ndarray[float],
     volume2: xp.ndarray[float],
     number_bands: Optional[int] = None,
-    mask: Optional[xp.ndarray[float]] = None,
+    mask: Optional[Union[xp.ndarray[float], Mask, str]] = None,
     verbose: bool = False,
     filename: Optional[str] = None,
 ) -> List[float]:
@@ -502,7 +510,6 @@ def fsc(
     """
 
     from pytom.agnostic.correlation import band_cc
-    from pytom.basic.structures import Mask
     import time
 
     time.time()
@@ -517,19 +524,19 @@ def fsc(
             volume1 = volume1 * mask
             volume2 = volume2 * mask
 
-        elif mask.__class__ == Mask:
+        elif isinstance(mask, Mask):
             mask = mask.getVolume()
             volume1 = volume1 * mask
             volume2 = volume2 * mask
 
-        elif mask.__class__ == str:
+        elif isinstance(mask, str):
             mask = read(mask)
             volume1 = volume1 * mask
             volume2 = volume2 * mask
 
         else:
             raise RuntimeError(
-                "FSC: Mask must be a volume OR a Mask object OR a string path to a mask!"
+                "FSC: Mask must be a volume OR a Mask object OR a string path to a mask"
             )
 
     fsc_result = []
@@ -574,13 +581,15 @@ def determine_resolution(
     randomized_fsc: Optional[List[float]] = None,
 ) -> Tuple[float, float, int]:
     """
-    determine_resolution: Determines frequency and band where correlation drops below the
-                         resolution_criterion. Uses linear interpolation between two positions
+    determine_resolution: Determines frequency and band where correlation drops below 
+                          the resolution_criterion. Uses linear interpolation between
+                          two positions
     @param fsc: The fsc list determined by L{pytom.basic.correlation.FSC}
     @param resolution_criterion: A value between 0 and 1
     @param verbose: Bool that activate writing of info, default=False
-    @param randomized_fsc: A value that sets the start of the calculation of randomized FSC. (0-1).
-    @return: [resolution,interpolated_band,number_bands]
+    @param randomized_fsc: A value that sets the start of the calculation of randomized
+                           FSC. (0-1).
+    @return: (resolution,interpolated_band,number_bands)
     @author: Thomas Hrabe
     @todo: Add test!
     """
@@ -681,7 +690,8 @@ def calc_fsc_true(
 def generate_random_phases_3d(
     shape: Union[Tuple[int, int], Tuple[int, int, int]], reduced_complex: bool = True
 ) -> xp.ndarray[float]:
-    """This function returns a set of random phases (between -pi and pi), optionally centrosymmetric
+    """This function returns a set of random phases (between -pi and pi), 
+       optionally centrosymmetric
     @shape: shape of array
     @type: tuple
     @reduced_complex: is the shape in reduced complex format
@@ -787,10 +797,10 @@ def sub_pixel_peak_parabolic(
     """
     quadratic interpolation of three adjacent samples
     @param score_volume: The score volume
-    @param coordinates: (x,y,z) coordinates as tuple (!) where the sub pixel peak will be determined
+    @param coordinates: (x,y,z) coordinates where the sub pixel peak will be determined
     @param verbose: be talkative
     @type verbose: bool
-    @return: Returns [peak_value,peak_coordinates] with sub pixel accuracy
+    @return: Returns (peak_value,peak_coordinates) with sub pixel accuracy
     @rtype: float, tuple
     """
 
@@ -856,8 +866,8 @@ def sub_pixel_peak(
     verbose: bool = False,
 ) -> Tuple[float, Tuple[float, float, float]]:
     """
-    sub_pixel_peak: Will determine the sub pixel area of peak. Utilizes spline, fourier or
-    parabolic interpolation.
+    sub_pixel_peak: Will determine the sub pixel area of peak. 
+                    Utilizes spline, fourier or parabolic interpolation.
 
     @param verbose: be talkative
     @type verbose: L{str}
@@ -964,113 +974,7 @@ def sub_pixel_peak(
     )
     return peak_value, out_peak_coordinates
 
-
-def sub_pixel_max_3d(
-    volume,
-    k=0.01,
-    ignore_border=50,
-    interpolation="filt_bspline",
-    plan=None,
-    profile=True,
-    num_threads=1024,
-    zoomed=None,
-    fast_sum=None,
-    max_id=None,
-):
-    """
-    Function to find the highest point in a 3D array, with subpixel accuracy using cubic spline
-    interpolation.
-
-    @param inp: A 3D numpy/cupy array containing the data points.
-    @type inp: numpy/cupy array 3D
-    @param k: The interpolation factor used in the spline interpolation,
-              k < 1 is zoomed in, k>1 zoom out.
-    @type k: float
-    @return: A list of maximal value in the interpolated volume and a list of x position,
-             the y position and the value.
-    @returntype: list
-    """
-
-    from pytom.voltools import transform
-
-    ox, oy, oz = volume.shape
-    ib = ignore_border
-    cropped_volume = volume[ib : ox - ib, ib : oy - ib, ib : oz - ib].astype(xp.float32)
-
-    if profile:
-        stream = xp.cuda.Stream.null
-        t_start = stream.record()
-
-    # x,y,z = xp.array(max_index(cropped_volume)) + ignore_border
-    x, y, z = (
-        xp.array(xp.unravel_index(cropped_volume.argmax(), cropped_volume.shape))
-        + ignore_border
-    )
-
-    dx, dy, dz = volume.shape
-    translation = [dx // 2 - x, dy // 2 - y, dz // 2 - z]
-
-    if profile:
-        t_end = stream.record()
-        t_end.synchronize()
-
-        time_took = xp.cuda.get_elapsed_time(t_start, t_end)
-        print(f"initial find max time: \t{time_took:.3f}ms")
-        t_start = stream.record()
-
-    b = max(0, int(volume.shape[0] // 2 - 4 / k))
-    zx, zy, zz = volume.shape
-    out = volume[b : zx - b, b : zy - b, b : zz - b]
-
-    transform(
-        out,
-        output=zoomed,
-        scale=(k, k, k),
-        device=device,
-        translation=translation,
-        interpolation=interpolation,
-    )
-
-    if profile:
-        t_end = stream.record()
-        t_end.synchronize()
-
-        time_took = xp.cuda.get_elapsed_time(t_start, t_end)
-        print(f"transform finished in \t{time_took:.3f}ms")
-        t_start = stream.record()
-
-    nblocks = int(xp.ceil(zoomed.size / num_threads / 2))
-    argmax(
-        (
-            nblocks,
-            1,
-        ),
-        (num_threads, 1, 1),
-        (zoomed, fast_sum, max_id, zoomed.size),
-        shared_mem=8 * num_threads,
-    )
-    x2, y2, z2 = xp.unravel_index(max_id[fast_sum.argmax()], zoomed.shape)
-
-    peak_value = zoomed[x2][y2][z2]
-    peak_shift = [
-        x + (x2 - zoomed.shape[0] // 2) * k - volume.shape[0] // 2,
-        y + (y2 - zoomed.shape[1] // 2) * k - volume.shape[1] // 2,
-        z + (z2 - zoomed.shape[2] // 2) * k - volume.shape[2] // 2,
-    ]
-
-    if profile:
-        t_end = stream.record()
-        t_end.synchronize()
-
-        time_took = xp.cuda.get_elapsed_time(t_start, t_end)
-        print(f"argmax finished in \t{time_took:.3f}ms")
-        t_start = stream.record()
-        print()
-
-    return [peak_value, peak_shift]
-
-
-def max_index(volume, num_threads=1024):
+def max_index(volume: xp.ndarray, num_threads: int=1024) -> Tuple[xp.ndarray, ...]:
     nblocks = int(xp.ceil(volume.size / num_threads / 2))
     fast_sum = -1000000 * xp.ones((nblocks), dtype=xp.float32)
     max_id = xp.zeros((nblocks), dtype=xp.int32)
