@@ -389,9 +389,9 @@ def band_cc(
     if verbose:
         print("lowest freq : ", band[0], " highest freq", band[1])
 
-    vf, m = bandpass(volume, band[0], band[1], return_mask=True, fourierOnly=True)
+    vf, m = bandpass(volume, band[0], band[1], return_mask=True, fourier_only=True)
     rf: xp.ndarray = bandpass(
-        reference, band[0], band[1], mask=m, fourierOnly=True
+        reference, band[0], band[1], mask=m, fourier_only=True
     )  # ,vf[1])
 
     vf = vf.astype(xp.complex128)
@@ -448,8 +448,8 @@ def band_cf(
 
     from math import sqrt
 
-    vf, vfm = bandpass(volume, band[0], band[1], fourierOnly=True, return_mask=True)
-    rf = bandpass(reference, band[0], band[1], vf[1], fourierOnly=True)
+    vf, vfm = bandpass(volume, band[0], band[1], fourier_only=True, return_mask=True)
+    rf = bandpass(reference, band[0], band[1], vf[1], fourier_only=True)
 
     v = fourier_reduced2full(vf)
     r = fourier_reduced2full(rf)

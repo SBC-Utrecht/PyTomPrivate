@@ -471,7 +471,7 @@ class TiltSeries(PyTomClass):
             if not (binning == 1) or (binning == None):
                 image = resize(volume=image, factor=1 / float(binning))[0]
             if lowpassFilter:
-                filtered = filterFunction(volume=image, filterObject=lpf, fourierOnly=False)
+                filtered = filterFunction(volume=image, filterObject=lpf, fourier_only=False)
                 image = filtered[0]
 
             tiltAngle = projection._tiltAngle

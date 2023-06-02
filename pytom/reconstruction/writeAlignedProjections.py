@@ -57,7 +57,7 @@ def writeAlignedProjections(TiltSeries_, weighting=None,
         # lpf2 = pytom_freqweight.weight(0.0, lowpassFilter * imdimY / 2, imdimX, imdimY // 2 + 1, 1,
         #                               lowpassFilter / 5. * imdimY)
         #lpf = bandpassFilter(volume=vol(imdim, imdim,1),lowestFrequency=0,highestFrequency=int(lowpassFilter*imdim/2),
-        #                     bpf=None,smooth=lowpassFilter/5.*imdim,fourierOnly=False)[1]
+        #                     bpf=None,smooth=lowpassFilter/5.*imdim,fourier_only=False)[1]
 
     tilt_angles = []
 
@@ -112,7 +112,7 @@ def writeAlignedProjections(TiltSeries_, weighting=None,
 
             # # 5 -- Optional Low Pass Filter
             # if lowpassFilter:
-            #     filtered = filterFunction( volume=image, filterObject=lpf2, fourierOnly=False)
+            #     filtered = filterFunction( volume=image, filterObject=lpf2, fourier_only=False)
             #     image = filtered[0]
 
             # 1 -- normalize to contrast - subtract mean and norm to mean
@@ -153,7 +153,7 @@ def writeAlignedProjections(TiltSeries_, weighting=None,
 
             # 5 -- Optional Low Pass Filter
             if lowpassFilter:
-                filtered = filterFunction( volume=image, filterObject=lpf, fourierOnly=False)
+                filtered = filterFunction( volume=image, filterObject=lpf, fourier_only=False)
                 image = filtered[0]
 
             # 6 -- smoothen once more to avoid edges

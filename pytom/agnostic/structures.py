@@ -4927,7 +4927,7 @@ class BandPassFilter(PyTomClass):
             print("Warning: Highest frequency in bandpass is larger than volume size.")
 
         res = bandpassFilter(volume, self._lowestFrequency, self._highestFrequency, bpf=None, smooth=self._smooth,
-                             fourierOnly=False)
+                             fourier_only=False)
         return res[0]
 
 

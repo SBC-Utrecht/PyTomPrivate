@@ -513,7 +513,7 @@ def rotateWeighting(weighting, z1, z2, x, mask=None, isReducedComplex=None, retu
     
     return returnVolume
     
-def wedgeFilter(volume,angle,radius=0,angleIsHalf=True,fourierOnly=False):
+def wedgeFilter(volume,angle,radius=0,angleIsHalf=True,fourier_only=False):
     """
     wedgeFilter: performs a single wedge filtering of volume.
     @param volume: The volume filtered.
@@ -537,9 +537,9 @@ def wedgeFilter(volume,angle,radius=0,angleIsHalf=True,fourierOnly=False):
     wf = pytom_freqweight.weight(angle,radius,volume.sizeX(),volume.sizeY(),volume.sizeZ())
     
     
-    return filter(volume,wf,fourierOnly)
+    return filter(volume,wf,fourier_only)
 
-def bandpassFilter(volume, lowestFrequency, highestFrequency, bpf=None, smooth=0,fourierOnly=False):
+def bandpassFilter(volume, lowestFrequency, highestFrequency, bpf=None, smooth=0,fourier_only=False):
     """
     bandpassFilter: Performs bandpass filtering of volume.
     @param volume: The volume to be filtered
@@ -567,9 +567,9 @@ def bandpassFilter(volume, lowestFrequency, highestFrequency, bpf=None, smooth=0
         bpf = pytom_freqweight.weight(lowestFrequency,highestFrequency,
                                       fvolume.sizeX(),fvolume.sizeY(),fvolume.sizeZ(),smooth)    
 
-    return filter(fvolume,bpf,fourierOnly)      
+    return filter(fvolume,bpf,fourier_only)      
 
-def lowpassFilter(volume,band,smooth=0,fourierOnly=False):
+def lowpassFilter(volume,band,smooth=0,fourier_only=False):
     """
     lowpassFilter: 
     @param volume: The volume filtered
@@ -591,9 +591,9 @@ def lowpassFilter(volume,band,smooth=0,fourierOnly=False):
         
     lpf = pytom_freqweight.weight(0.0,band,fvolume.sizeX(),fvolume.sizeY(),fvolume.sizeZ(),smooth)
     
-    return filter(fvolume,lpf,fourierOnly)
+    return filter(fvolume,lpf,fourier_only)
     
-def highpassFilter(volume,band,smooth=0,fourierOnly=False):   
+def highpassFilter(volume,band,smooth=0,fourier_only=False):   
     """
     highpassFilter:
     @param volume:  The volume filtered
@@ -614,9 +614,9 @@ def highpassFilter(volume,band,smooth=0,fourierOnly=False):
     
     hpf = pytom_freqweight.weight(band,fvolume.sizeX(),fvolume.sizeX(),fvolume.sizeY(),fvolume.sizeZ(),smooth)
        
-    return filter(fvolume,hpf,fourierOnly)
+    return filter(fvolume,hpf,fourier_only)
 
-def filter(volume,filterObject,fourierOnly=False):
+def filter(volume,filterObject,fourier_only=False):
     """
     filter: A generic filter method.
     @param volume: The volume to be filtered
@@ -643,7 +643,7 @@ def filter(volume,filterObject,fourierOnly=False):
             noPixels = volume.sizeX() * volume.sizeY() * 2*(volume.sizeZ()-1)
     filterObject.apply(fvolume)
     
-    if not fourierOnly:
+    if not fourier_only:
         result = ifft(fvolume)/noPixels
         return [result,filterObject,fvolume]   
     else:
