@@ -5,27 +5,27 @@ Created: unknown date
 
 restructured by @sroet in May 2023
 """
-from pytom.gpu.initialize import xp
-from pytom.gpu.gpuFunctions import argmax
+# Typing imports
+from typing import Any, List, Optional, Tuple, Union, cast
+
 from pytom.agnostic.filter import bandpass
 from pytom.agnostic.io import read
 from pytom.agnostic.macros import volumesSameSize
 from pytom.agnostic.normalise import (
+    mean0std1,
     meanUnderMask,
     meanVolUnderMask,
+    normaliseUnderMask,
     stdUnderMask,
     stdVolUnderMask,
-    normaliseUnderMask,
-    mean0std1,
 )
 from pytom.agnostic.tools import create_circle, create_sphere
 from pytom.agnostic.transform import fourier_reduced2full
-from pytom.basic.transformations import resize
 from pytom.basic.structures import Mask
+from pytom.basic.transformations import resize
+from pytom.gpu.gpuFunctions import argmax
+from pytom.gpu.initialize import xp
 from pytom.lib import pytom_volume
-
-# Typing imports
-from typing import Optional, Tuple, Any, List, Union, cast
 
 
 def flcf(
@@ -509,8 +509,9 @@ def fsc(
     @rtype: list[floats]
     """
 
-    from pytom.agnostic.correlation import band_cc
     import time
+
+    from pytom.agnostic.correlation import band_cc
 
     time.time()
 
