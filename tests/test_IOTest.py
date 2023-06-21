@@ -6,6 +6,7 @@ Created on Jul 30, 2012
 
 import unittest
 from pytom.gpu.initialize import xp
+import numpy as np
 import os
 
 
@@ -114,8 +115,8 @@ class pytom_IOTest(unittest.TestCase):
         from pytom.basic.datatypes import DATATYPE_METAFILE, FMT_METAFILE, HEADER_METAFILE
 
         fname = f'{self.outfolder}/data.meta'
-
-        data = xp.zeros((10), dtype=DATATYPE_METAFILE)
+        # Structured arrays are not yet supported in cupy 12.0
+        data = np.zeros((10), dtype=DATATYPE_METAFILE)
         data['TiltAngle'] = range(1, 11)
 
         for i in range(10):
