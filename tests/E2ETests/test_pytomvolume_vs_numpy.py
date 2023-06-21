@@ -106,8 +106,8 @@ class NumericalTest(unittest.TestCase):
         random_np = xp.array(self.random_np)
         mask_np = xp.array(self.mask_np)
 
-        meanV = meanVolUnderMask(self.random_np, self.mask_np)
-        std_v = stdVolUnderMask(self.random_np, self.mask_np, meanV)
+        meanV = meanVolUnderMask(random_np, mask_np)
+        std_v = stdVolUnderMask(random_np, mask_np, meanV)
         return std_v
 
     def rmsd(self, pytomvol, npcp):
