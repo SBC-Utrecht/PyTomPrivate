@@ -8,6 +8,7 @@ import scipy
 import numpy as np
 #typing imports
 from typing import Union, Tuple
+from pytom.gpu.initialize import xpt
 
 def normalize(v):
     """Normalize the data according to standard deviation
@@ -56,7 +57,7 @@ def bandpass_circle(image, low=0, high=-1, sigma=0, ff=1):
 
     return res
 
-def bandpass(volume, low=0, high=-1, sigma=0, returnMask=False, mask=None, fourierOnly=False) -> Union[Tuple[xp.ndarray[float], xp.ndarray[float]], xp.ndarray[float]]:
+def bandpass(volume, low=0, high=-1, sigma=0, returnMask=False, mask=None, fourierOnly=False) -> Union[Tuple[xpt.NDArray[float], xpt.NDArray[float]], xpt.NDArray[float]]:
     """Do a bandpass filter on a given volume.
 
     @param volume: input volume.

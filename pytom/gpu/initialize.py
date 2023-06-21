@@ -6,7 +6,7 @@ global map_coordinates
 if 'PYTOM_GPU' in os.environ.keys() and str(os.environ['PYTOM_GPU']) != '-1':
     try:
         import cupy as xp
-        import cupy.typing as xptyping
+        import cupy.typing as xpt
         ID = os.environ['PYTOM_GPU'].split(',')
         xp.cuda.Device(int(ID[0])).use()
         from cupyx.scipy.ndimage import map_coordinates
@@ -15,7 +15,7 @@ if 'PYTOM_GPU' in os.environ.keys() and str(os.environ['PYTOM_GPU']) != '-1':
     except Exception as e:
         print(e)
         import numpy as xp
-        import numpy.typing as xptyping
+        import numpy.typing as xpt
         from scipy.ndimage import map_coordinates
 
         device = 'cpu'
