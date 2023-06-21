@@ -1000,9 +1000,13 @@ def filter_volume_by_profile(volume, profile):
     return outvol
 
 def applyFourierFilter(particle, filter):
+    # cast numpy to cupy if needed
+    particle = xp.array(particle)
     return xp.fft.irfftn(xp.fft.rfftn(particle, particle.shape) * filter).real.astype(xp.float32)
 
 def applyFourierFilterFull(particle, filter):
+    # cast numpy to cupy if needed
+    particle = xp.array(particle)
     return xp.fft.ifftn(xp.fft.fftn(particle) * filter).real.astype(xp.float32)
 
 def fourierMult(fvolume, filter, human=False):

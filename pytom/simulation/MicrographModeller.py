@@ -19,8 +19,10 @@ from tqdm import tqdm
 # from pytom.basic.files import *
 import numpy as xp
 # TODO: see which code paths can become agnostic vs only numpy
+import numpy as np
 import random
 import pytom.simulation.physics as physics
+from pytom.lib.pytom_numpy import npy2vol
 
 # Plotting, use Qt5Agg to prevent conflict with tkinter in pylab on cluster
 # import matplotlib
@@ -925,6 +927,10 @@ def parallel_project(grandcell, frame, image_size, pixel_size, msdz, n_slices, c
         msdz_end = num_px_last_slice * pixel_size
         psi_t[:, :, -1] = transmission_function(projected_potent_ms[:, :, -1], voltage, msdz_end)
         propagator_end = fresnel_propagator(image_size, pixel_size, voltage, msdz_end)
+        # cast to numpy if required
+        #TODO: remove once this becomes agnostic
+        if hasattr(propagator_end, 'get'):
+            propagator_end = propagator_end.get()
         wave_field = xp.fft.fftn( xp.fft.ifftshift(psi_multislice) * xp.fft.ifftshift(psi_t[:, :, -1]) )
         psi_multislice = xp.fft.fftshift( xp.fft.ifftn( wave_field * xp.fft.ifftshift(propagator_end) ) )
 
@@ -1937,6 +1943,12 @@ def reconstruct_tomogram(save_path, weighting=-1, reconstruction_bin=1,
     projections.load_alignment(filename_align)
     vol = projections.reconstructVolume(dims=vol_size, reconstructionPosition=[0, 0, 0], binning=reconstruction_bin,
                                         weighting=weighting)
+    # cast to numpy and then volume if not an vol already
+    if hasattr(vol, 'get'):
+        vol = vol.get()
+    if isinstance(vol, xp.ndarray):
+        vol = np.asfortranarray(vol)
+        vol = npy2vol(vol, vol.ndim)
     vol.write(filename_output)
     os.system(f'convert.py -f {filename_output} -o mrc -t {os.path.dirname(filename_output)}')
     os.system(f'rm {filename_output}')
