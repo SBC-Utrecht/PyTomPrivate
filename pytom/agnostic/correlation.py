@@ -165,8 +165,8 @@ def nxcc(
 
 
 def xcf(
-    volume: xpt.NDArray[float, complex],
-    template: xpt.NDArray[float, complex],
+    volume: Union[xpt.NDArray[float], xpt.NDArray[complex]],
+    template: Union[xpt.NDArray[float], xpt.NDArray[complex]],
     mask: Any = None,
     std_v: Any = None,
 ) -> xpt.NDArray[float]:

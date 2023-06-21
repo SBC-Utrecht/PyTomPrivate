@@ -22,7 +22,7 @@ if 'PYTOM_GPU' in os.environ.keys() and str(os.environ['PYTOM_GPU']) != '-1':
 else:
     os.system("export PYTOM_GPU=0")
     import numpy as xp
-    import numpy.typing as xptyping
+    import numpy.typing as xpt
     from scipy.ndimage import map_coordinates
 
     device = 'cpu'
