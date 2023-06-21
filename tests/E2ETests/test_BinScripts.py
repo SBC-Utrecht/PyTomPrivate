@@ -354,7 +354,8 @@ class pytom_MyFunctionTest(unittest.TestCase):
         os.system(cmd)
 
     def test_localization(self):
-
+        # TODO: deal with this test
+        raise unittest.SkipTest('testjob.xml has disapeared, should be recovered')
         jobname = 'testjob.xml'
         mpi_procs = 4
         cmd = 'localization.py'
