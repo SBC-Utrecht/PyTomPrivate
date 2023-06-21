@@ -5,7 +5,7 @@ Created on Jul 30, 2012
 """
 
 import unittest
-import numpy as np
+from pytom.gpu.initialize import xp
 import os
 
 
@@ -64,7 +64,7 @@ class pytom_IOTest(unittest.TestCase):
 
         fname = f'{self.outfolder}/dummy_reading.em'
         self.fnames.append(fname)
-        data = np.ones((self.sx, self.sy, self.sz))
+        data = xp.ones((self.sx, self.sy, self.sz))
 
         write(fname, data)
         self.assertTrue(os.path.exists(fname))
@@ -115,7 +115,7 @@ class pytom_IOTest(unittest.TestCase):
 
         fname = f'{self.outfolder}/data.meta'
 
-        data = np.zeros((10), dtype=DATATYPE_METAFILE)
+        data = xp.zeros((10), dtype=DATATYPE_METAFILE)
         data['TiltAngle'] = range(1, 11)
 
         for i in range(10):
@@ -142,7 +142,7 @@ class pytom_IOTest(unittest.TestCase):
         from pytom.agnostic.io import read_tilt_angle
 
         a = read_tilt_angle(self.fnames[1])
-        self.assertTrue(np.abs(a-self.tilt_angle) < self.epsilon,
+        self.assertTrue(xp.abs(a-self.tilt_angle) < self.epsilon,
                         f'Tilt Angle is not correct: found {a}, expected {self.tilt_angle}')
 
     def write_tilt_angle(self):
@@ -153,7 +153,7 @@ class pytom_IOTest(unittest.TestCase):
         write_tilt_angle(fname, self.rotation_angles[0])
 
         a = read_tilt_angle(fname)
-        self.assertTrue(np.abs(a-ta) < self.epsilon,
+        self.assertTrue(xp.abs(a-ta) < self.epsilon,
                         f'Tilt Angle is not correct: found {a}, expected {ta}')
 
     def read_header(self):
@@ -176,7 +176,7 @@ class pytom_IOTest(unittest.TestCase):
 
         a = read_rotation_angles(self.fnames[1])
         for n, angle in enumerate(a):
-            self.assertTrue(np.abs(angle - tas[n]) < self.epsilon,
+            self.assertTrue(xp.abs(angle - tas[n]) < self.epsilon,
                         f'Rotation Angle {n} is not correct: found {angle}, expected {tas[n]}')
 
     def read_pixelsize(self):
@@ -185,7 +185,7 @@ class pytom_IOTest(unittest.TestCase):
         fname = self.fnames[1]
 
         a = read_pixelsize(fname)[0]
-        self.assertTrue(np.abs(a - self.pixel_size) < self.epsilon,
+        self.assertTrue(xp.abs(a - self.pixel_size) < self.epsilon,
                     f'Tilt Angle is not correct: found {a}, expected {self.pixel_size}')
 
     def data_write_read(self, extension='mrc'):
@@ -193,7 +193,7 @@ class pytom_IOTest(unittest.TestCase):
 
         fname = f'{self.outfolder}/dummy_reading.{extension.lower()}'
         self.fnames.append(fname)
-        data = np.random.random((self.sx,self.sy,self.sz)).astype(np.float32)
+        data = xp.random.random((self.sx,self.sy,self.sz)).astype(xp.float32)
 
         write(fname, data, pixel_size=self.pixel_size, tilt_angle=self.tilt_angle)
         self.assertTrue(os.path.exists(fname), f'writing {fname} failed')
@@ -203,7 +203,7 @@ class pytom_IOTest(unittest.TestCase):
         write(f'{self.outfolder}/testing.mrc', data2 -data)
         write(f'{self.outfolder}/testing2.mrc', data2 )
 
-        self.assertTrue(np.abs(data - data2).sum() < self.epsilon, f'reading {fname} failed: input and output files are different')
+        self.assertTrue(xp.abs(data - data2).sum() < self.epsilon, f'reading {fname} failed: input and output files are different')
 
     def runTest(self):
         self.read()
