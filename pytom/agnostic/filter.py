@@ -108,7 +108,7 @@ def bandpass(
             max(0, sz // 2 - high - 2) : min(sz, sz // 2 + high + 2),
         ]
 
-        res = fourierMult(xp.fft.fftshift(fcrop), mcrop, True)
+        res = fourier_mult(xp.fft.fftshift(fcrop), mcrop, True)
 
     else:
         res = fourier_filter(volume, mask, True)
@@ -1204,7 +1204,7 @@ def apply_fourier_filter_full(particle, filter):
     return xp.fft.ifftn(xp.fft.fftn(particle) * filter).real.astype(xp.float32)
 
 
-def fourierMult(fvolume, filter, human=False):
+def fourier_mult(fvolume, filter, human=False):
     from pytom.agnostic.transform import fourier_full2reduced
 
     if human:
