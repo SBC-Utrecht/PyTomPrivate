@@ -808,7 +808,7 @@ class Reference(PyTomClass):
 
         from pytom.agnostic.io import read
         from pytom.gpu.gpuFunctions import applyFourierFilter as convolute
-        from pytom.agnostic.filter import rotateWeighting
+        from pytom.agnostic.filter import rotate_weighting
         from pytom.agnostic.tools import invert_WedgeSum
         from pytom.agnostic.filter import filter_volume_by_profile
         from pytom.basic.resolution import read_fscFromAscii
@@ -835,7 +835,7 @@ class Reference(PyTomClass):
             wedge = particleWedge.return_wedge_volume(ptx, pty, ptz, False, rotinvert)
             # < buggy version
         else:
-            wedge = rotateWeighting(particleWedge.return_wedge_volume(ptx, pty, ptz, False),
+            wedge = rotate_weighting(particleWedge.return_wedge_volume(ptx, pty, ptz, False),
                                     [rotinvert[0], rotinvert[2],rotinvert[1]], mask=None)
 
 

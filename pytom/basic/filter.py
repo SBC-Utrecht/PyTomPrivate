@@ -456,9 +456,9 @@ def rotateFilter(tilt_angles, tilt_angle, sX, sY, slice_width, arr=[]):
 
     return weightFunc
 
-def rotateWeighting(weighting, z1, z2, x, mask=None, isReducedComplex=None, returnReducedComplex=False, binarize=False):
+def rotate_weighting(weighting, z1, z2, x, mask=None, isReducedComplex=None, returnReducedComplex=False, binarize=False):
     """
-    rotateWeighting: Rotates a frequency weighting volume around the center. If the volume provided is reduced complex, it will be rescaled to full size, ftshifted, rotated, iftshifted and scaled back to reduced size.
+    rotate_weighting: Rotates a frequency weighting volume around the center. If the volume provided is reduced complex, it will be rescaled to full size, ftshifted, rotated, iftshifted and scaled back to reduced size.
     @param weighting: A weighting volume
     @type weighting: L{pytom.lib.pytom_volume.vol}
     @param z1: Z1 rotation angle
@@ -480,7 +480,7 @@ def rotateWeighting(weighting, z1, z2, x, mask=None, isReducedComplex=None, retu
     @rtype: L{pytom.lib.pytom_volume.vol_comp}
     """
     from pytom.lib.pytom_volume import vol, limit, vol_comp, rotate
-    assert type(weighting) == vol or  type(weighting) == vol_comp, "rotateWeighting: input neither vol nor vol_comp"
+    assert type(weighting) == vol or  type(weighting) == vol_comp, "rotate_weighting: input neither vol nor vol_comp"
     
     isReducedComplex = isReducedComplex or int(weighting.size_x()/2)+1 == weighting.size_z();
 

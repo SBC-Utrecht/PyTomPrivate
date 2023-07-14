@@ -9,7 +9,7 @@ import numpy as np
 from math import pi, sin, cos
 from scipy.ndimage.interpolation import map_coordinates
 from pytom.basic.files import read
-from pytom.basic.filter import rotateWeighting
+from pytom.basic.filter import rotate_weighting
 from pytom.lib.pytom_volume import reducedToFull, vol
 from pytom.lib.pytom_numpy import vol2npy
 from pytom.basic.fourier import convolute, ftshift
@@ -540,7 +540,7 @@ class Reference(PyTomClass):
 
         from pytom.lib.pytom_volume import read
         from pytom.basic.fourier import convolute
-        from pytom.basic.filter import rotateWeighting
+        from pytom.basic.filter import rotate_weighting
         from pytom.alignment.alignmentFunctions import invert_WedgeSum
         from pytom.basic.filter import filter_volume_by_profile
         from pytom.basic.resolution import read_fscFromAscii
@@ -568,7 +568,7 @@ class Reference(PyTomClass):
             # < buggy version
         else:
             # > FF bugfix
-            wedge = rotateWeighting( weighting=particleWedge.return_wedge_volume(particleTransformed.size_x(),
+            wedge = rotate_weighting( weighting=particleWedge.return_wedge_volume(particleTransformed.size_x(),
                                                                                particleTransformed.size_y(),
                                                                                particleTransformed.size_z(),False),
                                  z1=rotinvert[0], z2=rotinvert[1], x=rotinvert[2], mask=None,
@@ -1521,7 +1521,7 @@ class Wedge3dCTF(PyTomClass):
             print('WARNING! Wedge size specification wont have effect for 3d ctf wedge!')
         wedge = read(self._filename)
         if rotation is not None:
-            wedge = rotateWeighting(wedge, z1=rotation[0], z2=rotation[1], x=rotation[2], mask=None,
+            wedge = rotate_weighting(wedge, z1=rotation[0], z2=rotation[1], x=rotation[2], mask=None,
                                     isReducedComplex=True, returnReducedComplex=True)
         if humanUnderstandable:
             wedge = ftshift(reducedToFull(wedge), False)

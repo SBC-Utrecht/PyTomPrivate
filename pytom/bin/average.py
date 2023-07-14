@@ -44,7 +44,7 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
     @change: limit for wedgeSum set to 1% or particles to avoid division by small numbers - FF
     """
     from pytom.lib.pytom_volume import read, vol, reducedToFull
-    from pytom.basic.filter import lowpassFilter, rotateWeighting
+    from pytom.basic.filter import lowpassFilter, rotate_weighting
     from pytom.lib.pytom_volume import transformSpline as transform
     from pytom.basic.fourier import convolute
     from pytom.basic.structures import Reference
@@ -128,7 +128,7 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
             wedge = wedgeInfo.return_wedge_volume(size_x, size_y, size_z, False, rotinvert)
         else:
             # > FF: interpol bugfix
-            wedge = rotateWeighting(weighting=wedgeInfo.return_wedge_volume(size_x, size_y, size_z, False),
+            wedge = rotate_weighting(weighting=wedgeInfo.return_wedge_volume(size_x, size_y, size_z, False),
                                     z1=rotinvert[0], z2=rotinvert[1], x=rotinvert[2], mask=None,
                                     isReducedComplex=True, returnReducedComplex=True)
             # wedge = wedgeInfo.return_wedge_volume(size_x, size_y, size_z, False, rotation=rotinvert)

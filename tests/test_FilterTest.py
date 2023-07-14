@@ -38,7 +38,7 @@ class pytom_FilterTest(unittest.TestCase):
         from pytom.lib.pytom_volume import vol, rotate, complexRealMult
         from pytom.basic.structures import Wedge, Rotation
         from pytom.basic.fourier import fft, ifft
-        from pytom.basic.filter import rotateWeighting
+        from pytom.basic.filter import rotate_weighting
 
         dim = 24
         cent = int(dim/2)
@@ -65,7 +65,7 @@ class pytom_FilterTest(unittest.TestCase):
         #vfil3.write('xxx3.em')
 
         w = wedgeInfo.return_wedge_volume(v.size_x(), v.size_y(), v.size_z(), False)
-        wrot = rotateWeighting( weighting=w, z1=rot[0], z2=rot[1], x=rot[2], mask=None,
+        wrot = rotate_weighting( weighting=w, z1=rot[0], z2=rot[1], x=rot[2], mask=None,
                                 isReducedComplex=None,returnReducedComplex=True)
         fvol4 = complexRealMult(fv,wrot)
         vfil4 = ifft(fvol4)

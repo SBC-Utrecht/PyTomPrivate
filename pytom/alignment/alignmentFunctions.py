@@ -346,7 +346,7 @@ def average( particleList, averageName, showProgressBar=False, verbose=False,
     @change: limit for wedgeSum set to 1% or particles to avoid division by small numbers - FF
     """
     from pytom.lib.pytom_volume import read,vol,reducedToFull,limit, complexRealMult
-    from pytom.basic.filter import lowpassFilter, rotateWeighting
+    from pytom.basic.filter import lowpassFilter, rotate_weighting
     from pytom.lib.pytom_volume import transformSpline as transform
     from pytom.basic.fourier import convolute
     from pytom.basic.structures import Reference
@@ -426,7 +426,7 @@ def average( particleList, averageName, showProgressBar=False, verbose=False,
             wedge = wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False, rotinvert)
         else:
             # > FF: interpol bugfix
-            wedge = rotateWeighting( weighting=wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False),
+            wedge = rotate_weighting( weighting=wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False),
                                      z1=rotinvert[0], z2=rotinvert[1], x=rotinvert[2], mask=None,
                                      isReducedComplex=True, returnReducedComplex=True)
             # < FF
@@ -496,7 +496,7 @@ def average2(particleList, weighting=False, norm=False, determine_resolution=Fal
     from pytom.basic.fourier import fft, ifft, convolute
     from pytom.basic.normalise import mean0std1
     from pytom.tools.ProgressBar import FixedProgBar
-    from pytom.basic.filter import lowpassFilter, rotateWeighting
+    from pytom.basic.filter import lowpassFilter, rotate_weighting
     from math import exp
     
     if len(particleList) == 0:
@@ -554,7 +554,7 @@ def average2(particleList, weighting=False, norm=False, determine_resolution=Fal
             # < original buggy version
         else:
             # > FF: interpol bugfix
-            wedge = rotateWeighting( weighting=wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False),
+            wedge = rotate_weighting( weighting=wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False),
                                      z1=rotinvert[0], z2=rotinvert[1], x=rotinvert[2], mask=None,
                                      isReducedComplex=True, returnReducedComplex=True)
             # < FF
@@ -714,7 +714,7 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
     from pytom.basic.correlation import sub_pixel_peak, sub_pixel_peak_parabolic
     from pytom.alignment.structures import Peak
     from pytom.lib.pytom_volume import peak, vol, vol_comp
-    from pytom.basic.filter import filter,rotateWeighting
+    from pytom.basic.filter import filter,rotate_weighting
     from pytom.basic.structures import Rotation, Shift, Particle, Mask
     from pytom.angles.angle import AngleObject
     from pytom.alignment.preprocessing import Preprocessing
@@ -802,7 +802,7 @@ def bestAlignment(particle, reference, referenceWeighting, wedgeInfo, rotations,
         #weight particle
         if not referenceWeighting.__class__ == str:
             from pytom.lib.pytom_freqweight import weight
-            weightingRotated = rotateWeighting(weighting=referenceWeighting, z1=currentRotation[0],
+            weightingRotated = rotate_weighting(weighting=referenceWeighting, z1=currentRotation[0],
                                                z2=currentRotation[1], x=currentRotation[2], isReducedComplex=True,
                                                returnReducedComplex=True, binarize=False)
             particleCopy.copyVolume(particle)
@@ -985,7 +985,7 @@ def compareTwoVolumes(particle,reference,referenceWeighting,wedgeInfo,rotations,
     """
 
     from pytom.lib.pytom_volume import vol,transformSpline
-    from pytom.basic.filter import filter,rotateWeighting
+    from pytom.basic.filter import filter,rotate_weighting
     from pytom.angles.angleList import OneAngleList
     
     assert particle.__class__ == vol, "particle not of type vol"
@@ -1030,7 +1030,7 @@ def compareTwoVolumes(particle,reference,referenceWeighting,wedgeInfo,rotations,
     if not referenceWeighting.__class__ == str:
         from pytom.lib.pytom_freqweight import weight
         
-        weightingRotated = rotateWeighting(weighting=referenceWeighting, z1=currentRotation[0], z2=currentRotation[1],
+        weightingRotated = rotate_weighting(weighting=referenceWeighting, z1=currentRotation[0], z2=currentRotation[1],
                                            x=currentRotation[2], isReducedComplex=None, returnReducedComplex=True,
                                            binarize=False)
         if verbose:

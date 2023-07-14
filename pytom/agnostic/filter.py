@@ -1010,9 +1010,9 @@ def exact_filter(tilt_angles, tilt_angle, size_x, size_y, slice_width, arr=[]):
     return wfunc
 
 
-def rotateWeighting(weighting, rotation, mask=None, binarize=False):
+def rotate_weighting(weighting, rotation, mask=None, binarize=False):
     """
-    rotateWeighting: Rotates a frequency weighting volume around the center. If the volume provided is reduced complex, it will be rescaled to full size, ftshifted, rotated, iftshifted and scaled back to reduced size.
+    rotate_weighting: Rotates a frequency weighting volume around the center. If the volume provided is reduced complex, it will be rescaled to full size, ftshifted, rotated, iftshifted and scaled back to reduced size.
     @param weighting: A weighting volume in reduced complex convention
     @type weighting: cupy or numpy array
     @param rotation: rotation angles in zxz order
@@ -1028,7 +1028,7 @@ def rotateWeighting(weighting, rotation, mask=None, binarize=False):
 
     assert (
         type(weighting) == vol or type(weighting) == vol_comp
-    ), "rotateWeighting: input neither vol nor vol_comp"
+    ), "rotate_weighting: input neither vol nor vol_comp"
     from pytom.agnostic.transform import fourier_full2reduced, fourier_reduced2full
 
     weighting = fourier_reduced2full(weighting, isodd=weighting.shape[0] % 2 == 1)
