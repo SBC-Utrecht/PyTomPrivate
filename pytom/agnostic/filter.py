@@ -695,7 +695,7 @@ def create_wedge(
 
 
 def create_symmetric_wedge(
-    angle1, angle2, cutoffRadius, size_x, size_y, size_z, smooth, rotation=None
+    angle1, angle2, cutoff_radius, size_x, size_y, size_z, smooth, rotation=None
 ):
     """This function returns a symmetric wedge object.
     @param angle1: angle of wedge1 in degrees
@@ -790,14 +790,14 @@ def create_symmetric_wedge(
 
     else:
         wedge += 1
-    wedge[r > cutoffRadius] = 0
+    wedge[r > cutoff_radius] = 0
     return xp.fft.ifftshift(
         wedge, axes=(0, 1)
     )  # TODO should be ifftshift, because centered is shifted to corner
 
 
 def create_asymmetric_wedge(
-    angle1, angle2, cutoffRadius, size_x, size_y, size_z, smooth, rotation=None
+    angle1, angle2, cutoff_radius, size_x, size_y, size_z, smooth, rotation=None
 ):
     """This function returns an asymmetric wedge object.
     @param angle1: angle of wedge1 in degrees
@@ -891,7 +891,7 @@ def create_asymmetric_wedge(
         )
         wedge += strip2 * area2 * (1 - wedge) * (y <= 0)
 
-    wedge[r > cutoffRadius] = 0
+    wedge[r > cutoff_radius] = 0
 
     return xp.fft.ifftshift(
         wedge, axes=(0, 1)

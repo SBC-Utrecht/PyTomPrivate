@@ -1068,7 +1068,7 @@ class Wedge(PyTomClass):
     Wedge: used as an dummy class to distinguish between single tilt axis wedge and double tilt axis wedge in fromXML
     """
 
-    def __init__(self, wedge_angles=[0.0, 0.0], cutoffRadius=0.0, tiltAxis='Y', smooth=0.0, wedge_3d_ctf_file='',
+    def __init__(self, wedge_angles=[0.0, 0.0], cutoff_radius=0.0, tiltAxis='Y', smooth=0.0, wedge_3d_ctf_file='',
                  ctf_max_resolution=0.):
         """
         __init__: This constructor is compatible to L{pytom.agnostic.structures.SingleTiltWedge} and L{pytom.agnostic.structures.DoubleTiltWedge}.
@@ -1083,7 +1083,7 @@ class Wedge(PyTomClass):
                 if wedge_angles.__class__ == list and wedge_angles[0].__class__ == list and len(wedge_angles[0]) == 2 and \
                         wedge_angles[1].__class__ == list and len(wedge_angles[1]) == 2:
                     self._wedgeObject = DoubleTiltWedge(wedge_angles=wedge_angles, tiltAxis1='Y', rotation12=tiltAxis,
-                                                        cutoffRadius=cutoffRadius, smooth=smooth)
+                                                        cutoff_radius=cutoff_radius, smooth=smooth)
                     self._type = 'DoubleTiltWedge'
                 else:
 
@@ -1091,7 +1091,7 @@ class Wedge(PyTomClass):
             except:
                 if wedge_angles.__class__ == list and wedge_angles[0].__class__ == list and wedge_angles[1].__class__ == list:
                     raise TypeError('Wrong parameters for SingleTiltWedge object error thrown by Wedge object!')
-                self._wedgeObject = SingleTiltWedge(wedge_angles, cutoffRadius=cutoffRadius, tiltAxis=tiltAxis,
+                self._wedgeObject = SingleTiltWedge(wedge_angles, cutoff_radius=cutoff_radius, tiltAxis=tiltAxis,
                                                     smooth=smooth)
                 self._type = 'SingleTiltWedge'
 
@@ -1246,14 +1246,14 @@ class SingleTiltWedge(PyTomClass):
     @author: Thomas Hrabe
     """
 
-    def __init__(self, wedge_angle=0.0, rotation=None, cutoffRadius=0.0, tiltAxis='Y', smooth=0.0):
+    def __init__(self, wedge_angle=0.0, rotation=None, cutoff_radius=0.0, tiltAxis='Y', smooth=0.0):
         """
         @param wedge_angle: The wedge angle. In wedge halfs.
         @type wedge_angle: either float (for symmetric wedge) or [float,float]  for \
             asymmetric wedge.
         @param rotation: deprecated!!! Only leave it here for compatibility reason.
         @deprecated: rotation
-        @param cutoffRadius: Maximum frequency (in pixels) up to where wedge will \
+        @param cutoff_radius: Maximum frequency (in pixels) up to where wedge will \
             be generated. If omitted / 0, filter is fixed to size/2.
         @param tiltAxis: Default will be Y. You can choose between the strings "X",\
             "Y" or "custom". You can also specify a Rotation object
@@ -1272,7 +1272,7 @@ class SingleTiltWedge(PyTomClass):
 
         if rotation:
             pass  # print("average: Warning - input rotation will not be used because deprecated!")
-        self._cutoffRadius = cutoffRadius
+        self._cutoff_radius = cutoff_radius
         self._tiltAxisRotation = Rotation(0.0, 0.0, 0.0)
 
         if tiltAxis.__class__ == str:
@@ -1333,10 +1333,10 @@ class SingleTiltWedge(PyTomClass):
         @author: Thomas Hrabe
         """
         # This import from own file ....
-        if self._cutoffRadius == 0.0:
+        if self._cutoff_radius == 0.0:
             cut = wedgeSizeX // 2
         else:
-            cut = self._cutoffRadius
+            cut = self._cutoff_radius
         weightObject = Weight(self._wedge_angle1, self._wedge_angle2, cut, wedgeSizeX, wedgeSizeY, wedgeSizeZ,
                               self._smooth)
 
@@ -1439,7 +1439,7 @@ class SingleTiltWedge(PyTomClass):
             self._wedge_angle1 = float(xmlObj.get('Angle1'))
             self._wedge_angle2 = float(xmlObj.get('Angle2'))
 
-        self._cutoffRadius = float(xmlObj.get('CutoffRadius'))
+        self._cutoff_radius = float(xmlObj.get('CutoffRadius'))
 
         if (xmlObj.get('Smooth') != None):
             self._smooth = float(xmlObj.get('Smooth'))
@@ -1464,7 +1464,7 @@ class SingleTiltWedge(PyTomClass):
         from lxml import etree
 
         wedgeElement = etree.Element('SingleTiltWedge', Angle1=str(self._wedge_angle1),
-                                     Angle2=str(self._wedge_angle2), CutoffRadius=str(self._cutoffRadius),
+                                     Angle2=str(self._wedge_angle2), CutoffRadius=str(self._cutoff_radius),
                                      Smooth=str(self._smooth))
 
         if ((not isinstance(self._tiltAxisRotation, int)) or
@@ -1497,7 +1497,7 @@ class DoubleTiltWedge(SingleTiltWedge):
     DoubleTiltWedge: Represents a wedge determined for a double tilt series of projections
     """
 
-    def __init__(self, wedge_angles=[[0, 0], [0, 0]], tiltAxis1='Y', rotation12=[90, 0, 0], cutoffRadius=0.0,
+    def __init__(self, wedge_angles=[[0, 0], [0, 0]], tiltAxis1='Y', rotation12=[90, 0, 0], cutoff_radius=0.0,
                  smooth=0.0):
         """Initialize a double tilt wedge
         @param wedge_angles: List of the tilt parameters [[tilt1.1,tilt1.2],[tilt2.1,tilt2.2]]. \
@@ -1509,7 +1509,7 @@ be set to X -> the double tilt wedge is perfectly rotated by 90 degrees.
 L{pytom.agnostic.structures.Rotation}
         @param rotation12: Rotation of 2nd tilt series with respect to 1st
         @type rotation12: rotation object L{pytom.agnostic.structures.Rotation} or 3-dim list
-        @param cutoffRadius: Maximum frequency (in pixels) up to where wedge will \
+        @param cutoff_radius: Maximum frequency (in pixels) up to where wedge will \
 be generated. If omitted / 0, filter is fixed to size/2.
         @param smooth: Smoothing size of wedge at the edges in degrees. Default is 0.
         """
@@ -1545,8 +1545,8 @@ be generated. If omitted / 0, filter is fixed to size/2.
 
         tiltAxis2 = (rotation12 * tiltAxis1)
 
-        self._wedge1 = SingleTiltWedge(tilt1, None, cutoffRadius, tiltAxis=tiltAxis1, smooth=smooth)
-        self._wedge2 = SingleTiltWedge(tilt2, None, cutoffRadius, tiltAxis=tiltAxis2, smooth=smooth)
+        self._wedge1 = SingleTiltWedge(tilt1, None, cutoff_radius, tiltAxis=tiltAxis1, smooth=smooth)
+        self._wedge2 = SingleTiltWedge(tilt2, None, cutoff_radius, tiltAxis=tiltAxis2, smooth=smooth)
 
         # for FRM
         self._wedge_vol = None  # cache for storing the wedge volume

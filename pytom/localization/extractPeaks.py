@@ -146,7 +146,7 @@ def extractPeaks(volume, reference, rotations, scoreFnc=None, mask=None, maskIsS
     return [result, orientation, sumV, sqrV]
 
 
-def create_structured_wedge(tilt_angles, angle2=None, cutoffRadius=10, size_x=10, size_y=10, size_z=10, smooth=0, rotation=None, c=1):
+def create_structured_wedge(tilt_angles, angle2=None, cutoff_radius=10, size_x=10, size_y=10, size_z=10, smooth=0, rotation=None, c=1):
     from pytom.gpu.initialize import xp
     print(tilt_angles)
     z, y, x = xp.meshgrid(xp.arange(-size_y // 2 + size_y % 2, size_y // 2 + size_y % 2),
@@ -165,7 +165,7 @@ def create_structured_wedge(tilt_angles, angle2=None, cutoffRadius=10, size_x=10
             tot += (abs(xp.sin(alpha)*(x-y/xp.tan(alpha))) <= c)*1
 
     tot[tot>1] = 1
-    tot[r > cutoffRadius] = 0
+    tot[r > cutoff_radius] = 0
     return xp.fft.fftshift(tot, axes=(0, 1))
 
 
@@ -220,7 +220,7 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
     if w1 > 1E-3 or w2 > 1E-3:
         # cutoff was previously sx // 2 - 1
         # replace with Wedge.convert2numpy() and the return_wedge_volume
-        cutoff = wedgeInfo._wedgeObject._cutoffRadius
+        cutoff = wedgeInfo._wedgeObject._cutoff_radius
         smooth = wedgeInfo._wedgeObject._smooth
         wedge = create_wedge(w1, w2, cutoff, sx, sy, sz, smooth).get().astype(np.float32)
         wedge_tomogram = create_wedge(w1, w2, cutoff, SX, SY, SZ, smooth).get().astype(np.float32)
