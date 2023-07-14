@@ -898,12 +898,12 @@ def create_asymmetric_wedge(
     )  # TODO should be ifftshift, because centered is shifted to corner
 
 
-def circle_filter(size_x, size_y, radiusCutoff):
+def circle_filter(size_x, size_y, cutoff_radius):
     """
     circleFilter: NEEDS Documentation
     @param size_x: NEEDS Documentation
     @param size_y: NEEDS Documentation
-    @param radiusCutoff: NEEDS Documentation
+    @param cutoff_radius: NEEDS Documentation
     """
     X, Y = xp.meshgrid(
         xp.arange(-size_x // 2 + size_x % 2, size_x // 2 + size_x % 2),
@@ -912,23 +912,23 @@ def circle_filter(size_x, size_y, radiusCutoff):
     R = xp.sqrt(X**2 + Y**2)
 
     filter = xp.zeros((size_x, size_y), dtype=xp.float32)
-    filter[R <= radiusCutoff] = 1
+    filter[R <= cutoff_radius] = 1
 
     return filter
 
 
-def ellipse_filter(size_x, size_y, radiusCutoffX, radiusCutoffY):
+def ellipse_filter(size_x, size_y, cutoff_radius_x, cutoff_radius_y):
     """
     circleFilter: NEEDS Documentation
     @param size_x: NEEDS Documentation
     @param size_y: NEEDS Documentation
-    @param radiusCutoff: NEEDS Documentation
+    @param cutoff_radius: NEEDS Documentation
     """
     X, Y = xp.meshgrid(
         xp.arange(-size_y // 2 + size_y % 2, size_y // 2 + size_y % 2),
         xp.arange(-size_x // 2 + size_x % 2, size_x // 2 + size_x % 2),
     )
-    R = xp.sqrt((X / radiusCutoffX) ** 2 + (Y / radiusCutoffY) ** 2)
+    R = xp.sqrt((X / cutoff_radius_x) ** 2 + (Y / cutoff_radius_y) ** 2)
 
     filter = xp.zeros((size_x, size_y), dtype=xp.float32)
     # print(filter.shape, R.shape)

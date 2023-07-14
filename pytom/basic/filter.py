@@ -296,12 +296,12 @@ def fourierFilterShift_ReducedComplex(filter):
 
     return shifted_filter
 
-def circleFilter(size_x,size_y, radiusCutoff):
+def circleFilter(size_x,size_y, cutoff_radius):
     """
     circleFilter: NEEDS Documentation
     @param size_x: NEEDS Documentation 
     @param size_y: NEEDS Documentation
-    @param radiusCutoff: NEEDS Documentation
+    @param cutoff_radius: NEEDS Documentation
     """
     from pytom.lib.pytom_volume import vol
     
@@ -318,7 +318,7 @@ def circleFilter(size_x,size_y, radiusCutoff):
                         
             radius = ((i-centerX)*(i-centerX)+(j-centerY)*(j-centerY))**0.5
                                                 
-            if radius <= radiusCutoff:
+            if radius <= cutoff_radius:
                 filter_vol.setV(1.0, i, j, 0)
                 
     return filter_vol
