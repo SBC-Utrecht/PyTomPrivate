@@ -134,7 +134,7 @@ class ParticleList(BaseClass):
             v = p.getTransformedVolume()
             # apply wedge to the volume itself
             v = p.wedge.apply(v, [-p.rotation_psi, -p.rotation_phi, -p.rotation_the])
-            w = p.wedge.returnWedgeVolume(v.shape, [-p.rotation_psi, -p.rotation_phi, -p.rotation_the])
+            w = p.wedge.return_wedge_volume(v.shape, [-p.rotation_psi, -p.rotation_phi, -p.rotation_the])
             if v_sum is None:
                 v_sum = v
                 wedge_sum = w

@@ -405,10 +405,10 @@ def average( particleList, averageName, showProgressBar=False, verbose=False,
             result = vol(size_x,size_y,size_z)
             result.setAll(0.0)
             if analytWedge:
-                wedgeSum = wedgeInfo.returnWedgeVolume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z)
+                wedgeSum = wedgeInfo.return_wedge_volume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z)
             else:
                 # > FF bugfix
-                wedgeSum = wedgeInfo.returnWedgeVolume(size_x,size_y,size_z)
+                wedgeSum = wedgeInfo.return_wedge_volume(size_x,size_y,size_z)
                 # < FF
                 # > TH bugfix
                 #wedgeSum = vol(size_x,size_y,size_z)
@@ -423,15 +423,15 @@ def average( particleList, averageName, showProgressBar=False, verbose=False,
         rotinvert = rotation.invert()
         if analytWedge:
             # > analytical buggy version
-            wedge = wedgeInfo.returnWedgeVolume(size_x,size_y,size_z,False, rotinvert)
+            wedge = wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False, rotinvert)
         else:
             # > FF: interpol bugfix
-            wedge = rotateWeighting( weighting=wedgeInfo.returnWedgeVolume(size_x,size_y,size_z,False),
+            wedge = rotateWeighting( weighting=wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False),
                                      z1=rotinvert[0], z2=rotinvert[1], x=rotinvert[2], mask=None,
                                      isReducedComplex=True, returnReducedComplex=True)
             # < FF
             # > TH bugfix
-            #wedgeVolume = wedgeInfo.returnWedgeVolume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z,
+            #wedgeVolume = wedgeInfo.return_wedge_volume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z,
             #                                    humanUnderstandable=True, rotation=rotinvert)
             #wedge = rotate(volume=wedgeVolume, rotation=rotinvert, imethod='linear')
             # < TH
@@ -539,9 +539,9 @@ def average2(particleList, weighting=False, norm=False, determine_resolution=Fal
             even = vol(size_x,size_y,size_z)
             even.setAll(0.0)
             
-            wedgeSum_odd = wedgeInfo.returnWedgeVolume(size_x,size_y,size_z)
+            wedgeSum_odd = wedgeInfo.return_wedge_volume(size_x,size_y,size_z)
             wedgeSum_odd.setAll(0)
-            wedgeSum_even = wedgeInfo.returnWedgeVolume(size_x,size_y,size_z)
+            wedgeSum_even = wedgeInfo.return_wedge_volume(size_x,size_y,size_z)
             wedgeSum_even.setAll(0)
         
 
@@ -550,16 +550,16 @@ def average2(particleList, weighting=False, norm=False, determine_resolution=Fal
         rotinvert =  rotation.invert()
         if analytWedge:
             # > original buggy version
-            wedge = wedgeInfo.returnWedgeVolume(size_x,size_y,size_z,False, rotinvert)
+            wedge = wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False, rotinvert)
             # < original buggy version
         else:
             # > FF: interpol bugfix
-            wedge = rotateWeighting( weighting=wedgeInfo.returnWedgeVolume(size_x,size_y,size_z,False),
+            wedge = rotateWeighting( weighting=wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False),
                                      z1=rotinvert[0], z2=rotinvert[1], x=rotinvert[2], mask=None,
                                      isReducedComplex=True, returnReducedComplex=True)
             # < FF
             # > TH bugfix
-            #wedgeVolume = wedgeInfo.returnWedgeVolume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z,
+            #wedgeVolume = wedgeInfo.return_wedge_volume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z,
             #                                          humanUnderstandable=True, rotation=rotinvert)
             #wedge = rotate(volume=wedgeVolume, rotation=rotinvert, imethod='linear')
             # < TH

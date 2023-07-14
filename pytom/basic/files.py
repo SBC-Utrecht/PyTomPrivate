@@ -79,13 +79,13 @@ def readSubvolumeFromFourierspaceFile(filename, size_x, size_y, size_z):
     Works only if fourier file is reduced complex without any shift applied.
     @param filename: The fourier space file name
     @param size_x: X final size of subvolume if it was complete
-    (what L{pytom.basic.structures.Wedge.returnWedgeVolume} with
+    (what L{pytom.basic.structures.Wedge.return_wedge_volume} with
     humanUnderstandable == True returns)
     @param size_y: Y final size of subvolume if it was complete
-    (what L{pytom.basic.structures.Wedge.returnWedgeVolume}
+    (what L{pytom.basic.structures.Wedge.return_wedge_volume}
     with humanUnderstandable == True returns)
     @param size_z: Z final size of subvolume if it was complete
-    (what L{pytom.basic.structures.Wedge.returnWedgeVolume}
+    (what L{pytom.basic.structures.Wedge.return_wedge_volume}
     with humanUnderstandable == True returns)
     @return: A subvolume
     @author: Thomas Hrabe

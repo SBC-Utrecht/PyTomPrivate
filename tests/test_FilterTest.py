@@ -19,7 +19,7 @@ class pytom_FilterTest(unittest.TestCase):
         v.setV(1.,16,16,16)
 
         wedgeInfo = WedgeInfo(30.0)#,[10.0,20.0,30.0],0.0)
-        wvol = wedgeInfo.returnWedgeVolume(v.size_x(), v.size_y(), v.size_z())
+        wvol = wedgeInfo.return_wedge_volume(v.size_x(), v.size_y(), v.size_z())
         wfil = wedgeInfo.returnWedgeFilter(v.size_x(), v.size_y(), v.size_z())
         vfil1 = wedgeInfo.apply(v)
         vfil2 = filter(v,wfil)
@@ -57,14 +57,14 @@ class pytom_FilterTest(unittest.TestCase):
         vfil2 = wedgeInfoRot.apply(v)
         #vfil2.write('xxx2.em')
 
-        wrot = wedgeInfo.returnWedgeVolume(v.size_x(), v.size_y(), v.size_z(), False, rot)
+        wrot = wedgeInfo.return_wedge_volume(v.size_x(), v.size_y(), v.size_z(), False, rot)
         fv = fft(v)
         fvol3 = complexRealMult(fv,wrot)
         vfil3 = ifft(fvol3)
         vfil3.shiftscale(0.0,1/float(v.size_x()*v.size_y()*v.size_z()))
         #vfil3.write('xxx3.em')
 
-        w = wedgeInfo.returnWedgeVolume(v.size_x(), v.size_y(), v.size_z(), False)
+        w = wedgeInfo.return_wedge_volume(v.size_x(), v.size_y(), v.size_z(), False)
         wrot = rotateWeighting( weighting=w, z1=rot[0], z2=rot[1], x=rot[2], mask=None,
                                 isReducedComplex=None,returnReducedComplex=True)
         fvol4 = complexRealMult(fv,wrot)

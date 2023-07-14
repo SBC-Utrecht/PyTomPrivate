@@ -105,10 +105,10 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
             result.setAll(0.0)
 
             if analytWedge:
-                wedgeSum = wedgeInfo.returnWedgeVolume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z)
+                wedgeSum = wedgeInfo.return_wedge_volume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z)
             else:
                 # > FF bugfix
-                wedgeSum = wedgeInfo.returnWedgeVolume(size_x, size_y, size_z)
+                wedgeSum = wedgeInfo.return_wedge_volume(size_x, size_y, size_z)
                 # < FF
                 # > TH bugfix
                 # wedgeSum = vol(size_x,size_y,size_z)
@@ -125,17 +125,17 @@ def average(particleList, averageName, showProgressBar=False, verbose=False,
         ### create spectral wedge weighting
         if analytWedge:
             # > analytical buggy version
-            wedge = wedgeInfo.returnWedgeVolume(size_x, size_y, size_z, False, rotinvert)
+            wedge = wedgeInfo.return_wedge_volume(size_x, size_y, size_z, False, rotinvert)
         else:
             # > FF: interpol bugfix
-            wedge = rotateWeighting(weighting=wedgeInfo.returnWedgeVolume(size_x, size_y, size_z, False),
+            wedge = rotateWeighting(weighting=wedgeInfo.return_wedge_volume(size_x, size_y, size_z, False),
                                     z1=rotinvert[0], z2=rotinvert[1], x=rotinvert[2], mask=None,
                                     isReducedComplex=True, returnReducedComplex=True)
-            # wedge = wedgeInfo.returnWedgeVolume(size_x, size_y, size_z, False, rotation=rotinvert)
+            # wedge = wedgeInfo.return_wedge_volume(size_x, size_y, size_z, False, rotation=rotinvert)
 
             # < FF
             # > TH bugfix
-            # wedgeVolume = wedgeInfo.returnWedgeVolume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z,
+            # wedgeVolume = wedgeInfo.return_wedge_volume(wedgeSizeX=size_x, wedgeSizeY=size_y, wedgeSizeZ=size_z,
             #                                    humanUnderstandable=True, rotation=rotinvert)
             # wedge = rotate(volume=wedgeVolume, rotation=rotinvert, imethod='linear')
             # < TH
@@ -286,7 +286,7 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
     wedgeInfo = particleList[0].getWedge().convert2numpy()
 
     # TODO ifftshift to shift centered spectrum back to corner!
-    wedgeZero = xp.fft.ifftshift(wedgeInfo.returnWedgeVolume(sx, sy, sz, True))
+    wedgeZero = xp.fft.ifftshift(wedgeInfo.return_wedge_volume(sx, sy, sz, True))
     wedge     = xp.zeros_like(wedgeZero, dtype=xp.float32)
     wedgeSum  = xp.zeros_like(wedge, dtype=xp.float32)
 
@@ -325,7 +325,7 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
 
         # get the wedge per particle because the wedge can differ
         wedgeInfo = particleObject.getWedge().convert2numpy()
-        wedgeZero = xp.fft.ifftshift(wedgeInfo.returnWedgeVolume(sx, sy, sz, True))
+        wedgeZero = xp.fft.ifftshift(wedgeInfo.return_wedge_volume(sx, sy, sz, True))
 
         # apply wedge to particle
         particle = (ifftnP(fftnP(particle, plan=fftplan) * wedgeZero, plan=fftplan)).real

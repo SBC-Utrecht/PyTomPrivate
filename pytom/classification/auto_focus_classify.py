@@ -225,12 +225,12 @@ def paverage(particleList, norm, binning, verbose, outdir='./', gpuID=None):
 
                 result = vol(size_x,size_y,size_z)
                 result.setAll(0.0)
-                wedgeSum = wedgeInfo.returnWedgeVolume(size_x,size_y,size_z)
+                wedgeSum = wedgeInfo.return_wedge_volume(size_x,size_y,size_z)
                 wedgeSum.setAll(0)
 
             # create spectral wedge weighting
             rotation = particleObject.getRotation()
-            wedge = wedgeInfo.returnWedgeVolume(size_x,size_y,size_z,False, rotation.invert())
+            wedge = wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False, rotation.invert())
 
             wedgeSum += wedge
 
@@ -302,12 +302,12 @@ def paverage(particleList, norm, binning, verbose, outdir='./', gpuID=None):
 
                 result = xp.zeros((size_x, size_y, size_z),dtype=xp.float32)
 
-                wedgeSum = wedgeInfo.returnWedgeVolume(size_x, size_y, size_z)
+                wedgeSum = wedgeInfo.return_wedge_volume(size_x, size_y, size_z)
                 wedgeSum *= 0
 
             # create spectral wedge weighting
             rotation = particleObject.getRotation()
-            wedge = wedgeInfo.returnWedgeVolume(size_x, size_y, size_z, False, rotation.invert())
+            wedge = wedgeInfo.return_wedge_volume(size_x, size_y, size_z, False, rotation.invert())
 
             wedgeSum += wedge
 

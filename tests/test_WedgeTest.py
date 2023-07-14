@@ -26,9 +26,9 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # here there is no problem
         SX, SY, SZ = self.SX, self.SY, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ)
+        temp = w.return_wedge_volume(SX, SY, SZ)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -36,9 +36,9 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # test uneven X
         SX, SY, SZ = self.SX_uneven, self.SY, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ)
+        temp = w.return_wedge_volume(SX, SY, SZ)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -46,9 +46,9 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # test uneven Y
         SX, SY, SZ = self.SX, self.SY_uneven, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ)
+        temp = w.return_wedge_volume(SX, SY, SZ)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -57,9 +57,9 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # test uneven Z
         SX, SY, SZ = self.SX, self.SY, self.SZ_uneven
-        temp = w.returnWedgeVolume(SX, SY, SZ)
+        temp = w.return_wedge_volume(SX, SY, SZ)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -78,9 +78,9 @@ class pytom_NumpyTest(unittest.TestCase):
             import matplotlib.pyplot as plt
 
             SX, SY, SZ = self.SX_uneven, self.SY, self.SZ
-            temp = w.returnWedgeVolume(SX, SY, SZ)
+            temp = w.return_wedge_volume(SX, SY, SZ)
             wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-            wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ)
+            wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ)
             fig, ax = plt.subplots(1, 3)
             ax[0].imshow(wedge_numpy[:, 0, :])
             ax[0].set_title('agnostic wedge')
@@ -91,9 +91,9 @@ class pytom_NumpyTest(unittest.TestCase):
             plt.show()
 
             SX, SY, SZ = self.SX, self.SY, self.SZ_uneven
-            temp = w.returnWedgeVolume(SX, SY, SZ)
+            temp = w.return_wedge_volume(SX, SY, SZ)
             wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-            wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ)
+            wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ)
             fig, ax = plt.subplots(1, 3)
             ax[0].imshow(wedge_numpy[:, 0, :])
             ax[0].set_title('agnostic wedge')
@@ -109,9 +109,9 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # here there is no problem
         SX, SY, SZ = self.SX, self.SY, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ, humanUnderstandable=True)
+        temp = w.return_wedge_volume(SX, SY, SZ, humanUnderstandable=True)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ, humanUnderstandable=True)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ, humanUnderstandable=True)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -120,9 +120,9 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # test uneven X
         SX, SY, SZ = self.SX_uneven, self.SY, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ, humanUnderstandable=True)
+        temp = w.return_wedge_volume(SX, SY, SZ, humanUnderstandable=True)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ, humanUnderstandable=True)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ, humanUnderstandable=True)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -131,9 +131,9 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # test uneven Y
         SX, SY, SZ = self.SX, self.SY_uneven, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ, humanUnderstandable=True)
+        temp = w.return_wedge_volume(SX, SY, SZ, humanUnderstandable=True)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ, humanUnderstandable=True)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ, humanUnderstandable=True)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -145,9 +145,9 @@ class pytom_NumpyTest(unittest.TestCase):
         w_np = w.convert2numpy()
 
         SX, SY, SZ = self.SX, self.SY, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ)
+        temp = w.return_wedge_volume(SX, SY, SZ)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -156,9 +156,9 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # test uneven X
         SX, SY, SZ = self.SX_uneven, self.SY, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ)
+        temp = w.return_wedge_volume(SX, SY, SZ)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -167,9 +167,9 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # test uneven Y
         SX, SY, SZ = self.SX, self.SY_uneven, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ)
+        temp = w.return_wedge_volume(SX, SY, SZ)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ)
         # cast from cupy to numpy if required
         if hasattr(wedge_numpy, 'get'):
             wedge_numpy = wedge_numpy.get()
@@ -189,9 +189,9 @@ class pytom_NumpyTest(unittest.TestCase):
         w_np = w.convert2numpy()
 
         SX, SY, SZ = self.SX, self.SY, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ, rotation=self.rotation)
+        temp = w.return_wedge_volume(SX, SY, SZ, rotation=self.rotation)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ, rotation=self.rotation)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ, rotation=self.rotation)
         # write('wedge_pytom.mrc', np.fft.ifftshift(wedge_pytom, axes=(0, 1)))
         # write('wedge_numpy.mrc', np.fft.ifftshift(wedge_numpy, axes=(0, 1)))
         print(nxcc(wedge_pytom, wedge_numpy))
@@ -199,17 +199,17 @@ class pytom_NumpyTest(unittest.TestCase):
 
         # test uneven X
         SX, SY, SZ = self.SX_uneven, self.SY, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ, rotation=self.rotation)
+        temp = w.return_wedge_volume(SX, SY, SZ, rotation=self.rotation)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ, rotation=self.rotation)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ, rotation=self.rotation)
         print(nxcc(wedge_pytom, wedge_numpy))
         self.assertTrue(nxcc(wedge_pytom, wedge_numpy) > 0.90, "failing with uneven X")
 
         # test uneven Y
         SX, SY, SZ = self.SX, self.SY_uneven, self.SZ
-        temp = w.returnWedgeVolume(SX, SY, SZ, rotation=self.rotation)
+        temp = w.return_wedge_volume(SX, SY, SZ, rotation=self.rotation)
         wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-        wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ, rotation=self.rotation)
+        wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ, rotation=self.rotation)
         print(nxcc(wedge_pytom, wedge_numpy))
         self.assertTrue(nxcc(wedge_pytom, wedge_numpy) > 0.90, "failing with uneven Y")
 
@@ -225,9 +225,9 @@ class pytom_NumpyTest(unittest.TestCase):
             import matplotlib.pyplot as plt
 
             SX, SY, SZ = self.SX, self.SY, self.SZ
-            temp = w.returnWedgeVolume(SX, SY, SZ, rotation=self.rotation)
+            temp = w.return_wedge_volume(SX, SY, SZ, rotation=self.rotation)
             wedge_pytom = vol2npy(temp).copy().astype(np.float32)
-            wedge_numpy = w_np.returnWedgeVolume(SX, SY, SZ, rotation=self.rotation)
+            wedge_numpy = w_np.return_wedge_volume(SX, SY, SZ, rotation=self.rotation)
             fig, ax = plt.subplots(1, 3)
             ax[0].imshow(wedge_numpy[:, 0, :])
             ax[0].set_title('agnostic wedge')

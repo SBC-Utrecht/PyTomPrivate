@@ -550,7 +550,7 @@ class SingleTiltWedge(Wedge):
 
         return res
 
-    def returnWedgeVolume(self, size, rotation=None):
+    def return_wedge_volume(self, size, rotation=None):
         """Return the wedge volume in full size and zero in the center
         @param size: size of wedge
         @type size: C{list}
@@ -559,7 +559,7 @@ class SingleTiltWedge(Wedge):
         @return: wedge volume
         @rtype: Numpy array
         """
-        assert len(size) == 3, "returnWedgeVolume: size must be 3-dim list"
+        assert len(size) == 3, "return_wedge_volume: size must be 3-dim list"
 
         if self._volume is not None and np.array_equal(self._volume_shape, size):
             pass

@@ -549,13 +549,13 @@ class MultiDefocusWorker(FRMWorker):
                 result = vol(size_x,size_y,size_z)
                 result.setAll(0)
                 
-                wedgeSum = wedgeInfo.returnWedgeVolume(size_x,size_y,size_z)
+                wedgeSum = wedgeInfo.return_wedge_volume(size_x,size_y,size_z)
                 wedgeSum.setAll(0)
             
             # create wedge weighting
             rotation = p.getRotation()
             
-            wedge = wedgeInfo.returnWedgeVolume(size_x,size_y,size_z,False,rotation.invert())
+            wedge = wedgeInfo.return_wedge_volume(size_x,size_y,size_z,False,rotation.invert())
             wedgeSum = wedgeSum + wedge
             
             # shift and rotate particle

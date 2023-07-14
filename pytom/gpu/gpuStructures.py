@@ -258,7 +258,7 @@ class GLocalAlignmentPlan():
             self.wedge_angles = wedge.getWedgeAngle()
         else:
             self.wedge_angles = None
-        wedgePart          = wedge.returnWedgeVolume(*self.volume.shape, humanUnderstandable=True).get()
+        wedgePart          = wedge.return_wedge_volume(*self.volume.shape, humanUnderstandable=True).get()
         self.rotatedWedge  = cp.array(wedgePart, dtype=cp.float32)
         self.wedgePart     = cp.fft.fftshift(wedgePart).astype(cp.float32)
         self.wedgeTex      = StaticVolume(self.rotatedWedge.copy(), device=self.device, interpolation=interpolation)
@@ -522,7 +522,7 @@ class GLocalAlignmentPlan():
         if wedge._type == 'Wedge3dCTF':
             self.wedge_angles = None
             self.wedge = wedge
-            wedgePart = wedge.returnWedgeVolume(*self.volume.shape, humanUnderstandable=True).astype(
+            wedgePart = wedge.return_wedge_volume(*self.volume.shape, humanUnderstandable=True).astype(
                 self.cp.float32).get()
             self.rotatedWedge = self.cp.array(wedgePart, dtype=self.cp.float32)
             self.wedgePart = self.cp.fft.fftshift(wedgePart)
@@ -539,7 +539,7 @@ class GLocalAlignmentPlan():
             else:
                 self.wedge_angles  = wedge_angles
                 self.wedge        = wedge
-                wedgePart         = wedge.returnWedgeVolume(*self.volume.shape,
+                wedgePart         = wedge.return_wedge_volume(*self.volume.shape,
                                                             humanUnderstandable=True).astype(self.cp.float32).get()
                 self.rotatedWedge = self.cp.array(wedgePart, dtype=self.cp.float32)
                 self.wedgePart    = self.cp.fft.fftshift(wedgePart)
@@ -895,7 +895,7 @@ class CCCPlan():
         else:
             mask = maskFull
 
-        wedgeVol = particleList[0].getWedge().convert2numpy().getWedgeObject().returnWedgeVolume(*mask.shape)
+        wedgeVol = particleList[0].getWedge().convert2numpy().getWedgeObject().return_wedge_volume(*mask.shape)
         wedge = fourier_reduced2full(wedgeVol, isodd=mask.shape[-1] % 2)
         lpf = xp.fft.fftshift(create_sphere(mask.shape, freq))
 

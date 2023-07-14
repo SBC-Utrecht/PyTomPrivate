@@ -563,12 +563,12 @@ class Reference(PyTomClass):
         rotinvert =  particleRotation.invert()
         if analytWedge:
             # > buggy version
-            wedge = particleWedge.returnWedgeVolume(particleTransformed.size_x(),particleTransformed.size_y(),
+            wedge = particleWedge.return_wedge_volume(particleTransformed.size_x(),particleTransformed.size_y(),
                                                     particleTransformed.size_z(),False,rotinvert)
             # < buggy version
         else:
             # > FF bugfix
-            wedge = rotateWeighting( weighting=particleWedge.returnWedgeVolume(particleTransformed.size_x(),
+            wedge = rotateWeighting( weighting=particleWedge.return_wedge_volume(particleTransformed.size_x(),
                                                                                particleTransformed.size_y(),
                                                                                particleTransformed.size_z(),False),
                                  z1=rotinvert[0], z2=rotinvert[1], x=rotinvert[2], mask=None,
@@ -847,9 +847,9 @@ class Wedge(PyTomClass):
         else:
             return self._wedgeObject.returnWedgeFilter(wedgeSizeX,wedgeSizeY,wedgeSizeZ,rotation)
     
-    def returnWedgeVolume(self,wedgeSizeX=None,wedgeSizeY=None,wedgeSizeZ=None,humanUnderstandable=False,rotation=None):
+    def return_wedge_volume(self,wedgeSizeX=None,wedgeSizeY=None,wedgeSizeZ=None,humanUnderstandable=False,rotation=None):
         """
-        returnWedgeVolume: Returns a wedge volume for later processing. 
+        return_wedge_volume: Returns a wedge volume for later processing. 
         @param wedgeSizeX: volume size for x (size of original volume in real space) 
         @param wedgeSizeY: volume size for y (size of original volume in real space)
         @param wedgeSizeZ: volume size for z (size of original volume in real space)
@@ -860,7 +860,7 @@ class Wedge(PyTomClass):
         @author: Thomas Hrabe 
         """
         
-        return self._wedgeObject.returnWedgeVolume(wedgeSizeX,wedgeSizeY,wedgeSizeZ,humanUnderstandable,rotation)
+        return self._wedgeObject.return_wedge_volume(wedgeSizeX,wedgeSizeY,wedgeSizeZ,humanUnderstandable,rotation)
     
     def getWedgeAngle(self):
         """
@@ -1101,10 +1101,10 @@ class SingleTiltWedge(PyTomClass):
                 
         return weightObject
     
-    def returnWedgeVolume(self,wedgeSizeX,wedgeSizeY,wedgeSizeZ,humanUnderstandable=False, rotation=None,
+    def return_wedge_volume(self,wedgeSizeX,wedgeSizeY,wedgeSizeZ,humanUnderstandable=False, rotation=None,
                           as_numpy=False):
         """
-        returnWedgeVolume: Returns a wedge volume for later processing. 
+        return_wedge_volume: Returns a wedge volume for later processing. 
         @param wedgeSizeX: volume size for x (size of original volume in real space) 
         @param wedgeSizeY: volume size for y (size of original volume in real space)
         @param wedgeSizeZ: volume size for z (size of original volume in real space)
@@ -1186,7 +1186,7 @@ class SingleTiltWedge(PyTomClass):
         assert (b <= 128)
         # r = 45  # this radius and the volume size should be sufficient for sampling b <= 128
         if self._wedge_vol is None:
-            self._wedge_vol = self.returnWedgeVolume(100, 100, 100, humanUnderstandable=True, as_numpy=True)
+            self._wedge_vol = self.return_wedge_volume(100, 100, 100, humanUnderstandable=True, as_numpy=True)
 
         size_x, size_y, size_z = self._wedge_vol.shape
 
@@ -1350,10 +1350,10 @@ be generated. If omitted / 0, filter is fixed to size/2.
         self._bw = None
         self._sf = None
         
-    def returnWedgeVolume(self, wedgeSizeX, wedgeSizeY, wedgeSizeZ, humanUnderstandable=False, rotation=None,
+    def return_wedge_volume(self, wedgeSizeX, wedgeSizeY, wedgeSizeZ, humanUnderstandable=False, rotation=None,
                           as_numpy=False):
         """
-        returnWedgeVolume: Returns a wedge volume for later processing. 
+        return_wedge_volume: Returns a wedge volume for later processing. 
         @param wedgeSizeX: volume size for x (size of original volume in real space) 
         @param wedgeSizeY: volume size for y (size of original volume in real space)
         @param wedgeSizeZ: volume size for z (size of original volume in real space)
@@ -1366,8 +1366,8 @@ be generated. If omitted / 0, filter is fixed to size/2.
         """
         from pytom.lib.pytom_volume import vol, limit
         
-        w1 = self._wedge1.returnWedgeVolume(wedgeSizeX, wedgeSizeY, wedgeSizeZ, humanUnderstandable, rotation)
-        w2 = self._wedge2.returnWedgeVolume(wedgeSizeX, wedgeSizeY, wedgeSizeZ, humanUnderstandable, rotation)
+        w1 = self._wedge1.return_wedge_volume(wedgeSizeX, wedgeSizeY, wedgeSizeZ, humanUnderstandable, rotation)
+        w2 = self._wedge2.return_wedge_volume(wedgeSizeX, wedgeSizeY, wedgeSizeZ, humanUnderstandable, rotation)
         
         # combine into one
         w = w1+w2
@@ -1390,7 +1390,7 @@ be generated. If omitted / 0, filter is fixed to size/2.
         assert (b <= 128)
         # r = 45  # this radius and the volume size should be sufficient for sampling b <= 128
         if self._wedge_vol is None:
-            self._wedge_vol = self.returnWedgeVolume(100, 100, 100, humanUnderstandable=True, as_numpy=True)
+            self._wedge_vol = self.return_wedge_volume(100, 100, 100, humanUnderstandable=True, as_numpy=True)
 
         size_x, size_y, size_z = self._wedge_vol.shape
 
@@ -1471,7 +1471,7 @@ be generated. If omitted / 0, filter is fixed to size/2.
         if not volume.__class__ == vol:
             raise TypeError('You must provide a pytom.lib.pytom_volume.vol here!')
     
-        wedgeVolume = self.returnWedgeVolume(volume.size_x(),volume.size_y(),volume.size_z(),
+        wedgeVolume = self.return_wedge_volume(volume.size_x(),volume.size_y(),volume.size_z(),
                            humanUnderstandable = False,rotation=rotation)
         fvolume     = fft(volume) 
         fresult     = complexRealMult(fvolume, wedgeVolume)
@@ -1514,7 +1514,7 @@ class Wedge3dCTF(PyTomClass):
     def set_ctf_max_resolution(self, ctf_max_resolution):
         self._ctf_max_resolution = ctf_max_resolution
 
-    def returnWedgeVolume(self, wedgeSizeX=None, wedgeSizeY=None, wedgeSizeZ=None, humanUnderstandable=False,
+    def return_wedge_volume(self, wedgeSizeX=None, wedgeSizeY=None, wedgeSizeZ=None, humanUnderstandable=False,
                           rotation=None, as_numpy=False):
         """parameters here are not needed but for compat with the wedge class"""
         if wedgeSizeX is not None or wedgeSizeY is not None or wedgeSizeZ is not None:
@@ -1536,7 +1536,7 @@ class Wedge3dCTF(PyTomClass):
         if not volume.__class__ == vol:
             raise TypeError('Wedge3dCTF: You must provide a pytom.lib.pytom_volume.vol here!')
 
-        wedge = self.returnWedgeVolume(rotation=rotation)
+        wedge = self.return_wedge_volume(rotation=rotation)
 
         return convolute(volume, wedge, kernel_in_fourier=True)
 
@@ -1550,7 +1550,7 @@ class Wedge3dCTF(PyTomClass):
         assert (b <= 128)
         # r = 45  # this radius and the volume size should be sufficient for sampling b <= 128
         if self._wedge_vol is None:
-            self._wedge_vol = self.returnWedgeVolume(humanUnderstandable=True, as_numpy=True)
+            self._wedge_vol = self.return_wedge_volume(humanUnderstandable=True, as_numpy=True)
 
         size_x, size_y, size_z = self._wedge_vol.shape
 
@@ -1653,7 +1653,7 @@ class GeneralWedge(PyTomClass):
          
         return w
     
-    def returnWedgeVolume(self, wedgeSizeX=None, wedgeSizeY=None, wedgeSizeZ=None, humanUnderstandable=False, rotation=None):
+    def return_wedge_volume(self, wedgeSizeX=None, wedgeSizeY=None, wedgeSizeZ=None, humanUnderstandable=False, rotation=None):
         wedgeFilter = self.returnWedgeFilter(None, None, None, rotation)
         
         # return only the reduced complex part
@@ -3310,9 +3310,9 @@ class ParticleList(PyTomClass):
             # rotate the wedge
             w = p.getWedge()
             if sum_w is None:
-                sum_w = w.returnWedgeVolume(v.size_x(),v.size_y(),v.size_z(), False, p.getRotation().invert())
+                sum_w = w.return_wedge_volume(v.size_x(),v.size_y(),v.size_z(), False, p.getRotation().invert())
             else:
-                sum_w += w.returnWedgeVolume(v.size_x(),v.size_y(),v.size_z(), False, p.getRotation().invert())
+                sum_w += w.return_wedge_volume(v.size_x(),v.size_y(),v.size_z(), False, p.getRotation().invert())
             
             # calculate the variance
             wa = w.apply(average, p.getRotation().invert())

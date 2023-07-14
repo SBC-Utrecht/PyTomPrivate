@@ -39,14 +39,14 @@ class pytom_NumpyTest(unittest.TestCase):
         dtype = np.float32
 
         # no issues
-        temp = w.returnWedgeVolume(sx, sy, sz)
+        temp = w.return_wedge_volume(sx, sy, sz)
         wedge_pytom = pytom_numpy.vol2npy(temp).copy().astype(dtype)
         wedge_numpy = create_wedge(w1, w2, sx // 2, sx, sy, sz, smooth).astype(dtype)
         self.assertTrue((wedge_pytom != wedge_numpy).sum() == 0, msg='somehting is very wrong with conversion')
 
         # here there is an issue
         # this is just a known location where I know there is a mismatch of 8 (McHaillet)
-        wedge_pytom = pytom_numpy.vol2npy(w.returnWedgeVolume(sx, sy, sz)).copy().astype(dtype)
+        wedge_pytom = pytom_numpy.vol2npy(w.return_wedge_volume(sx, sy, sz)).copy().astype(dtype)
         wedge_numpy = create_wedge(w1, w2, sx // 2, sx, sy, sz, smooth).astype(dtype)
         print('These two arrays are not identical due to some issue with conversion between numpy and pytom volumes. '
               'There difference is: ', (wedge_pytom != wedge_numpy).sum())

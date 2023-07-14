@@ -219,7 +219,7 @@ def templateMatchingGPU(volume, reference, rotations, scoreFnc=None, mask=None, 
 
     if w1 > 1E-3 or w2 > 1E-3:
         # cutoff was previously sx // 2 - 1
-        # replace with Wedge.convert2numpy() and the returnWedgeVolume
+        # replace with Wedge.convert2numpy() and the return_wedge_volume
         cutoff = wedgeInfo._wedgeObject._cutoffRadius
         smooth = wedgeInfo._wedgeObject._smooth
         wedge = create_wedge(w1, w2, cutoff, sx, sy, sz, smooth).get().astype(np.float32)

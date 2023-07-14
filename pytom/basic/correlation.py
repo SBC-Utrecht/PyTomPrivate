@@ -459,7 +459,7 @@ def weighted_xcc(volume,reference,number_of_bands,wedge_angle=-1):
         freference.shiftscale(0,1/float(numelem))
         from pytom.basic.structures import WedgeInfo
         wedge = WedgeInfo(wedge_angle)
-        wedgeVolume = wedge.returnWedgeVolume(volume.size_x(),volume.size_y(),volume.size_z())
+        wedgeVolume = wedge.return_wedge_volume(volume.size_x(),volume.size_y(),volume.size_z())
         
         increment = int(volume.size_x()/2 * 1/number_of_bands)
         band = [0,100]
