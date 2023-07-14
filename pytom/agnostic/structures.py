@@ -4932,10 +4932,10 @@ class BandPassFilter(PyTomClass):
 
 
 class Weight():
-    def __init__(self, wedge_angle1=0, wedge_angle2=0, cutOffRadius=0, size_x=0, size_y=0, size_z=0, smooth=0, rotation=None):
+    def __init__(self, wedge_angle1=0, wedge_angle2=0, cutoff_radius=0, size_x=0, size_y=0, size_z=0, smooth=0, rotation=None):
         self.wedge_angle1 = wedge_angle1
         self.wedge_angle2 = wedge_angle2
-        self.cutOffRadius = cutOffRadius
+        self.cutoff_radius = cutoff_radius
         self.size_x = size_x
         self.size_y = size_y
         self.size_z = size_z
@@ -4956,7 +4956,7 @@ class Weight():
         from pytom.agnostic.filter import create_wedge
         from pytom.agnostic.transform import fourier_reduced2full
 
-        wedge = create_wedge(self.wedge_angle1, self.wedge_angle2, self.cutOffRadius, self.size_x, self.size_y, self.size_z, self.smooth, self.rotation)
+        wedge = create_wedge(self.wedge_angle1, self.wedge_angle2, self.cutoff_radius, self.size_x, self.size_y, self.size_z, self.smooth, self.rotation)
 
         if reducedComplex == False:
             wedge = fourier_reduced2full(wedge)

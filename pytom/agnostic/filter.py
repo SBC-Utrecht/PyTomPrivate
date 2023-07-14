@@ -497,14 +497,14 @@ class SingleTiltWedge(Wedge):
 
         self.smooth = smooth
 
-    def _create_wedge_volume(self, size, cutOffRadius=None):
-        if cutOffRadius is None:
-            cutOffRadius = size[0] // 2
+    def _create_wedge_volume(self, size, cutoff_radius=None):
+        if cutoff_radius is None:
+            cutoff_radius = size[0] // 2
 
         self._volume = create_wedge(
             self.start_ang,
             self.end_ang,
-            cutOffRadius,
+            cutoff_radius,
             size[0],
             size[1],
             size[2],
@@ -639,7 +639,7 @@ class SingleTiltWedge(Wedge):
 def create_wedge(
     wedge_angle1,
     wedge_angle2,
-    cutOffRadius,
+    cutoff_radius,
     size_x,
     size_y,
     size_z,
@@ -651,8 +651,8 @@ def create_wedge(
     @type wedge_angle1: int
     @param wedge_angle2: angle of wedge2 in degrees
     @type wedge_angle2: int
-    @param cutOffRadius: radius from center beyond which the wedge is set to zero.
-    @type cutOffRadius: int
+    @param cutoff_radius: radius from center beyond which the wedge is set to zero.
+    @type cutoff_radius: int
     @param size_x: the size of the box in x-direction.
     @type size_x: int
     @param size_y: the size of the box in y-direction.
@@ -667,14 +667,14 @@ def create_wedge(
 
     import numpy as np
 
-    if cutOffRadius < 1:
-        cutOffRadius = size_x // 2
+    if cutoff_radius < 1:
+        cutoff_radius = size_x // 2
 
     if wedge_angle1 == wedge_angle2:
         return create_symmetric_wedge(
             wedge_angle1,
             wedge_angle2,
-            cutOffRadius,
+            cutoff_radius,
             size_x,
             size_y,
             size_z,
@@ -685,7 +685,7 @@ def create_wedge(
         return create_asymmetric_wedge(
             wedge_angle1,
             wedge_angle2,
-            cutOffRadius,
+            cutoff_radius,
             size_x,
             size_y,
             size_z,
@@ -702,8 +702,8 @@ def create_symmetric_wedge(
     @type angle1: int
     @param angle2: angle of wedge2 in degrees
     @type angle2: int
-    @param cutOffRadius: radius from center beyond which the wedge is set to zero.
-    @type cutOffRadius: int
+    @param cutoff_radius: radius from center beyond which the wedge is set to zero.
+    @type cutoff_radius: int
     @param size_x: the size of the box in x-direction.
     @type size_x: int
     @param size_y: the size of the box in y-direction.
@@ -804,8 +804,8 @@ def create_asymmetric_wedge(
     @type angle1: int
     @param angle2: angle of wedge2 in degrees
     @type angle2: int
-    @param cutOffRadius: radius from center beyond which the wedge is set to zero.
-    @type cutOffRadius: int
+    @param cutoff_radius: radius from center beyond which the wedge is set to zero.
+    @type cutoff_radius: int
     @param size_x: the size of the box in x-direction.
     @type size_x: int
     @param size_y: the size of the box in y-direction.
