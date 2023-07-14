@@ -369,7 +369,7 @@ def alignImagesUsingAlignmentResultFile(alignmentResultsFile, weighting=None, lo
         imdimY = int(float(imdimY) / float(binning) + .5)
 
     imdim = max(imdimY, imdimX)
-    sliceWidth = imdim
+    slice_width = imdim
 
     if (weighting != None) and (float(weighting) < -0.001):
         cfreq = abs(tilt_angles[1:]-tilt_angles[:-1])
@@ -461,7 +461,7 @@ def alignImagesUsingAlignmentResultFile(alignmentResultsFile, weighting=None, lo
             # image = (ifft(complexRealMult(fft(image), w_func)) / (image.size_x() * image.size_y() * image.size_z()))
             image = xp.fft.ifftn(xp.fft.fftn(image) * weightSlice * circleSlice).real
         elif (weighting != None) and (weighting > 0):
-            weightSlice = xp.fft.fftshift(exact_filter(tilt_angles, tiltAngle, imdim, imdim, sliceWidth))
+            weightSlice = xp.fft.fftshift(exact_filter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
             image = xp.fft.ifftn(xp.fft.fftn(image) * weightSlice * circleSlice).real
 
         thetaStack[ii] = float(round(projection.getTiltAngle() - angle_specimen))

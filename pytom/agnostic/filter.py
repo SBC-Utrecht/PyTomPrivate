@@ -967,7 +967,7 @@ def ramp_filter(size_x, size_y, crowther_freq=None, n=None):
     return rampfilter
 
 
-def exact_filter(tilt_angles, tiltAngle, size_x, size_y, sliceWidth, arr=[]):
+def exact_filter(tilt_angles, tiltAngle, size_x, size_y, slice_width, arr=[]):
     """
     exactFilter: Generates the exact weighting function required for weighted backprojection - y-axis is tilt axis
     Reference : Optik, Exact filters for general geometry three dimensional reconstuction, vol.73,146,1986.
@@ -984,17 +984,17 @@ def exact_filter(tilt_angles, tiltAngle, size_x, size_y, sliceWidth, arr=[]):
     smallest_sampling = xp.min(sampling[sampling > 0.001])
 
     if (
-        sliceWidth / smallest_sampling > size_x // 2
+        slice_width / smallest_sampling > size_x // 2
     ):  # crowther crit can be to nyquist freq (i.e. sX // 2)
-        sliceWidth = smallest_sampling * (size_x // 2)  # adjust sliceWidth if too large
+        slice_width = smallest_sampling * (size_x // 2)  # adjust slice_width if too large
 
-    crowther_freq = min(size_x // 2, int(xp.ceil(sliceWidth / smallest_sampling)))
+    crowther_freq = min(size_x // 2, int(xp.ceil(slice_width / smallest_sampling)))
     arrCrowther = xp.abs(xp.arange(-crowther_freq, min(size_x // 2, crowther_freq + 1)))
 
     # as in the paper: 1 - frequency / overlap_frequency
-    # where frequency = arrCrowther, and 1 / overlap_frequency = sampling/sliceWidth
+    # where frequency = arrCrowther, and 1 / overlap_frequency = sampling/slice_width
     wfuncCrowther = 1.0 / xp.clip(
-        1 - ((sampling / sliceWidth)[:, xp.newaxis] * arrCrowther) ** 2, 0, 2
+        1 - ((sampling / slice_width)[:, xp.newaxis] * arrCrowther) ** 2, 0, 2
     ).sum(axis=0)
 
     # Create full width weightFunc

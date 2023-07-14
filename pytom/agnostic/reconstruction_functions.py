@@ -93,7 +93,7 @@ def backProjectGPU(projections, reconstruction, vol_phi, proj_angles, recPosVol=
                                                             center_recon, dims, tr, reconstruction.size))
 
 
-def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
+def exactFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
     """
     exactFilter: Generates the exact weighting function required for weighted backprojection - y-axis is tilt axis
     Reference : Optik, Exact filters for general geometry three dimensional reconstuction, vol.73,146,1986.
@@ -105,8 +105,8 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     @type sX: int
     @param sY: size of the y-axis
     @type sY: int
-    @param sliceWidth: width slice through the object
-    @type sliceWidth: int
+    @param slice_width: width slice through the object
+    @type slice_width: int
     @param arr: array
     @type arr: list
     @return: 2D weight array of floats

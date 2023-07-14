@@ -41,7 +41,7 @@ def writeAlignedProjections(TiltSeries_, weighting=None,
 
     imdim = int(max(imdimX, imdimY))
 
-    sliceWidth = imdim
+    slice_width = imdim
 
     # pre-determine analytical weighting function and lowpass for speedup
     if (weighting != None) and (weighting < -0.001):
@@ -164,9 +164,9 @@ def writeAlignedProjections(TiltSeries_, weighting=None,
                 image = (ifft( complexRealMult( fft( image), w_func) ) / (image.size_x()*image.size_y()*image.size_z()) )
             elif (weighting != None) and (weighting > 0):
                 if weighting > 1.5:
-                    w_func = fourierFilterShift(rotateFilter(tilt_angles, tiltAngle, imdim, imdim, sliceWidth))
+                    w_func = fourierFilterShift(rotateFilter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
                 else:
-                    w_func = fourierFilterShift(exactFilter(tilt_angles, tiltAngle, imdim, imdim, sliceWidth))
+                    w_func = fourierFilterShift(exactFilter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
 
                 image = (ifft( complexRealMult( fft( image), w_func) )/
                       (image.size_x()*image.size_y()*image.size_z()) )

@@ -2037,7 +2037,7 @@ class ProjectionList(PyTomClass):
         offsetStack.setAll(0.0)
 
         # design filters
-        sliceWidth = imdim  # this should be relative to the particle size as that determines the crowther freq
+        slice_width = imdim  # this should be relative to the particle size as that determines the crowther freq
 
         if weighting == -1:
             weightSlice = fourierFilterShift(rampFilter(imdim, imdim))
@@ -2096,7 +2096,7 @@ class ProjectionList(PyTomClass):
             elif weighting == 1:  # exact filter
                 print('weighting == 1, exact filter, needs tilt angle infomration, currently not provided')
                 weightSlice = fourierFilterShift(exactFilter(self.tilt_angles, projection._tiltAngle,
-                                                             imdim, imdim, sliceWidth))
+                                                             imdim, imdim, slice_width))
                 image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
 
             thetaStack(int(round(projection.getTiltAngle() - angle_specimen)), 0, 0, ii)
@@ -2186,7 +2186,7 @@ class ProjectionList(PyTomClass):
         offsetStack.setAll(0.0)
 
         # design filters
-        sliceWidth = imdim  # this should be relative to the particle size as that determines the crowther freq
+        slice_width = imdim  # this should be relative to the particle size as that determines the crowther freq
 
         # pre-determine analytical weighting function and lowpass for speedup
         if weighting == -1:
@@ -2286,7 +2286,7 @@ class ProjectionList(PyTomClass):
             if weighting == -1:  # ramp filter
                 image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
             elif weighting == 1:  # exact filter
-                weightSlice = fourierFilterShift(exactFilter(tilt_angles, tiltAngle, imdim, imdim, sliceWidth))
+                weightSlice = fourierFilterShift(exactFilter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
                 image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
 
             thetaStack(int(round(projection.getTiltAngle()))-self.angle_specimen, 0, 0, ii)
@@ -2362,7 +2362,7 @@ class ProjectionList(PyTomClass):
         else:
             imdim = imdim
 
-        sliceWidth = imdim
+        slice_width = imdim
 
         projectionList = ProjectionList()
         for n, image in enumerate(imageList):
@@ -2404,7 +2404,7 @@ class ProjectionList(PyTomClass):
             else:
                 order =[2,1,0]
 
-            args = (projection._filename, projection._index, projection._tiltAngle, tilt_angles, sliceWidth,
+            args = (projection._filename, projection._index, projection._tiltAngle, tilt_angles, slice_width,
                     projection._alignmentTransX, projection._alignmentTransY, projection._alignmentRotation,
                     projection._alignmentMagnification, order,
                     scaleFactorParticle, weighting, imdim, imdimX, imdimY, binning, lowpassFilter, circleFilter,
@@ -2428,7 +2428,7 @@ class ProjectionList(PyTomClass):
 
         return [stack, phiStack, thetaStack, offsetStack]
 
-    def align_single_image(self, filename, index, tiltAngle, tilt_angles, sliceWidth, alignmentTransX, alignmentTransY,
+    def align_single_image(self, filename, index, tiltAngle, tilt_angles, slice_width, alignmentTransX, alignmentTransY,
                            alignmentRotation, alignmentMagnification, order,
                            scaleFactorParticle, weighting, imdim, imdimX, imdimY, binning, lowpassFilter, circleFilter,
                            fname):
@@ -2442,8 +2442,8 @@ class ProjectionList(PyTomClass):
            @type tiltAngle: float
            @param tilt_angles: all angles of tiltseries
            @type tilt_angles: numpy.ndarray or list
-           @param sliceWidth: width of a slice in fourier space
-           @type sliceWidth: int
+           @param slice_width: width of a slice in fourier space
+           @type slice_width: int
            @param alignmentTransX: translation of tilt image in x-direction
            @type alignmentTransX: float
            @param alignmentTransY: translation of tilt image in y-direction
@@ -2563,7 +2563,7 @@ class ProjectionList(PyTomClass):
             image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
 
         elif (weighting != None) and (weighting > 0):
-            weightSlice = fourierFilterShift(exactFilter(tilt_angles, tiltAngle, imdim, imdim, sliceWidth))
+            weightSlice = fourierFilterShift(exactFilter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
             image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
 
         image.write(fname)
@@ -2696,7 +2696,7 @@ class ProjectionList(PyTomClass):
             imdimY = int(float(imdimY) / float(binning) + .5)
 
         imdim = max(imdimY, imdimX)
-        sliceWidth = imdim
+        slice_width = imdim
 
         if (weighting != None) and (float(weighting) < -0.001):
             cfreq = abs(tilt_angles[1:] - tilt_angles[:-1])
@@ -2794,7 +2794,7 @@ class ProjectionList(PyTomClass):
                 # image = (ifft(complexRealMult(fft(image), w_func)) / (image.size_x() * image.size_y() * image.size_z()))
                 image = xp.fft.ifftn(xp.fft.fftn(image) * weightSlice * circleSlice).real
             elif (weighting != None) and (weighting > 0):
-                weightSlice = xp.fft.fftshift(exact_filter(tilt_angles, tiltAngle, imdim, imdim, sliceWidth))
+                weightSlice = xp.fft.fftshift(exact_filter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
                 image = xp.fft.ifftn(xp.fft.fftn(image) * weightSlice * circleSlice).real
 
             thetaStack[ii] = float(round(projection.getTiltAngle() - angle_specimen))

@@ -360,7 +360,7 @@ def rampFilter( size_x, size_y, crowther_freq=None, N=None):
 
     return filter_vol
 
-def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
+def exactFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
     """
     exactFilter: Generates the exact weighting function required for weighted backprojection - y-axis is tilt axis
     Reference : Optik, Exact filters for general geometry three dimensional reconstuction, vol.73,146,1986.
@@ -379,15 +379,15 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     sampling = np.sin(np.abs((np.array(tilt_angles) - tiltAngle) * np.pi / 180.))
     smallest_sampling = np.min(sampling[sampling > 0.001])
 
-    if sliceWidth / smallest_sampling > sX // 2:  # crowther crit can be to nyquist freq (i.e. sX // 2)
-        sliceWidth = smallest_sampling * (sX // 2)  # adjust sliceWidth if too large
+    if slice_width / smallest_sampling > sX // 2:  # crowther crit can be to nyquist freq (i.e. sX // 2)
+        slice_width = smallest_sampling * (sX // 2)  # adjust slice_width if too large
 
-    crowther_freq = min(sX // 2, int(np.ceil(sliceWidth / smallest_sampling)))
+    crowther_freq = min(sX // 2, int(np.ceil(slice_width / smallest_sampling)))
     arrCrowther = np.abs(np.arange(-crowther_freq, min(sX // 2, crowther_freq + 1)))
 
     # as in the paper: 1 - frequency / overlap_frequency
-    # where frequency = arrCrowther, and 1 / overlap_frequency = sampling/sliceWidth
-    wfuncCrowther = 1. / np.clip(1 - ((sampling / sliceWidth)[:, np.newaxis] * arrCrowther) ** 2, 0, 2).sum(axis=0)
+    # where frequency = arrCrowther, and 1 / overlap_frequency = sampling/slice_width
+    wfuncCrowther = 1. / np.clip(1 - ((sampling / slice_width)[:, np.newaxis] * arrCrowther) ** 2, 0, 2).sum(axis=0)
 
     # Create full with weightFunc
     wfunc = np.ones((sX, sY, 1), dtype=float)
@@ -404,7 +404,7 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
         
     return weightFunc
 
-def rotateFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
+def rotateFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
     """
     rotate filter function
     @param tilt_angles: ...
