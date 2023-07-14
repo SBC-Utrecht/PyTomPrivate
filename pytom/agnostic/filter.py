@@ -967,7 +967,7 @@ def ramp_filter(size_x, size_y, crowther_freq=None, n=None):
     return rampfilter
 
 
-def exact_filter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
+def exact_filter(tilt_angles, tiltAngle, size_x, size_y, sliceWidth, arr=[]):
     """
     exactFilter: Generates the exact weighting function required for weighted backprojection - y-axis is tilt axis
     Reference : Optik, Exact filters for general geometry three dimensional reconstuction, vol.73,146,1986.
@@ -984,12 +984,12 @@ def exact_filter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     smallest_sampling = xp.min(sampling[sampling > 0.001])
 
     if (
-        sliceWidth / smallest_sampling > sX // 2
+        sliceWidth / smallest_sampling > size_x // 2
     ):  # crowther crit can be to nyquist freq (i.e. sX // 2)
-        sliceWidth = smallest_sampling * (sX // 2)  # adjust sliceWidth if too large
+        sliceWidth = smallest_sampling * (size_x // 2)  # adjust sliceWidth if too large
 
-    crowther_freq = min(sX // 2, int(xp.ceil(sliceWidth / smallest_sampling)))
-    arrCrowther = xp.abs(xp.arange(-crowther_freq, min(sX // 2, crowther_freq + 1)))
+    crowther_freq = min(size_x // 2, int(xp.ceil(sliceWidth / smallest_sampling)))
+    arrCrowther = xp.abs(xp.arange(-crowther_freq, min(size_x // 2, crowther_freq + 1)))
 
     # as in the paper: 1 - frequency / overlap_frequency
     # where frequency = arrCrowther, and 1 / overlap_frequency = sampling/sliceWidth
@@ -998,13 +998,13 @@ def exact_filter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     ).sum(axis=0)
 
     # Create full width weightFunc
-    wfunc = xp.ones((sX, sY), dtype=xp.float32)
+    wfunc = xp.ones((size_x, size_y), dtype=xp.float32)
 
     # row_stack is not implemented in cupy
-    weightingFunc = xp.tile(wfuncCrowther, (sY, 1)).T
+    weightingFunc = xp.tile(wfuncCrowther, (size_y, 1)).T
 
     wfunc[
-        sX // 2 - crowther_freq : sX // 2 + min(sX // 2, crowther_freq + 1), :
+        size_x // 2 - crowther_freq : size_x // 2 + min(size_x // 2, crowther_freq + 1), :
     ] = weightingFunc
 
     return wfunc
