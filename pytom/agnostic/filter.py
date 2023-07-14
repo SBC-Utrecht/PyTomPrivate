@@ -3,16 +3,15 @@
 """
 basic filters operating on numpy arrays
 """
-from pytom.gpu.initialize import xp, device
-import scipy
+# typing imports
+from typing import Tuple, Union
+
 import numpy as np
 
-# typing imports
-from typing import Union, Tuple
-from pytom.gpu.initialize import xpt
+from pytom.gpu.initialize import device, xp, xpt
 
 
-def normalize(v):
+def normalize(v: xpt.NDArray[float]) -> xpt.NDArray[float]:
     """Normalize the data according to standard deviation
 
     @param v: input volume.
@@ -36,11 +35,10 @@ def bandpass_circle(image, low=0, high=-1, sigma=0, ff=1):
 
     @return: bandpass filtered volume.
     """
-    from pytom.agnostic.transform import fourier_filter
 
     assert low >= 0, "lower limit must be >= 0"
 
-    from pytom.agnostic.tools import create_sphere, create_circle
+    from pytom.agnostic.tools import create_circle
 
     if high == -1:
         high = np.min(image.shape) / 2
@@ -380,7 +378,7 @@ def wiener_like_filter(
 
     @author: Marten Chaillet
     """
-    from pytom.simulation.microscope import create_ctf, create_ctf_1d
+    from pytom.simulation.microscope import create_ctf
 
     # calculate highpass
     highpass = highpass_ramp(shape, highpassnyquist)
@@ -444,7 +442,7 @@ class GeneralWedge(Wedge):
             self._volume = wedge_vol
 
             # human understandable version with 0-freq in the center
-            from transform import fourier_reduced2full, fftshift
+            from transform import fftshift, fourier_reduced2full
 
             self._whole_volume = fftshift(fourier_reduced2full(self._volume, isodd))
         else:
@@ -457,7 +455,7 @@ class GeneralWedge(Wedge):
     def apply(self, data, rotation=None):
         if rotation is not None:  # rotate the wedge first
             assert len(rotation) == 3
-            from transform import rotate3d, fourier_full2reduced, ifftshift
+            from transform import fourier_full2reduced, ifftshift, rotate3d
 
             filter_vol = rotate3d(
                 self._whole_volume, rotation[0], rotation[1], rotation[2], order=1
@@ -530,11 +528,11 @@ class SingleTiltWedge(Wedge):
         if rotation is not None:  # rotate the wedge first
             assert len(rotation) == 3
             from pytom.agnostic.transform import (
-                rotate3d,
-                fourier_reduced2full,
-                fourier_full2reduced,
                 fftshift,
+                fourier_full2reduced,
+                fourier_reduced2full,
                 ifftshift,
+                rotate3d,
             )
 
             isodd = self._volume_shape[2] % 2
@@ -568,7 +566,7 @@ class SingleTiltWedge(Wedge):
         else:
             self._create_wedge_volume(size)
 
-        from pytom.agnostic.transform import rotate3d, fourier_reduced2full, fftshift
+        from pytom.agnostic.transform import fftshift, fourier_reduced2full, rotate3d
 
         isodd = self._volume_shape[2] % 2
         wedge_vol = fftshift(fourier_reduced2full(self._volume, isodd))
@@ -606,13 +604,13 @@ class SingleTiltWedge(Wedge):
         else:
             self._bw = bw
 
-        from pytom.agnostic.transform import fourier_reduced2full, fftshift
+        from pytom.agnostic.transform import fftshift, fourier_reduced2full
 
         isodd = self._volume_shape[2] % 2
         filter_vol = fftshift(fourier_reduced2full(self._volume, isodd))
 
         # start sampling
-        from math import pi, sin, cos
+        from math import cos, pi, sin
 
         res = []
 
@@ -1025,14 +1023,13 @@ def rotateWeighting(weighting, rotation, mask=None, binarize=False):
     @return: weight as reduced complex volume
     @rtype: L{pytom.lib.pytom_volume.vol_comp}
     """
-    from pytom.lib.pytom_volume import vol, limit, vol_comp
-    from pytom.lib.pytom_volume import rotate
+    from pytom.lib.pytom_volume import vol, vol_comp
     from pytom.voltools import transform
 
     assert (
         type(weighting) == vol or type(weighting) == vol_comp
     ), "rotateWeighting: input neither vol nor vol_comp"
-    from pytom.agnostic.transform import fourier_reduced2full, fourier_full2reduced
+    from pytom.agnostic.transform import fourier_full2reduced, fourier_reduced2full
 
     weighting = fourier_reduced2full(weighting, isodd=weighting.shape[0] % 2 == 1)
     weighting = xp.fft.fftshift(weighting)
@@ -1048,7 +1045,7 @@ def rotateWeighting(weighting, rotation, mask=None, binarize=False):
         interpolation="filt_bspline",
     )
 
-    if not mask is None:
+    if mask is not None:
         weightingRotated *= mask
 
     weightingRotated = xp.fft.fftshift(weightingRotated)
