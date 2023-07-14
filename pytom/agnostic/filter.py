@@ -196,7 +196,7 @@ def wiener_filtered_ctf(ctf, ssnr, highpass=None, phaseflipped=False):
     return wiener
 
 
-def SSNR(shape, spacing_angstrom, snrfalloff, deconvstrength, r=None):
+def spatial_snr(shape, spacing_angstrom, snrfalloff, deconvstrength, r=None):
     """
 
     @param shape: shape tuple
@@ -384,7 +384,7 @@ def wiener_like_filter(
     highpass = highpass_ramp(shape, highpassnyquist)
 
     # calculate spectral SNR
-    ssnr = SSNR(shape, spacing_angstrom, snrfalloff, deconvstrength)
+    ssnr = spatial_snr(shape, spacing_angstrom, snrfalloff, deconvstrength)
 
     # calculate ctf
     ctf = -create_ctf(
