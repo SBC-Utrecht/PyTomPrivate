@@ -62,7 +62,7 @@ def bandpass_circle(image, low=0, high=-1, sigma=0, ff=1):
 
 
 def bandpass(
-    volume, low=0, high=-1, sigma=0, returnMask=False, mask=None, fourierOnly=False
+    volume, low=0, high=-1, sigma=0, return_mask=False, mask=None, fourierOnly=False
 ) -> Union[Tuple[xpt.NDArray[float], xpt.NDArray[float]], xpt.NDArray[float]]:
     """Do a bandpass filter on a given volume.
 
@@ -112,7 +112,7 @@ def bandpass(
 
     else:
         res = fourier_filter(volume, mask, True)
-    if returnMask:
+    if return_mask:
         return res, mask
     else:
         return res
