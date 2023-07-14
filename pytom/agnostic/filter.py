@@ -164,14 +164,16 @@ def wiener_filtered_ctf(ctf, ssnr, highpass=None, phaseflipped=False):
     highpass = 1 - xp.cos(highpass * xp.pi)
 
     # calculate spectral SNR
-    ssnr = xp.exp(points_snr * snrfalloff * 100 / spacing_angstrom) * 10 ** (3 * deconvstrength)
+    ssnr = xp.exp(points_snr * snrfalloff * 100 / spacing_angstrom
+           ) * 10 ** (3 * deconvstrength)
 
 
     @param ctf: ctf function
     @type  ctf: L{np.ndarray}
     @param ssnr: array with spectral signal to noise ratio, same shape as ctf
     @type  ssnr: L{np.ndarray}
-    @param highpass: Pass optional high pass filter, should filter to ~ (0.02 nm)^-1, same shape a ctf
+    @param highpass: Pass optional high pass filter, should filter to ~ (0.02 nm)^-1,
+                     same shape a ctf
     @type  highpass: L{np.ndarray}
     @param phaseflipped: Flip phases of CTF
     @type  phaseflipped: L{bool}
@@ -431,9 +433,12 @@ class GeneralWedge(Wedge):
     def __init__(self, wedge_vol, half=True, isodd=False):
         """Initialize a general wedge with given Fourier volume.
 
-        @param half: if true, the given volume is in half and zero frequency at the corner.
-                     Otherwise, the given volume is full and zero frequency in the center.
-        @param isodd: when half is true, this field tells the z dimension of the full Fourier volume is odd-/even-sized.
+        @param half: if true, 
+                        the given volume is half and has zero frequency at the corner.
+                     Otherwise, 
+                        the given volume is full and has zero frequency in the center.
+        @param isodd: when half is true, this field tells the z dimension of the full
+                      Fourier volume is odd-/even-sized.
         """
         self.set_wedge_volume(wedge_vol, half)
 
@@ -579,14 +584,17 @@ class SingleTiltWedge(Wedge):
         return wedge_vol
 
     def to_spherical_func(self, bw, radius=None, threshold=0.5):
-        """Convert the wedge from k-space to a spherical function. \
-        currently some hard-coded parameters in - bw <=128, r=45 for max bw, default vol 100
+        """Convert the wedge from k-space to a spherical function. 
+        currently has some hard-coded parameters in -
+            bw <=128, r=45 for max bw, default vol 100
         
         @param bw: bandwidth of the spherical function (must be <=128).
-        @param radius: radius in k-space. For general Wedge, not used for SingleTiltWedge.
+        @param radius: radius in k-space. 
+                       For general Wedge, not used for SingleTiltWedge.
         @param threshold: threshold, above which the value there would be set to 1.
 
-        @return: a spherical function in numpy.array - default 100x100x100 if no self.vol defined
+        @return: a spherical function in numpy.array
+                 - default 100x100x100 if no self.vol defined
         """
         assert bw <= 128, "to_spherical_func: bw currently limited to <= 128"
 
@@ -595,7 +603,8 @@ class SingleTiltWedge(Wedge):
             self._sf = np.ones((4 * bw**2,))
             return self._sf
 
-        r = 45  # this radius and the volume size should be sufficient for sampling b <= 128
+        # this radius and the volume size should be sufficient for sampling b <= 128
+        r = 45  
         if self._volume is None or np.min(self._volume.shape) < 100:
             self._create_wedge_volume((100, 100, 100))
 
@@ -646,7 +655,8 @@ def create_wedge(
     smooth=0,
     rotation=None,
 ):
-    """This function returns a wedge object. For speed reasons it decides whether to generate a symmetric or assymetric wedge.
+    """This function returns a wedge object. 
+    For speed reasons it decides whether to generate a symmetric or assymetric wedge.
     @param wedge_angle1: angle of wedge1 in degrees
     @type wedge_angle1: int
     @param wedge_angle2: angle of wedge2 in degrees
@@ -659,11 +669,13 @@ def create_wedge(
     @type size_y: int
     @param size_z: the size of the box in z-direction.
     @type size_z: int
-    @param smooth: smoothing parameter that defines the amount of smoothing  at the edge of the wedge.
+    @param smooth: smoothing parameter that defines the amount of smoothing at the edge 
+                   of the wedge.
     @type smooth: float
     @return: 3D array determining the wedge object.
     @rtype: ndarray of np.float64"""
-    # TODO update so that uneven values for size_z still match with pytom.lib.pytom.lib.pytom_volume
+    # TODO update so that uneven values for size_z still match 
+    # with pytom.lib.pytom.lib.pytom_volume
 
     import numpy as np
 
@@ -710,7 +722,8 @@ def create_symmetric_wedge(
     @type size_y: int
     @param size_z: the size of the box in z-direction.
     @type size_z: int
-    @param smooth: smoothing parameter that defines the amount of smoothing  at the edge of the wedge.
+    @param smooth: smoothing parameter that defines the amount of smoothing at the edge
+                   of the wedge.
     @type smooth: float
     @return: 3D array determining the wedge object.
     @rtype: ndarray of np.float64"""
@@ -735,12 +748,9 @@ def create_symmetric_wedge(
         phi = -float(phi) * xp.pi / 180.0
         the = -float(the) * xp.pi / 180.0
         psi = -float(psi) * xp.pi / 180.0
-        sin_alpha = xp.sin(phi)
-        cos_alpha = xp.cos(phi)
-        sin_beta = xp.sin(the)
-        cos_beta = xp.cos(the)
-        sin_gamma = xp.sin(psi)
-        cos_gamma = xp.cos(psi)
+        sin_alpha, cos_alpha = xp.sin(phi), xp.cos(phi)
+        sin_beta, cos_beta = xp.sin(the), xp.cos(the)
+        sin_gamma, cos_gamma = xp.sin(psi), xp.cos(psi)
 
         # Calculate inverse rotation matrix
         Inv_R = xp.zeros((3, 3), dtype="float32")
