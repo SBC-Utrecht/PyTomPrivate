@@ -323,7 +323,7 @@ def circleFilter(size_x,size_y, cutoff_radius):
                 
     return filter_vol
 
-def rampFilter( size_x, size_y, crowtherFreq=None, N=None):
+def rampFilter( size_x, size_y, crowther_freq=None, N=None):
     """
     rampFilter: Generates the weighting function required for weighted backprojection - y-axis is tilt axis
 
@@ -343,10 +343,10 @@ def rampFilter( size_x, size_y, crowtherFreq=None, N=None):
 
     N = 0 if N is None else 1 / N
 
-    if crowtherFreq is None:
+    if crowther_freq is None:
         Ny = size_x//2
     else:
-        Ny = crowtherFreq
+        Ny = crowther_freq
 
     filter_vol = vol(size_x, size_y, 1)
     filter_vol.setAll(0.0)
@@ -382,8 +382,8 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     if sliceWidth / smallest_sampling > sX // 2:  # crowther crit can be to nyquist freq (i.e. sX // 2)
         sliceWidth = smallest_sampling * (sX // 2)  # adjust sliceWidth if too large
 
-    crowtherFreq = min(sX // 2, int(np.ceil(sliceWidth / smallest_sampling)))
-    arrCrowther = np.abs(np.arange(-crowtherFreq, min(sX // 2, crowtherFreq + 1)))
+    crowther_freq = min(sX // 2, int(np.ceil(sliceWidth / smallest_sampling)))
+    arrCrowther = np.abs(np.arange(-crowther_freq, min(sX // 2, crowther_freq + 1)))
 
     # as in the paper: 1 - frequency / overlap_frequency
     # where frequency = arrCrowther, and 1 / overlap_frequency = sampling/sliceWidth
@@ -391,7 +391,7 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
 
     # Create full with weightFunc
     wfunc = np.ones((sX, sY, 1), dtype=float)
-    wfunc[sX//2-crowtherFreq:sX//2+min(sX//2,crowtherFreq+1),:, 0] = np.tile(wfuncCrowther, (sY, 1)).T
+    wfunc[sX//2-crowther_freq:sX//2+min(sX//2,crowther_freq+1),:, 0] = np.tile(wfuncCrowther, (sY, 1)).T
 
     weightFunc = vol(sX, sY, 1)
     weightFunc.setAll(0.0)

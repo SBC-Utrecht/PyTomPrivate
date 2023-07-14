@@ -123,15 +123,15 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     # Closest angle to tiltAngle (but not tiltAngle) sets the maximal frequency of overlap (Crowther's frequency).
     # Weights only need to be calculated up to this frequency.
     sampling = min(abs(diffAngles)[abs(diffAngles) > 0.001])
-    crowtherFreq = min(sX // 2, int(ceil(1 / sin(sampling))))
-    arrCrowther = matrix(abs(arange(-crowtherFreq, min(sX // 2, crowtherFreq + 1))))
+    crowther_freq = min(sX // 2, int(ceil(1 / sin(sampling))))
+    arrCrowther = matrix(abs(arange(-crowther_freq, min(sX // 2, crowther_freq + 1))))
 
     # Calculate weights
     wfuncCrowther = 1. / (clip(1 - array(matrix(abs(sin(diffAngles))).T * arrCrowther) ** 2, 0, 2)).sum(axis=0)
 
     # Create full with weightFunc
     wfunc = ones((sX, sY, 1), dtype=float32)
-    wfunc[sX // 2 - crowtherFreq:sX // 2 + min(sX // 2, crowtherFreq + 1), :, 0] = column_stack(
+    wfunc[sX // 2 - crowther_freq:sX // 2 + min(sX // 2, crowther_freq + 1), :, 0] = column_stack(
         ([(wfuncCrowther), ] * (sY))).astype(float32)
     return wfunc
 

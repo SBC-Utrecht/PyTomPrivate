@@ -937,22 +937,22 @@ def ellipse_filter(size_x, size_y, cutoff_radius_x, cutoff_radius_y):
     return filter
 
 
-def ramp_filter(size_x, size_y, crowtherFreq=None, N=None):
+def ramp_filter(size_x, size_y, crowther_freq=None, n=None):
     """
     rampFilter: Generates the weighting function required for weighted backprojection - y-axis is tilt axis
 
     @param size_x: size of weighted image in X
     @param size_y: size of weighted image in Y
-    @param crowtherFreq: size of weighted image in Y
+    @param crowther_freq: size of weighted image in Y
     @return: filter volume
 
     """
-    if crowtherFreq is None:
-        crowtherFreq = size_x // 2
-    N = 0 if N is None else 1 / N
+    if crowther_freq is None:
+        crowther_freq = size_x // 2
+    n = 0 if n is None else 1 / n
 
-    rampLine = xp.abs(xp.arange(-size_x // 2, size_x // 2)) / crowtherFreq + N
-    # should be: rampLine = xp.abs(xp.arange(-size_x // 2, size_x // 2)) / crowtherFreq + N
+    rampLine = xp.abs(xp.arange(-size_x // 2, size_x // 2)) / crowther_freq + n
+    # should be: rampLine = xp.abs(xp.arange(-size_x // 2, size_x // 2)) / crowther_freq + n
     rampLine[rampLine > 1] = 1
 
     rampfilter = xp.column_stack(
@@ -988,8 +988,8 @@ def exact_filter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     ):  # crowther crit can be to nyquist freq (i.e. sX // 2)
         sliceWidth = smallest_sampling * (sX // 2)  # adjust sliceWidth if too large
 
-    crowtherFreq = min(sX // 2, int(xp.ceil(sliceWidth / smallest_sampling)))
-    arrCrowther = xp.abs(xp.arange(-crowtherFreq, min(sX // 2, crowtherFreq + 1)))
+    crowther_freq = min(sX // 2, int(xp.ceil(sliceWidth / smallest_sampling)))
+    arrCrowther = xp.abs(xp.arange(-crowther_freq, min(sX // 2, crowther_freq + 1)))
 
     # as in the paper: 1 - frequency / overlap_frequency
     # where frequency = arrCrowther, and 1 / overlap_frequency = sampling/sliceWidth
@@ -1004,7 +1004,7 @@ def exact_filter(tilt_angles, tiltAngle, sX, sY, sliceWidth, arr=[]):
     weightingFunc = xp.tile(wfuncCrowther, (sY, 1)).T
 
     wfunc[
-        sX // 2 - crowtherFreq : sX // 2 + min(sX // 2, crowtherFreq + 1), :
+        sX // 2 - crowther_freq : sX // 2 + min(sX // 2, crowther_freq + 1), :
     ] = weightingFunc
 
     return wfunc
