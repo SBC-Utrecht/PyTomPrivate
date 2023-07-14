@@ -39,12 +39,12 @@ def adjustPickPositionInParticleList(particleList,offsetZ,binning,centerX,center
     return particleList
     
         
-def positionInProjection(location3D, tiltAngle, tiltAxis='Y'):
+def positionInProjection(location3D, tilt_angle, tiltAxis='Y'):
     """
     positionInProjection:
     @param location3D: [x,y,z] vector of particle positions in tomogram
-    @param tiltAngle: tilt angle
-    @type tiltAngle: float
+    @param tilt_angle: tilt angle
+    @type tilt_angle: float
     @param tiltAxis: Set tilt axis of projections. 'Y' is default.
     @type tiltAxis: str
     @return: 2D Position vector [x,y]
@@ -52,13 +52,13 @@ def positionInProjection(location3D, tiltAngle, tiltAxis='Y'):
     """
     if tiltAxis == 'X':
         from pytom.tools.maths import XRotationMatrix
-        rotationMatrix = XRotationMatrix(tiltAngle) 
+        rotationMatrix = XRotationMatrix(tilt_angle) 
     elif tiltAxis == 'Y':
         from pytom.tools.maths import YRotationMatrix
-        rotationMatrix = YRotationMatrix(tiltAngle)
+        rotationMatrix = YRotationMatrix(tilt_angle)
     elif tiltAxis == 'Z':
         from pytom.tools.maths import ZRotationMatrix
-        rotationMatrix = ZRotationMatrix(tiltAngle)
+        rotationMatrix = ZRotationMatrix(tilt_angle)
 
     position2D = rotationMatrix * location3D
 
@@ -228,7 +228,7 @@ def alignWeightReconstruct(tiltSeriesName, markerFileName, lastProj, tltfile=Non
             # for n, i in enumerate(tiltAlignment._projIndices.astype(int)):
             #
             #
-            #     print("{:3.0f} {:6.0f} {:6.0f} {:6.0f} {:6.0f}".format(tiltAlignment._tiltAngles[n],
+            #     print("{:3.0f} {:6.0f} {:6.0f} {:6.0f} {:6.0f}".format(tiltAlignment._tilt_angles[n],
             #           tiltAlignment._Markers[tiltSeries._TiltAlignmentParas.irefmark].xProj[n],
             #           tiltAlignment._Markers[tiltSeries._TiltAlignmentParas.irefmark].yProj[n],
             #           tiltSeries._ProjectionList[int(n)]._alignmentTransX,
@@ -244,7 +244,7 @@ def alignWeightReconstruct(tiltSeriesName, markerFileName, lastProj, tltfile=Non
 
             # Retrieve the two relevant angles
             inPlaneAng = tiltAlignment._alignmentRotations[ireftilt]
-            tiltAng = tiltAlignment._tiltAngles[ireftilt]
+            tiltAng = tiltAlignment._tilt_angles[ireftilt]
 
             # Retrieve the original pick position
             xx = tiltAlignment._Markers[tiltSeries._TiltAlignmentParas.irefmark].xProj[ireftilt]
@@ -309,7 +309,7 @@ def alignWeightReconstruct(tiltSeriesName, markerFileName, lastProj, tltfile=Non
 
 
 # TODO why is this function here?????
-def rotate_vector3D(point3D, centerPoint3D, shift3D, inPlaneRotAngle, tiltAngle):
+def rotate_vector3D(point3D, centerPoint3D, shift3D, inPlaneRotAngle, tilt_angle):
     from pytom.tools.maths import rotate_vector2d
     from numpy import sin, cos, pi
 
@@ -326,9 +326,9 @@ def rotate_vector3D(point3D, centerPoint3D, shift3D, inPlaneRotAngle, tiltAngle)
     xmod, ymod = rotate_vector2d(newPoint[:2], cpsi, spsi)
     zmod = newPoint[2]
 
-    # In-plane rotation of x and z coordinate over tiltAngle
-    sTilt = sin(tiltAngle / 180. * pi)
-    cTilt = cos(tiltAngle / 180. * pi)
+    # In-plane rotation of x and z coordinate over tilt_angle
+    sTilt = sin(tilt_angle / 180. * pi)
+    cTilt = cos(tilt_angle / 180. * pi)
     xmod,zmod = rotate_vector2d([xmod,zmod], cTilt, sTilt)
 
     rotatedNewPoint = [xmod, ymod, zmod]
@@ -395,7 +395,7 @@ def alignImagesUsingAlignmentResultFile(alignmentResultsFile, weighting=None, lo
         aty = alignmentResults['AlignmentTransY'][n]
         rot = alignmentResults['InPlaneRotation'][n]
         mag = 1 / (alignmentResults['Magnification'][n])
-        projection = Projection(imageList[n], tiltAngle=tilt_angles[n], alignmentTransX=atx, alignmentTransY=aty,
+        projection = Projection(imageList[n], tilt_angle=tilt_angles[n], alignmentTransX=atx, alignmentTransY=aty,
                                 alignmentRotation=rot, alignmentMagnification=mag)
         projectionList.append(projection)
 
@@ -411,7 +411,7 @@ def alignImagesUsingAlignmentResultFile(alignmentResultsFile, weighting=None, lo
         if binning > 1:
             image = resize(image, 1 / binning)
 
-        tiltAngle = projection._tiltAngle
+        tilt_angle = projection._tilt_angle
 
         # 1 -- normalize to contrast - subtract mean and norm to mean
         immean = image.mean()
@@ -461,7 +461,7 @@ def alignImagesUsingAlignmentResultFile(alignmentResultsFile, weighting=None, lo
             # image = (ifft(complexRealMult(fft(image), w_func)) / (image.size_x() * image.size_y() * image.size_z()))
             image = xp.fft.ifftn(xp.fft.fftn(image) * weightSlice * circleSlice).real
         elif (weighting != None) and (weighting > 0):
-            weightSlice = xp.fft.fftshift(exact_filter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
+            weightSlice = xp.fft.fftshift(exact_filter(tilt_angles, tilt_angle, imdim, imdim, slice_width))
             image = xp.fft.ifftn(xp.fft.fftn(image) * weightSlice * circleSlice).real
 
         thetaStack[ii] = float(round(projection.getTiltAngle() - angle_specimen))

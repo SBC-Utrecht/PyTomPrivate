@@ -967,7 +967,7 @@ def ramp_filter(size_x, size_y, crowther_freq=None, n=None):
     return rampfilter
 
 
-def exact_filter(tilt_angles, tiltAngle, size_x, size_y, slice_width, arr=[]):
+def exact_filter(tilt_angles, tilt_angle, size_x, size_y, slice_width, arr=[]):
     """
     exactFilter: Generates the exact weighting function required for weighted backprojection - y-axis is tilt axis
     Reference : Optik, Exact filters for general geometry three dimensional reconstuction, vol.73,146,1986.
@@ -980,7 +980,7 @@ def exact_filter(tilt_angles, tiltAngle, size_x, size_y, slice_width, arr=[]):
 
     """
     # Calculate the relative angles in radians.
-    sampling = xp.sin(xp.abs((xp.array(tilt_angles) - tiltAngle) * xp.pi / 180.0))
+    sampling = xp.sin(xp.abs((xp.array(tilt_angles) - tilt_angle) * xp.pi / 180.0))
     smallest_sampling = xp.min(sampling[sampling > 0.001])
 
     if (

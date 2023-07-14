@@ -93,14 +93,14 @@ def backProjectGPU(projections, reconstruction, vol_phi, proj_angles, recPosVol=
                                                             center_recon, dims, tr, reconstruction.size))
 
 
-def exactFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
+def exactFilter(tilt_angles, tilt_angle, sX, sY, slice_width, arr=[]):
     """
     exactFilter: Generates the exact weighting function required for weighted backprojection - y-axis is tilt axis
     Reference : Optik, Exact filters for general geometry three dimensional reconstuction, vol.73,146,1986.
     @param tilt_angles: List of tilt angles
     @type tilt_angles: list  of floats
-    @param tiltAngle: Tilt angle of projection
-    @type tiltAngle: float
+    @param tilt_angle: Tilt angle of projection
+    @type tilt_angle: float
     @param sX: size of the x-axis
     @type sX: int
     @param sY: size of the y-axis
@@ -118,9 +118,9 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
     # sY = sY // 2 + 1
 
     # Calculate the relative angles in radians.
-    diffAngles = (array(tilt_angles) - tiltAngle) * pi / 180.
+    diffAngles = (array(tilt_angles) - tilt_angle) * pi / 180.
 
-    # Closest angle to tiltAngle (but not tiltAngle) sets the maximal frequency of overlap (Crowther's frequency).
+    # Closest angle to tilt_angle (but not tilt_angle) sets the maximal frequency of overlap (Crowther's frequency).
     # Weights only need to be calculated up to this frequency.
     sampling = min(abs(diffAngles)[abs(diffAngles) > 0.001])
     crowther_freq = min(sX // 2, int(ceil(1 / sin(sampling))))

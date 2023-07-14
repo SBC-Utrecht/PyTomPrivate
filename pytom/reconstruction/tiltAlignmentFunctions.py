@@ -765,19 +765,19 @@ def alignmentFixMagRot( Markers_, cTilt, sTilt, ireftilt, irefmark=1, r=None, im
     return(psiindeg, shiftX, shiftY, x, y, z, distLine, diffX, diffY, shiftVarX, shiftVarY)
 
 
-def simulate_markers(markCoords, tiltAngles, tiltAxis=-76.71, ireftilt=None,
+def simulate_markers(markCoords, tilt_angles, tiltAxis=-76.71, ireftilt=None,
         ampTrans=100., ampRot=.5, ampMag=.01, dBeam=None, dMagnFocus=None):
     """
     simulate marker coordinates for testing alignment routines
 
     (Markers, TiltSeries, TiltAlignmentParas) = simulate_markers(markCoords, \
-    tiltAngles, tiltAxis=-76.71, ireftilt=None,\
+    tilt_angles, tiltAxis=-76.71, ireftilt=None,\
     ampTrans=100., ampRot=.5, ampMag=.01, dBeam=None)
 
     @param markCoords: marker coordinates
     @type markCoords: array
-    @param tiltAngles: tilt angles
-    @type tiltAngles: array
+    @param tilt_angles: tilt angles
+    @type tilt_angles: array
     @param tiltAxis: approximate tilt axis
     @type tiltAxis: float
     @param ampTrans: amplitude of translation distortions (gaussian)
@@ -805,7 +805,7 @@ def simulate_markers(markCoords, tiltAngles, tiltAxis=-76.71, ireftilt=None,
         cdbeam = cos(dBeam*pi/180.)
         sdbeam = sin(dBeam*pi/180.)
 
-    ntilt = len(tiltAngles)
+    ntilt = len(tilt_angles)
     rot = ntilt*[tiltAxis]
     srot = ntilt*[0.]
     crot = ntilt*[1.]
@@ -816,7 +816,7 @@ def simulate_markers(markCoords, tiltAngles, tiltAxis=-76.71, ireftilt=None,
     sTilt = ntilt*[0.]
 
     if not ireftilt:
-        ireftilt = tiltAngles.argmin()+1
+        ireftilt = tilt_angles.argmin()+1
     #generate Markers
     nmarks = len(markCoords)
     Markers = []
@@ -843,7 +843,7 @@ def simulate_markers(markCoords, tiltAngles, tiltAxis=-76.71, ireftilt=None,
     TiltSeries.createEmptyProjections()
 
     #compute 'alignment'
-    for (itilt, tiltAngle) in enumerate(tiltAngles):
+    for (itilt, tilt_angle) in enumerate(tilt_angles):
         rot[itilt] = tiltAxis + gauss(0.,ampRot)
     crot[itilt] = cos(rot[itilt]/180.*pi + pi/2.)
     srot[itilt] = sin(rot[itilt]/180.*pi + pi/2.)
@@ -856,9 +856,9 @@ def simulate_markers(markCoords, tiltAngles, tiltAxis=-76.71, ireftilt=None,
         transX[itilt] = gauss(0., ampTrans)
         transY[itilt] = gauss(0., ampTrans)
 
-    cTilt[itilt] = cos(tiltAngle/180.*pi)
-    sTilt[itilt] = sin(tiltAngle/180.*pi)
-    TiltSeries._ProjectionList[itilt].setTiltAngle( tiltAngle)
+    cTilt[itilt] = cos(tilt_angle/180.*pi)
+    sTilt[itilt] = sin(tilt_angle/180.*pi)
+    TiltSeries._ProjectionList[itilt].setTiltAngle( tilt_angle)
     TiltSeries._ProjectionList[itilt].setAlignmentTransX(transX[itilt])
     TiltSeries._ProjectionList[itilt].setAlignmentTransY(transY[itilt])
     TiltSeries._ProjectionList[itilt].setAlignmentRotation(rot[itilt])
@@ -875,7 +875,7 @@ def simulate_markers(markCoords, tiltAngles, tiltAxis=-76.71, ireftilt=None,
         [xmod, ymod] = rotate_vector2d(markCoord, cpsi, spsi)
 
         # simulate corresponding marker positions in projs
-        for (itilt, tiltAngle) in enumerate(tiltAngles):
+        for (itilt, tilt_angle) in enumerate(tilt_angles):
             # model projection
             ## beam inclination
             if dBeam:
@@ -1007,7 +1007,7 @@ def readIMODmarkerfile(markerfile, binning=1):
             marker.set_yProj( iproj=int(float(tmp[3])), yProj=float(tmp[2]) * scalefac)
     return markers
 
-def readIMODtiltAngles(tltfile):
+def readIMODtilt_angles(tltfile):
     """
     read tilt angles from IMOD file
 

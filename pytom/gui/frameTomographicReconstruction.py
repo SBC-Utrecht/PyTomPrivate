@@ -1270,12 +1270,12 @@ class TomographReconstruct(GuiTabWidget):
             first,last = 0, len(files)-1
             self.widgets[mode + 'FirstIndex'].setText( str(0))
             self.widgets[mode + 'LastIndex'].setText( str( len(files)-1) )
-            for n, tiltAngle in enumerate( metadata['TiltAngle']):
+            for n, tilt_angle in enumerate( metadata['TiltAngle']):
                 mrcfile = 'sorted_{:02d}.mrc'.format(n)
-                if tiltAngle - firstAngle < -0.1 and mrcfile in files:
+                if tilt_angle - firstAngle < -0.1 and mrcfile in files:
                     self.widgets[mode + 'FirstIndex'].setText(str(n+1+INFR))
 
-                if tiltAngle - lastAngle < 0.1 and mrcfile in files:
+                if tilt_angle - lastAngle < 0.1 and mrcfile in files:
                     self.widgets[mode + 'LastIndex'].setText(str(n+INFR))
 
             fi, li = int(self.widgets[mode+'FirstIndex'].text()), int(self.widgets[mode+'LastIndex'].text())

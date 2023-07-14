@@ -85,7 +85,7 @@ class TiltSeries(PyTomClass):
                     fname = tiltSeriesName + "_" + str( ii ) + "." + tiltSeriesFormat
                     if alignedTiltSeriesName:
                         proj = Projection(filename=fname,
-                                          index=ii, tiltAngle=self.mf[0,cnt,0],
+                                          index=ii, tilt_angle=self.mf[0,cnt,0],
                                           offsetX=0., offsetY=0.,
                                           alignmentTransX=0., alignmentTransY=0.,
                                           alignmentRotation=0., alignmentMagnification=1.)
@@ -95,7 +95,7 @@ class TiltSeries(PyTomClass):
                     else:
         
                         proj = Projection(filename=fname,
-                                          index=ii, tiltAngle=self.mf[0,cnt,0],
+                                          index=ii, tilt_angle=self.mf[0,cnt,0],
                                           offsetX=0., offsetY=0.,
                                           alignmentTransX=0., alignmentTransY=0.,
                                           alignmentRotation=0., alignmentMagnification=1.)
@@ -119,7 +119,7 @@ class TiltSeries(PyTomClass):
 
                     if alignedTiltSeriesName:
                         proj = Projection(filename=fname,
-                                          index=ii, tiltAngle=self.mf[0,ii,0],
+                                          index=ii, tilt_angle=self.mf[0,ii,0],
                                           offsetX=0., offsetY=0.,
                                           alignmentTransX=0., alignmentTransY=0.,
                                           alignmentRotation=0., alignmentMagnification=1.)
@@ -129,7 +129,7 @@ class TiltSeries(PyTomClass):
                     else:
                         
                         proj = Projection(filename=fname,
-                                          index=ii, tiltAngle=self.mf[0,ii,0],
+                                          index=ii, tilt_angle=self.mf[0,ii,0],
                                           offsetX=0., offsetY=0.,
                                           alignmentTransX=0., alignmentTransY=0.,
                                           alignmentRotation=0., alignmentMagnification=1.)
@@ -171,14 +171,14 @@ class TiltSeries(PyTomClass):
         """
         tline = ""
         for (ii, projection) in enumerate(self._ProjectionList):
-            tiltAngle = projection._tiltAngle
+            tilt_angle = projection._tilt_angle
             transX = -projection._alignmentTransX
             transY = -projection._alignmentTransY
             rot = -(projection._alignmentRotation + 90.)
             mag = projection._alignmentMagnification
             tline = tline + ("%3d: " % ii)
             tline = tline + ("%15s; " % projection._filename)
-            tline = tline + ("tiltAngle=%9.3f; " % tiltAngle)
+            tline = tline + ("tiltAngle=%9.3f; " % tilt_angle)
             tline = tline + ("transX=%9.3f; " % transX)
             tline = tline + ("transY=%9.3f; " % transY)
             tline = tline + ("rot=%9.3f; " % rot)
@@ -209,7 +209,7 @@ class TiltSeries(PyTomClass):
         projs = []
         for ii in self._projIndices:
             proj = Projection(filename=None,
-                              index=ii, tiltAngle=None,
+                              index=ii, tilt_angle=None,
                               offsetX=0., offsetY=0.,
                               alignmentTransX=0., alignmentTransY=0.,
                               alignmentRotation=0., alignmentMagnification=1.)
@@ -300,12 +300,12 @@ class TiltSeries(PyTomClass):
 
         # check that tilt angles in marker file and projections are the same
         for (iproj, proj) in enumerate(self._ProjectionList._list):
-            tiltAngle = markerFile[0, iproj, 0]
-            proj._tiltAngle = tiltAngle
-            if abs(tiltAngle - proj._tiltAngle) > 0.01:
+            tilt_angle = markerFile[0, iproj, 0]
+            proj._tilt_angle = tilt_angle
+            if abs(tilt_angle - proj._tilt_angle) > 0.01:
                 print(("Warning: tilt angles in Projection " + str(iproj + 1)
                       + " differ in markerFile"))
-                print(("MarkerFile: %4.1f" % tiltAngle) + (" vs. image Header: %4.1f" % proj._tiltAngle))
+                print(("MarkerFile: %4.1f" % tilt_angle) + (" vs. image Header: %4.1f" % proj._tilt_angle))
 
         # delete old markerFiles
         if (len(self._Markers) > 0):
@@ -365,21 +365,21 @@ class TiltSeries(PyTomClass):
 
         @param tltfile: file containing tilt angles - typically end on .tlt or .rawtlt
         @type tltfile: str
-        @return: tiltAngles
+        @return: tilt_angles
         @rtype: list
 
         @author: FF
         """
-        from pytom.reconstruction.tiltAlignmentFunctions import readIMODtiltAngles
+        from pytom.reconstruction.tiltAlignmentFunctions import readIMODtilt_angles
 
-        tiltAngles = readIMODtiltAngles(tltfile)
-        if len(tiltAngles) != len(self._ProjectionList):
-            print("Number of tilt angles in tiltfile:   " + len(tiltAngles))
+        tilt_angles = readIMODtilt_angles(tltfile)
+        if len(tilt_angles) != len(self._ProjectionList):
+            print("Number of tilt angles in tiltfile:   " + len(tilt_angles))
             print("Number of tilt angles in tiltseries: " + len(self._ProjectionList))
             raise IndexError('Number of tilt angles in tltfile does not match TiltSeries')
         for (iproj, proj) in enumerate(self._ProjectionList):
-            proj._tiltAngle = tiltAngles[iproj]
-        return tiltAngles
+            proj._tilt_angle = tilt_angles[iproj]
+        return tilt_angles
 
     def writeMarkerFile(self, markerFileName):
         """
@@ -397,7 +397,7 @@ class TiltSeries(PyTomClass):
                 markerFileVol.setV(Marker.get_xProj(itilt), 1, itilt, imark)
                 markerFileVol.setV(Marker.get_yProj(itilt), 2, itilt, imark)
                 if imark == 0:
-                    markerFileVol.setV(int(round(proj._tiltAngle)), 0, int(itilt), int(imark))
+                    markerFileVol.setV(int(round(proj._tilt_angle)), 0, int(itilt), int(imark))
         markerFileVol.write(markerFileName)
 
     def write_aligned_projs(self, weighting=None, lowpassFilter=None, binning=1, verbose=False, write_images=True):
@@ -474,10 +474,10 @@ class TiltSeries(PyTomClass):
                 filtered = filterFunction(volume=image, filterObject=lpf, fourier_only=False)
                 image = filtered[0]
 
-            tiltAngle = projection._tiltAngle
+            tilt_angle = projection._tilt_angle
             if verbose:
-                print("tiltAngle=%2.2f" % tiltAngle)
-            header.set_tiltangle(tiltAngle)
+                print("tiltAngle=%2.2f" % tilt_angle)
+            header.set_tiltangle(tilt_angle)
             newFilename = (filename + "_" + str(projection.getIndex()) + '.em')
             write_em(filename=newFilename, data=image, header=header)
 
@@ -505,10 +505,10 @@ class TiltSeries(PyTomClass):
             # ar = loadstar(alignResultFile, dtype=DATATYPE_ALIGNMENT_RESULTS)
             # for (kk, filename) in enumerate(ar['FileName']):
             #     filename=str(filename)
-            #     tiltAngle = ar['TiltAngle'][kk]
+            #     tilt_angle = ar['TiltAngle'][kk]
             #     proj = Projection(filename=filename,
             #                       alignedFilename=filename,
-            #                       index=kk, tiltAngle=tiltAngle,
+            #                       index=kk, tilt_angle=tilt_angle,
             #                       offsetX=0., offsetY=0.,
             #                       alignmentTransX=0., alignmentTransY=0.,
             #                       alignmentRotation=0., alignmentMagnification=1.)
@@ -518,9 +518,9 @@ class TiltSeries(PyTomClass):
             projs = []
             for (kk, ii) in enumerate(self._projIndices):
                 print(self._alignedTiltSeriesName + "_" + str(ii) + "." + self._tiltSeriesFormat)
-                tiltAngle = self._ProjectionList[kk]._tiltAngle
+                tilt_angle = self._ProjectionList[kk]._tilt_angle
                 proj = Projection(filename=self._alignedTiltSeriesName + "_" + str(ii) + "." + self._tiltSeriesFormat,
-                                  index=ii, tiltAngle=tiltAngle,
+                                  index=ii, tilt_angle=tilt_angle,
                                   offsetX=0., offsetY=0.,
                                   alignmentTransX=0., alignmentTransY=0.,
                                   alignmentRotation=0., alignmentMagnification=1.)
@@ -577,8 +577,8 @@ class TiltAlignment:
         self._alignmentRotations = numpy.array(self._ntilt * [0.])
         self._alignmentMagnifications = numpy.array(self._ntilt * [1.])
         self._alignmentBeamTilt = 0.
-        # get tilt angles from projections, stored in self._tiltAngles, self._cTilt, self._sTilt
-        self._tiltAngles = numpy.array(self._ntilt * [0.])
+        # get tilt angles from projections, stored in self._tilt_angles, self._cTilt, self._sTilt
+        self._tilt_angles = numpy.array(self._ntilt * [0.])
         self._cTilt = numpy.array(self._ntilt * [0.])
         self._sTilt = numpy.array(self._ntilt * [0.])
         self.getTiltAnglesFromTiltSeries(TiltSeries_)
@@ -598,14 +598,14 @@ class TiltAlignment:
         """
         tline = ""
         for ii in range(0, self._ntilt):
-            tiltAngle = self._tiltAngles[ii]
+            tilt_angle = self._tilt_angles[ii]
             transX = -self._alignmentTransX[ii]
             transY = -self._alignmentTransY[ii]
             rot = -(self._alignmentRotations[ii] + 90.)
             mag = self._alignmentMagnifications[ii]
 
             tline = tline + ("%3d: " % ii)
-            tline = tline + ("tiltAngle=%8.3f; " % tiltAngle)
+            tline = tline + ("tiltAngle=%8.3f; " % tilt_angle)
             tline = tline + ("transX=%9.3f; " % transX)
             tline = tline + ("transY=%9.3f; " % transY)
             tline = tline + ("rot=%9.3f; " % rot)
@@ -769,15 +769,15 @@ class TiltAlignment:
             print("Houston: We have a problem!")
         # initialize alignment in seperate array - easier for optimization
         # sin and cos
-        self._tiltAngles = numpy.array(self._ntilt * [0.])
+        self._tilt_angles = numpy.array(self._ntilt * [0.])
         self._cTilt = numpy.array(self._ntilt * [0.])
         self._sTilt = numpy.array(self._ntilt * [0.])
         for (kk, proj) in enumerate(TiltSeries_._ProjectionList._list):
             the = proj.getTiltAngle()
-            self._tiltAngles[kk] = the
+            self._tilt_angles[kk] = the
             self._sTilt[kk] = sin(the / 180. * pi)
             self._cTilt[kk] = cos(the / 180. * pi)
-        return self._tiltAngles
+        return self._tilt_angles
 
     def getTiltAnglesFromIMODfile(self, tltfile):
         """
@@ -785,24 +785,24 @@ class TiltAlignment:
 
         @param tltfile: file containing tilt angles - typically end on .tlt or .rawtlt
         @type tltfile: str
-        @return: tiltAngles
+        @return: tilt_angles
         @rtype: list
 
         @author: FF
         """
-        from pytom.reconstruction.tiltAlignmentFunctions import readIMODtiltAngles
+        from pytom.reconstruction.tiltAlignmentFunctions import readIMODtilt_angles
         from math import sin, cos, pi
 
-        tiltAngles = readIMODtiltAngles(tltfile)
-        self._ntilt = len(tiltAngles)
-        self._tiltAngles = numpy.array(self._ntilt * [0.])
+        tilt_angles = readIMODtilt_angles(tltfile)
+        self._ntilt = len(tilt_angles)
+        self._tilt_angles = numpy.array(self._ntilt * [0.])
         self._cTilt = numpy.array(self._ntilt * [0.])
         self._sTilt = numpy.array(self._ntilt * [0.])
-        for ii in range(0, len(tiltAngles)):
-            self._tiltAngles[ii] = tiltAngles[ii]
-            self._sTilt[ii] = sin(tiltAngles[ii] / 180. * pi)
-            self._cTilt[ii] = cos(tiltAngles[ii] / 180. * pi)
-        return self._tiltAngles
+        for ii in range(0, len(tilt_angles)):
+            self._tilt_angles[ii] = tilt_angles[ii]
+            self._sTilt[ii] = sin(tilt_angles[ii] / 180. * pi)
+            self._cTilt[ii] = cos(tilt_angles[ii] / 180. * pi)
+        return self._tilt_angles
 
     def randomize(self, amplitude):
         """
@@ -859,7 +859,7 @@ class TiltAlignment:
                                   Markers_=self._Markers[start:end],
                                   cTilt=self._cTilt, sTilt=self._sTilt,
                                   transX=self._alignmentTransX, transY=self._alignmentTransY,
-                                  rotInPlane=self._alignmentRotations, tiltangles=self._tiltAngles,
+                                  rotInPlane=self._alignmentRotations, tiltangles=self._tilt_angles,
                                   isoMag=self._alignmentMagnifications, dBeam=self._alignmentBeamTilt,
                                   dMagnFocus=None, dRotFocus=None, equationSet=False,
                                   irefmark=self.TiltSeries_._TiltAlignmentParas.irefmark, logfile_residual=logfile,
@@ -882,7 +882,7 @@ class TiltAlignment:
                                    Markers_=self._Markers,
                                    cTilt=self._cTilt, sTilt=self._sTilt,
                                    transX=self._alignmentTransX, transY=self._alignmentTransY,ireftilt=self.ireftilt,
-                                   rotInPlane=self._alignmentRotations,irefmark=self.irefmark, tiltangles=self._tiltAngles,
+                                   rotInPlane=self._alignmentRotations,irefmark=self.irefmark, tiltangles=self._tilt_angles,
                                    isoMag=self._alignmentMagnifications, dBeam=self._alignmentBeamTilt,
                                    dMagnFocus=None, dRotFocus=None, equationSet=True)
         else:
@@ -925,7 +925,7 @@ class TiltAlignment:
                                                          rotInPlane=self._alignmentRotations,
                                                          irefmark=self.irefmark,
                                                          ireftilt=self.ireftilt,
-                                                         tiltangles=self._tiltAngles,
+                                                         tiltangles=self._tilt_angles,
                                                          isoMag=self._alignmentMagnifications,
                                                          dBeam=self._alignmentBeamTilt,
                                                          dMagnFocus=None, dRotFocus=None, equationSet=True)
@@ -963,7 +963,7 @@ class TiltAlignment:
             print("New irefmark: " + str(TiltAlignmentParameters_.irefmark))
 
         if not (TiltAlignmentParameters_.ireftilt in self._projIndices.astype(int)):
-            TiltAlignmentParameters_.ireftilt = abs(self._tiltAngles).argmin()
+            TiltAlignmentParameters_.ireftilt = abs(self._tilt_angles).argmin()
             print("Warning: ireftilt must be in range of projection indices")
             print("New ireftilt: " + str(TiltAlignmentParameters_.ireftilt))
 
@@ -1262,7 +1262,7 @@ class TiltAlignment:
             Markers_=self._Markers,
             cTilt=self._cTilt, sTilt=self._sTilt, ireftilt=self.ireftilt,
             transX=self._alignmentTransX, transY=self._alignmentTransY,
-            rotInPlane=self._alignmentRotations, tiltangles=self._tiltAngles,
+            rotInPlane=self._alignmentRotations, tiltangles=self._tilt_angles,
             isoMag=self._alignmentMagnifications, dBeam=self._alignmentBeamTilt,
             dMagnFocus=None, dRotFocus=None, equationSet=False, irefmark=self.irefmark)
 
@@ -1292,7 +1292,7 @@ class TiltAlignment:
             Markers_=self._Markers,
             cTilt=self._cTilt, sTilt=self._sTilt,
             transX=self._alignmentTransX, transY=self._alignmentTransY, ireftilt=self.ireftilt,
-            rotInPlane=self._alignmentRotations, irefmark=self.irefmark, tiltangles=self._tiltAngles,
+            rotInPlane=self._alignmentRotations, irefmark=self.irefmark, tiltangles=self._tilt_angles,
             isoMag=self._alignmentMagnifications, dBeam=self._alignmentBeamTilt,
             dMagnFocus=None, dRotFocus=None, equationSet=False, logfile_residual=logfile_residual)
 
@@ -1321,7 +1321,7 @@ class TiltAlignment:
                                    cTilt=self._cTilt, sTilt=self._sTilt,
                                    transX=self._alignmentTransX, transY=self._alignmentTransY, ireftilt=self.ireftilt,
                                    rotInPlane=self._alignmentRotations, irefmark=self.irefmark,
-                                   tiltangles=self._tiltAngles,
+                                   tiltangles=self._tilt_angles,
                                    isoMag=self._alignmentMagnifications, dBeam=self._alignmentBeamTilt,
                                    dMagnFocus=None, dRotFocus=None, equationSet=False,
                                    logfile_residual=logfile_residual, verbose=True, errorRef=True)
@@ -1402,7 +1402,7 @@ class TiltAlignment:
     #         print("New irefmark: " + str(TiltAlignmentParameters_.irefmark))
     #
     #     if not (TiltAlignmentParameters_.ireftilt in self._projIndices.astype(int)):
-    #         TiltAlignmentParameters_.ireftilt = abs(self._tiltAngles).argmin() + 1
+    #         TiltAlignmentParameters_.ireftilt = abs(self._tilt_angles).argmin() + 1
     #         print("Warning: ireftilt must be in range of projection indices")
     #         print("New ireftilt: " + str(TiltAlignmentParameters_.ireftilt))
     #

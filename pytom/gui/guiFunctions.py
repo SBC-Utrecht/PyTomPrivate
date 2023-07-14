@@ -1112,8 +1112,8 @@ def parseImodShiftFile(imodShiftFile):
     return data[:, -2:]
 
 def addShiftToMarkFrames(mark_frames, shifts, metadata, excluded):
-    tiltAngles = metadata['TiltAngle'][excluded]
-    zeroIndex = abs(tiltAngles).argmin()
+    tilt_angles = metadata['TiltAngle'][excluded]
+    zeroIndex = abs(tilt_angles).argmin()
     zerox, zeroy = shifts[zeroIndex]*0
 
     for i in range(len(mark_frames)):

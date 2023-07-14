@@ -43,9 +43,9 @@ if __name__ == '__main__':
 
     if metafile and os.path.exists(metafile):
         metadata = loadstar(metafile, dtype=datatype)
-        tiltAngles = metadata['TiltAngle']
+        tilt_angles = metadata['TiltAngle']
     else:
-        tiltAngles = []
+        tilt_angles = []
 
     metafile = '' if metafile is None or not os.path.exists(metafile) else metafile
 

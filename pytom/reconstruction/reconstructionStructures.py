@@ -187,7 +187,7 @@ class Projection(PyTomClass):
     """
     Projection: 
     """
-    def __init__(self, filename=None, tiltAngle=None, offsetX=0, offsetY=0, alignmentTransX=0.,
+    def __init__(self, filename=None, tilt_angle=None, offsetX=0, offsetY=0, alignmentTransX=0.,
                  alignmentTransY=0., alignmentRotation=0., alignmentMagnification=1.,
                  alignmentAxisAngle=0., operationOrder=[2, 0, 1], index=0):
         """
@@ -195,8 +195,8 @@ class Projection(PyTomClass):
 
         @param filename: The filename
         @type filename: string
-        @param tiltAngle: Tilt angle of a projection, rotation around microscope y-axis
-        @type tiltAngle: float
+        @param tilt_angle: Tilt angle of a projection, rotation around microscope y-axis
+        @type tilt_angle: float
         @param offsetX: offset X is used for subtomogram reconstruction from cut out projections
         @type offsetX: float
         @param offsetY: offset Y is used for subtomogram reconstruction from cut out projections
@@ -224,10 +224,10 @@ class Projection(PyTomClass):
         self._xSize = None
         self._ySize = None
 
-        if filename and tiltAngle is None:
+        if filename and tilt_angle is None:
             self._loadTiltAngle()
         else:
-            self._tiltAngle = float(tiltAngle)
+            self._tilt_angle = float(tilt_angle)
 
         self._index = int(index)
         self._offsetX = float(offsetX)
@@ -248,7 +248,7 @@ class Projection(PyTomClass):
     def info(self):
         tline = (" %3d: " %self.getIndex())
         tline = tline + ("Filename: %20s" %self._filename)
-        tline = tline + (", TiltAngle= %6.2f" %self._tiltAngle)
+        tline = tline + (", TiltAngle= %6.2f" %self._tilt_angle)
         return tline
         
     def _loadTiltAngle(self):
@@ -262,14 +262,14 @@ class Projection(PyTomClass):
             if self._filename.split('.')[-1] == 'em':
                 fh = open(self._filename,'rb')
                 fh.seek(168)
-                self._tiltAngle = float(struct.unpack('i',fh.read(4))[0])/1000
+                self._tilt_angle = float(struct.unpack('i',fh.read(4))[0])/1000
                 fh.close()
             else:
                 fh = read_mrc_header(self._filename)
-                self._tiltAngle = fh['user'][0]/1000.  # TODO find correct location of the tiltangle and autowrite it.
+                self._tilt_angle = fh['user'][0]/1000.  # TODO find correct location of the tiltangle and autowrite it.
         except:
             print(f'could not read tilt angle for projection {self._filename}')
-            self._tiltAngle = None
+            self._tilt_angle = None
 
     def _checkValidFile(self):
         """
@@ -299,7 +299,7 @@ class Projection(PyTomClass):
         return self._filename
         
     def getTiltAngle(self):
-        return self._tiltAngle
+        return self._tilt_angle
 
     def getOffsetX(self):
         return self._offsetX
@@ -381,14 +381,14 @@ class Projection(PyTomClass):
         self._filename = filename
         self._checkValidFile()
 
-    def setTiltAngle(self, tiltAngle):
+    def setTiltAngle(self, tilt_angle):
         """
         set tilt angle in projection
 
-        @param tiltAngle: tilt angle (deg)
-        @type tiltAngle: float
+        @param tilt_angle: tilt angle (deg)
+        @type tilt_angle: float
         """
-        self._tiltAngle = float(tiltAngle)
+        self._tilt_angle = float(tilt_angle)
 
     def setOffsetX(self, offsetX):
         """
@@ -510,7 +510,7 @@ class Projection(PyTomClass):
         """
         from lxml import etree
         projection_element = etree.Element('Projection', Filename=str(self._filename),
-                                           TiltAngle=str(float(self._tiltAngle)),OffsetX=str(float(self._offsetX)),
+                                           TiltAngle=str(float(self._tilt_angle)),OffsetX=str(float(self._offsetX)),
                                            OffsetY=str(float(self._offsetY)),
                                            AlignmentTransX=str(float(self._alignmentTransX)),
                                            AlignmentTransY=str(float(self._alignmentTransY)),
@@ -536,7 +536,7 @@ class Projection(PyTomClass):
         
         self._filename = projection_element.get('Filename')
         self._checkValidFile()
-        self._tiltAngle = float(projection_element.get('TiltAngle'))
+        self._tilt_angle = float(projection_element.get('TiltAngle'))
         self._offsetX = float(projection_element.get('OffsetX'))
         self._offsetY = float(projection_element.get('OffsetY'))
         self._alignmentMagnification = float(projection_element.get('AlignmentMagnification'))
@@ -608,7 +608,7 @@ class ProjectionList(PyTomClass):
                 metafile = os.path.join(directory, possible_files[0])
         if metafile is not None:  # if we have a metafile, load its tilt angles
             metadata = loadstar(metafile, dtype=DATATYPE_METAFILE)
-            tiltAngles = metadata['TiltAngle']
+            tilt_angles = metadata['TiltAngle']
 
         files = [line for line in sorted(os.listdir(directory)) if prefix in line]
 
@@ -618,7 +618,7 @@ class ProjectionList(PyTomClass):
             if os.path.splitext(file)[1] in ['.em', '.mrc']:
                 i = int(file.split('_')[-1].split('.')[0])  # TODO this is hackish => but leave it for now
                 if metafile is not None:
-                    projection = Projection(filename=os.path.join(directory, file), tiltAngle=tiltAngles[i], index=i)
+                    projection = Projection(filename=os.path.join(directory, file), tilt_angle=tilt_angles[i], index=i)
                 else:
                     projection = Projection(filename=os.path.join(directory, file), index=i)
                 self.append(projection)
@@ -656,7 +656,7 @@ class ProjectionList(PyTomClass):
             for i in range(len(alignment_results)):
                 # set offsetx and offsety ??
                 projection = Projection(filename=alignment_results[i]['FileName'],
-                                        tiltAngle=alignment_results[i]['TiltAngle'],
+                                        tilt_angle=alignment_results[i]['TiltAngle'],
                                         alignmentTransX=alignment_results[i]['AlignmentTransX'],
                                         alignmentTransY=alignment_results[i]['AlignmentTransY'],
                                         alignmentRotation=alignment_results[i]['InPlaneRotation'],
@@ -712,7 +712,7 @@ class ProjectionList(PyTomClass):
 
         projectionList_element = etree.Element('ProjectionList')
 
-        ##self._list = sorted(self._list, key=lambda Projection: Projection._tiltAngle)
+        ##self._list = sorted(self._list, key=lambda Projection: Projection._tilt_angle)
 
         for projection in self._list:
             projectionList_element.append(projection.toXML())
@@ -1991,8 +1991,8 @@ class ProjectionList(PyTomClass):
         @type binning: int
         @param applyWeighting: applyWeighting
         @type applyWeighting: bool
-        @param tiltAngle: optional tiltAngle of image
-        @type tiltAngle: float
+        @param tilt_angle: optional tilt_angle of image
+        @type tilt_angle: float
         @param showProgressBar: show pretty bar
         @type showProgressBar: bool
         @param verbose: talkative
@@ -2065,7 +2065,7 @@ class ProjectionList(PyTomClass):
         self.tilt_angles = []  # TODO is this also not already initiated at the class init?
 
         for ii, projection in enumerate(self._list):
-            self.tilt_angles.append(projection._tiltAngle)  # TODO are these correctly assigned????
+            self.tilt_angles.append(projection._tilt_angle)  # TODO are these correctly assigned????
 
         self.tilt_angles = sorted(self.tilt_angles)  # they need to be sorted, and the specific angle is got later
 
@@ -2095,7 +2095,7 @@ class ProjectionList(PyTomClass):
                 image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
             elif weighting == 1:  # exact filter
                 print('weighting == 1, exact filter, needs tilt angle infomration, currently not provided')
-                weightSlice = fourierFilterShift(exactFilter(self.tilt_angles, projection._tiltAngle,
+                weightSlice = fourierFilterShift(exactFilter(self.tilt_angles, projection._tilt_angle,
                                                              imdim, imdim, slice_width))
                 image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
 
@@ -2214,7 +2214,7 @@ class ProjectionList(PyTomClass):
             aty = alignmentResults['AlignmentTransY'][n]
             rot = alignmentResults['InPlaneRotation'][n]
             mag = alignmentResults['Magnification'][n]
-            projection = Projection(imageList[n], tiltAngle=tilt_angles[n], alignmentTransX=atx, alignmentTransY=aty,
+            projection = Projection(imageList[n], tilt_angle=tilt_angles[n], alignmentTransX=atx, alignmentTransY=aty,
                                     alignmentRotation=rot, alignmentMagnification=mag)
             projectionList.append(projection)
 
@@ -2242,7 +2242,7 @@ class ProjectionList(PyTomClass):
                 # image = rotate(image,180.,0.,0.)
                 image = resize(volume=image, factor=1 / float(binning))[0]
 
-            tiltAngle = projection._tiltAngle
+            tilt_angle = projection._tilt_angle
 
             # normalize to contrast - subtract mean and norm to mean
             immean = mean(image)
@@ -2286,7 +2286,7 @@ class ProjectionList(PyTomClass):
             if weighting == -1:  # ramp filter
                 image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
             elif weighting == 1:  # exact filter
-                weightSlice = fourierFilterShift(exactFilter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
+                weightSlice = fourierFilterShift(exactFilter(tilt_angles, tilt_angle, imdim, imdim, slice_width))
                 image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
 
             thetaStack(int(round(projection.getTiltAngle()))-self.angle_specimen, 0, 0, ii)
@@ -2370,7 +2370,7 @@ class ProjectionList(PyTomClass):
             aty = alignmentResults['AlignmentTransY'][n]
             rot = alignmentResults['InPlaneRotation'][n]
             mag = alignmentResults['Magnification'][n]
-            projection = Projection(imageList[n], tiltAngle=tilt_angles[n], alignmentTransX=atx, alignmentTransY=aty,
+            projection = Projection(imageList[n], tilt_angle=tilt_angles[n], alignmentTransX=atx, alignmentTransY=aty,
                                     alignmentRotation=rot, alignmentMagnification=mag)
             projectionList.append(projection)
 
@@ -2404,7 +2404,7 @@ class ProjectionList(PyTomClass):
             else:
                 order =[2,1,0]
 
-            args = (projection._filename, projection._index, projection._tiltAngle, tilt_angles, slice_width,
+            args = (projection._filename, projection._index, projection._tilt_angle, tilt_angles, slice_width,
                     projection._alignmentTransX, projection._alignmentTransY, projection._alignmentRotation,
                     projection._alignmentMagnification, order,
                     scaleFactorParticle, weighting, imdim, imdimX, imdimY, binning, lowpassFilter, circleFilter,
@@ -2428,7 +2428,7 @@ class ProjectionList(PyTomClass):
 
         return [stack, phiStack, thetaStack, offsetStack]
 
-    def align_single_image(self, filename, index, tiltAngle, tilt_angles, slice_width, alignmentTransX, alignmentTransY,
+    def align_single_image(self, filename, index, tilt_angle, tilt_angles, slice_width, alignmentTransX, alignmentTransY,
                            alignmentRotation, alignmentMagnification, order,
                            scaleFactorParticle, weighting, imdim, imdimX, imdimY, binning, lowpassFilter, circleFilter,
                            fname):
@@ -2438,8 +2438,8 @@ class ProjectionList(PyTomClass):
            @type fname: str
            @param index: index of image
            @type index: int
-           @param tiltAngle: tilt angle of tilt image
-           @type tiltAngle: float
+           @param tilt_angle: tilt angle of tilt image
+           @type tilt_angle: float
            @param tilt_angles: all angles of tiltseries
            @type tilt_angles: numpy.ndarray or list
            @param slice_width: width of a slice in fourier space
@@ -2523,7 +2523,7 @@ class ProjectionList(PyTomClass):
             # image = rotate(image,180.,0.,0.)
             image = resize(volume=image, factor=1 / float(binning))[0]
 
-        tiltAngle = tiltAngle
+        tilt_angle = tilt_angle
 
         # normalize to contrast - subtract mean and norm to mean
         immean = vol2npy(image).mean()
@@ -2563,7 +2563,7 @@ class ProjectionList(PyTomClass):
             image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
 
         elif (weighting != None) and (weighting > 0):
-            weightSlice = fourierFilterShift(exactFilter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
+            weightSlice = fourierFilterShift(exactFilter(tilt_angles, tilt_angle, imdim, imdim, slice_width))
             image = ifft(complexRealMult(complexRealMult(fft(image), weightSlice), circleSlice), scaling=True)
 
         image.write(fname)
@@ -2581,8 +2581,8 @@ class ProjectionList(PyTomClass):
         @type binning: int
         @param applyWeighting: applyWeighting
         @type applyWeighting: bool
-        @param tiltAngle: optional tiltAngle of image
-        @type tiltAngle: float
+        @param tilt_angle: optional tilt_angle of image
+        @type tilt_angle: float
         @param showProgressBar: show pretty bar
         @type showProgressBar: bool
         @param verbose: talkative
@@ -2633,7 +2633,7 @@ class ProjectionList(PyTomClass):
         self.tilt_angles = []
 
         for (i, projection) in enumerate(self._list):
-            self.tilt_angles.append(projection._tiltAngle)
+            self.tilt_angles.append(projection._tilt_angle)
 
         self.tilt_angles = sorted(self.tilt_angles)
 
@@ -2645,11 +2645,11 @@ class ProjectionList(PyTomClass):
             if int((applyWeighting)) >= 1:
 
                 if int(applyWeighting) != 2:
-                    weightSlice = fourierFilterShift(exactFilter(self.tilt_angles, projection._tiltAngle,
+                    weightSlice = fourierFilterShift(exactFilter(self.tilt_angles, projection._tilt_angle,
                                                                  imdim, imdim, imdim))
 
                 else:
-                    weightSlice = fourierFilterShift(rotateFilter(self.tilt_angles, projection._tiltAngle,
+                    weightSlice = fourierFilterShift(rotateFilter(self.tilt_angles, projection._tilt_angle,
                                                                   imdim, imdim, imdim))
 
             image = read(projection.getFilename(), 0, 0, 0, 0, 0, 0, 0, 0, 0, binning, binning, 1)
@@ -2723,7 +2723,7 @@ class ProjectionList(PyTomClass):
             aty = alignmentResults['AlignmentTransY'][n]
             rot = alignmentResults['InPlaneRotation'][n]
             mag = 1 / (alignmentResults['Magnification'][n])
-            projection = Projection(imageList[n], tiltAngle=tilt_angles[n], alignmentTransX=atx, alignmentTransY=aty,
+            projection = Projection(imageList[n], tilt_angle=tilt_angles[n], alignmentTransX=atx, alignmentTransY=aty,
                                     alignmentRotation=rot, alignmentMagnification=mag)
             projectionList.append(projection)
 
@@ -2739,7 +2739,7 @@ class ProjectionList(PyTomClass):
             if binning > 1:
                 image = resize(image, 1 / binning)
 
-            tiltAngle = projection._tiltAngle
+            tilt_angle = projection._tilt_angle
 
             # 1 -- normalize to contrast - subtract mean and norm to mean
             immean = image.mean()
@@ -2794,7 +2794,7 @@ class ProjectionList(PyTomClass):
                 # image = (ifft(complexRealMult(fft(image), w_func)) / (image.size_x() * image.size_y() * image.size_z()))
                 image = xp.fft.ifftn(xp.fft.fftn(image) * weightSlice * circleSlice).real
             elif (weighting != None) and (weighting > 0):
-                weightSlice = xp.fft.fftshift(exact_filter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
+                weightSlice = xp.fft.fftshift(exact_filter(tilt_angles, tilt_angle, imdim, imdim, slice_width))
                 image = xp.fft.ifftn(xp.fft.fftn(image) * weightSlice * circleSlice).real
 
             thetaStack[ii] = float(round(projection.getTiltAngle() - angle_specimen))
@@ -2818,9 +2818,9 @@ class ProjectionList(PyTomClass):
             print(i * num_procs + pid)
 
             if int(applyWeighting) >= 1:
-                print(self.tilt_angles, projection._tiltAngle, imgDim)
+                print(self.tilt_angles, projection._tilt_angle, imgDim)
 
-                self.temp_weightSlice = fourierFilterShift(exactFilter(self.tilt_angles, projection._tiltAngle,
+                self.temp_weightSlice = fourierFilterShift(exactFilter(self.tilt_angles, projection._tilt_angle,
                                                                        imgDim, imgDim, imgDim))
 
             image = read(projection.getFilename(), 0, 0, 0, 0, 0, 0, 0, 0, 0, binning, binning, 1)

@@ -88,7 +88,7 @@ def cleanUp_RandomParticleList( pl_filename='pl.xml', pdir='./testparticles'):
     remove(pl_filename)
 
 
-def create_TiltSeries(data, tiltAngles, outputfolder='./'):
+def create_TiltSeries(data, tilt_angles, outputfolder='./'):
     from pytom.agnostic.io import read, write
     from pytom.agnostic.transform import rotate_axis
     import os
@@ -98,9 +98,9 @@ def create_TiltSeries(data, tiltAngles, outputfolder='./'):
 
     if not os.path.exists(outputfolder): os.mkdir(outputfolder)
 
-    for n, tiltAngle in enumerate(tiltAngles):
+    for n, tilt_angle in enumerate(tilt_angles):
         outname = os.path.join(outputfolder, 'sorted_{:03d}.mrc'.format(n))
-        write(outname, rotate_axis(data, tiltAngle, axis='y').sum(axis=2),tilt_angle=tiltAngle)
+        write(outname, rotate_axis(data, tilt_angle, axis='y').sum(axis=2),tilt_angle=tilt_angle)
 
 
 def remove_tree(foldername):

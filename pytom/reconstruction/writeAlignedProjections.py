@@ -62,7 +62,7 @@ def writeAlignedProjections(TiltSeries_, weighting=None,
     tilt_angles = []
 
     for projection in TiltSeries_._ProjectionList:
-        tilt_angles.append( projection._tiltAngle )
+        tilt_angles.append( projection._tilt_angle )
     tilt_angles = sorted(tilt_angles)
 
     #q = np.matrix(abs(np.arange(-imdim//2, imdim//2)))
@@ -107,8 +107,8 @@ def writeAlignedProjections(TiltSeries_, weighting=None,
                     header.set_dim(x=imdim, y=imdim, z=1)
 
 
-            tiltAngle = projection._tiltAngle
-            header.set_tiltangle(tiltAngle)
+            tilt_angle = projection._tilt_angle
+            header.set_tiltangle(tilt_angle)
 
             # # 5 -- Optional Low Pass Filter
             # if lowpassFilter:
@@ -132,7 +132,7 @@ def writeAlignedProjections(TiltSeries_, weighting=None,
                                +'.'+TiltSeries_._tiltSeriesFormat)
             if verbose:
                 tline = ("%30s" %newFilename)
-                tline = tline + (" (tiltAngle=%6.2f)" % tiltAngle)
+                tline = tline + (" (tiltAngle=%6.2f)" % tilt_angle)
                 tline = tline + (": transX=%6.1f" %transX)
                 tline = tline + (", transY=%6.1f" %transY)
                 tline = tline + (", rot=%6.2f" %rot)
@@ -164,9 +164,9 @@ def writeAlignedProjections(TiltSeries_, weighting=None,
                 image = (ifft( complexRealMult( fft( image), w_func) ) / (image.size_x()*image.size_y()*image.size_z()) )
             elif (weighting != None) and (weighting > 0):
                 if weighting > 1.5:
-                    w_func = fourierFilterShift(rotateFilter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
+                    w_func = fourierFilterShift(rotateFilter(tilt_angles, tilt_angle, imdim, imdim, slice_width))
                 else:
-                    w_func = fourierFilterShift(exactFilter(tilt_angles, tiltAngle, imdim, imdim, slice_width))
+                    w_func = fourierFilterShift(exactFilter(tilt_angles, tilt_angle, imdim, imdim, slice_width))
 
                 image = (ifft( complexRealMult( fft( image), w_func) )/
                       (image.size_x()*image.size_y()*image.size_z()) )

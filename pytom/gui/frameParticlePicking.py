@@ -453,9 +453,9 @@ class ParticlePick(GuiTabWidget):
                     from pytom.gui.guiFunctions import datatype, loadstar
 
                     metadata = loadstar(metafiles[0],dtype=datatype)
-                    tiltAngles = metadata['TiltAngle']
-                    w1 = int(numpy.round(tiltAngles.min()+90))
-                    w2 = int(90-numpy.round(tiltAngles.max()))
+                    tilt_angles = metadata['TiltAngle']
+                    w1 = int(numpy.round(tilt_angles.min()+90))
+                    w2 = int(90-numpy.round(tilt_angles.max()))
                 else:
                     w1,w2 = 30,30
 
@@ -1198,9 +1198,9 @@ class ParticlePick(GuiTabWidget):
                 from pytom.gui.guiFunctions import datatype, loadstar
 
                 metadata = loadstar(metafiles[0],dtype=datatype)
-                tiltAngles = metadata['TiltAngle']
-                self.widgets[mode + 'Wedge1'].setValue(int(numpy.round(tiltAngles.min()+90)))
-                self.widgets[mode + 'Wedge2'].setValue(int(90-numpy.round(tiltAngles.max())))
+                tilt_angles = metadata['TiltAngle']
+                self.widgets[mode + 'Wedge1'].setValue(int(numpy.round(tilt_angles.min()+90)))
+                self.widgets[mode + 'Wedge2'].setValue(int(90-numpy.round(tilt_angles.max())))
         except Exception as e:
             print(e)
 

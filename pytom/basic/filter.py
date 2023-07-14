@@ -360,7 +360,7 @@ def rampFilter( size_x, size_y, crowther_freq=None, N=None):
 
     return filter_vol
 
-def exactFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
+def exactFilter(tilt_angles, tilt_angle, sX, sY, slice_width, arr=[]):
     """
     exactFilter: Generates the exact weighting function required for weighted backprojection - y-axis is tilt axis
     Reference : Optik, Exact filters for general geometry three dimensional reconstuction, vol.73,146,1986.
@@ -376,7 +376,7 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
     sY = sY//2+1
 
     # Calculate the relative angles in radians.
-    sampling = np.sin(np.abs((np.array(tilt_angles) - tiltAngle) * np.pi / 180.))
+    sampling = np.sin(np.abs((np.array(tilt_angles) - tilt_angle) * np.pi / 180.))
     smallest_sampling = np.min(sampling[sampling > 0.001])
 
     if slice_width / smallest_sampling > sX // 2:  # crowther crit can be to nyquist freq (i.e. sX // 2)
@@ -404,7 +404,7 @@ def exactFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
         
     return weightFunc
 
-def rotateFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
+def rotateFilter(tilt_angles, tilt_angle, sX, sY, slice_width, arr=[]):
     """
     rotate filter function
     @param tilt_angles: ...
@@ -418,7 +418,7 @@ def rotateFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
 
     tilt_angles = array(tilt_angles)
 
-    smallest = abs(tilt_angles - tiltAngle)
+    smallest = abs(tilt_angles - tilt_angle)
     smallest[smallest.argmin()] = 1000
     smallest = smallest.min()
 
@@ -434,7 +434,7 @@ def rotateFilter(tilt_angles, tiltAngle, sX, sY, slice_width, arr=[]):
 
     out = zeros_like(a)
 
-    for angle in (tilt_angles - tiltAngle):
+    for angle in (tilt_angles - tilt_angle):
 
         if abs(angle) > 0.0001:
             dame2 = rotate(dame, angle, axes=(0, 1), reshape=False)
