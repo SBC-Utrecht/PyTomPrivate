@@ -167,7 +167,7 @@ class Image(PyTomClass):
         from pytom.basic.filter import bandpassFilter
 
         res = bandpassFilter(volume=self.data, lowestFrequency=lowfreq,
-                             highestFrequency=hifreq, bpf=None, smooth=smooth, fourierOnly=False)
+                             highestFrequency=hifreq, bpf=None, smooth=smooth, fourier_only=False)
         self.data = res[0]
         bpf = res[1]
         return bpf
@@ -189,7 +189,7 @@ class Image(PyTomClass):
         res = bandpassFilter(volume=self.data,
                              lowestFrequency=lowfreq * self.dims[0] / 2.,
                              highestFrequency=hifreq * self.dims[0] / 2., bpf=None,
-                             smooth=smooth * self.dims[0] / 2., fourierOnly=False)
+                             smooth=smooth * self.dims[0] / 2., fourier_only=False)
         self.data = res[0]
         bpf = res[1]
         return bpf

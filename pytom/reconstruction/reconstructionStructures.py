@@ -158,7 +158,7 @@ def align_single_projection(index, projection_list, tilt_angles, shared_dtype, s
                                     crop=True, center=center)
 
     if low_pass_freq > 0:
-        filtered = filter(volume=image, filterObject=lpf, fourierOnly=False)
+        filtered = filter(volume=image, filterObject=lpf, fourier_only=False)
         image = filtered[0]
 
     # smoothen once more to avoid edges
@@ -1646,7 +1646,7 @@ class ProjectionList(PyTomClass):
                                             crop=True, center=center)
 
             if low_pass_freq > 0:
-                filtered = filter(volume=image, filterObject=lpf, fourierOnly=False)
+                filtered = filter(volume=image, filterObject=lpf, fourier_only=False)
                 image = filtered[0]
 
             # smoothen once more to avoid edges
@@ -2087,7 +2087,7 @@ class ProjectionList(PyTomClass):
                 image = newImage
 
             if low_pass_freq > 0:
-                filtered = filter(volume=image, filterObject=lpf, fourierOnly=False)
+                filtered = filter(volume=image, filterObject=lpf, fourier_only=False)
                 image = filtered[0]
 
             # weighting
@@ -2276,7 +2276,7 @@ class ProjectionList(PyTomClass):
                                         center=center)
 
             if low_pass_freq > 0:
-                filtered = filter(volume=image, filterObject=lpf, fourierOnly=False)
+                filtered = filter(volume=image, filterObject=lpf, fourier_only=False)
                 image = filtered[0]
 
             # smoothen once more to avoid edges
@@ -2552,7 +2552,7 @@ class ProjectionList(PyTomClass):
         image = general_transform2d(v=image, rot=rot, shift=[transX, transY], scale=mag, order=order, crop=True, center=center)
 
         if lowpassFilter:
-            filtered = filterFunction(volume=image, filterObject=lpf, fourierOnly=False)
+            filtered = filterFunction(volume=image, filterObject=lpf, fourier_only=False)
             image = filtered[0]
 
         # smoothen once more to avoid edges

@@ -306,7 +306,7 @@ def mainAlignmentLoop(alignmentJob, verbose=False):
             # filter final average according to resolution
             from pytom.basic.filter import lowpassFilter
             filtered_final = lowpassFilter(volume=final_average.getVolume(), band=resolutionBand, smooth=resolutionBand/10,
-                                           fourierOnly=False)[0]
+                                           fourier_only=False)[0]
             filtered_final.write(f"{alignmentJob.destination}/average-FinalFiltered_{resolutionAngstrom:.2f}.{filetype}")
             # clean up temporary files
             from os import remove

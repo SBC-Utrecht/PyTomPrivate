@@ -62,7 +62,7 @@ def bandpass_circle(image, low=0, high=-1, sigma=0, ff=1):
 
 
 def bandpass(
-    volume, low=0, high=-1, sigma=0, return_mask=False, mask=None, fourierOnly=False
+    volume, low=0, high=-1, sigma=0, return_mask=False, mask=None, fourier_only=False
 ) -> Union[Tuple[xpt.NDArray[float], xpt.NDArray[float]], xpt.NDArray[float]]:
     """Do a bandpass filter on a given volume.
 
@@ -93,7 +93,7 @@ def bandpass(
 
     from pytom.agnostic.transform import fourier_filter
 
-    if fourierOnly:
+    if fourier_only:
         fvolume = xp.fft.fftshift(volume)
         sx, sy, sz = mask.shape
 

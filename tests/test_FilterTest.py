@@ -106,9 +106,9 @@ class pytom_FilterTest(unittest.TestCase):
         refNoise.setV(1., 32, 32, 32)
         # make sure that out of bounds frequency works
         fil1 = bandpassFilter(volume=refNoise, lowestFrequency=0, highestFrequency=30, bpf=None, smooth=1,
-                             fourierOnly=False)
+                             fourier_only=False)
         fil2 = bandpassFilter(volume=refNoise, lowestFrequency=0, highestFrequency=16, bpf=None, smooth=1,
-                             fourierOnly=False)
+                             fourier_only=False)
         #fil1[0].write('fil1.em')
         #fil2[0].write('fil2.em')
         filter = fil1[1]

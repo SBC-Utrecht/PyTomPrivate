@@ -388,8 +388,8 @@ def band_cc(volume,reference,band,verbose = False):
     if verbose:
         print('lowest freq : ', band[0],' highest freq' , band[1])
         
-    vf = bandpassFilter(volume,band[0],band[1],fourierOnly=True)
-    rf = bandpassFilter(reference,band[0],band[1],vf[1],fourierOnly=True)
+    vf = bandpassFilter(volume,band[0],band[1],fourier_only=True)
+    rf = bandpassFilter(reference,band[0],band[1],vf[1],fourier_only=True)
     
     ccVolume = pytom_volume.vol_comp(rf[0].size_x(),rf[0].size_y(),rf[0].size_z())
     ccVolume.copyVolume(rf[0])
@@ -572,8 +572,8 @@ def band_cf(volume,reference,band=[0,100]):
     from pytom.basic.filter import bandpassFilter
     from pytom.basic.correlation import norm_xcf
     
-    vf = bandpassFilter(volume,band[0],band[1],fourierOnly=True)
-    rf = bandpassFilter(reference,band[0],band[1],vf[1],fourierOnly=True)
+    vf = bandpassFilter(volume,band[0],band[1],fourier_only=True)
+    rf = bandpassFilter(reference,band[0],band[1],vf[1],fourier_only=True)
     
     v = pytom_volume.reducedToFull(vf[0])
     r = pytom_volume.reducedToFull(rf[0])
