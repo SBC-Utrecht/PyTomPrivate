@@ -893,13 +893,13 @@ class Wedge(PyTomClass):
         """
         return self._wedgeObject
     
-    def toSphericalFunc(self, b, radius):
+    def to_spherical_func(self, b, radius):
         """Convert the wedge from real space to a spherical function.
         This function serves as an interface to FRM.
         @param b: Bandwidth of the spherical function.
         @return: a spherical function in numpy.array
         """
-        return self._wedgeObject.toSphericalFunc(b, radius)
+        return self._wedgeObject.to_spherical_func(b, radius)
     
     def toXML(self):
         
@@ -1176,7 +1176,7 @@ class SingleTiltWedge(PyTomClass):
         else:
             return volume
     
-    def toSphericalFunc(self, b, radius):
+    def to_spherical_func(self, b, radius):
         """Convert the wedge from real space to a spherical function.
         This function serves as an interface to FRM.
         @param b: Bandwidth of the spherical function.
@@ -1380,7 +1380,7 @@ be generated. If omitted / 0, filter is fixed to size/2.
         else:
             return w
     
-    def toSphericalFunc(self, b, radius):
+    def to_spherical_func(self, b, radius):
         """Convert the wedge from real space to a spherical function.
         This function serves as an interface to FRM.
         @param b: Bandwidth of the spherical function.
@@ -1540,7 +1540,7 @@ class Wedge3dCTF(PyTomClass):
 
         return convolute(volume, wedge, kernel_in_fourier=True)
 
-    def toSphericalFunc(self, b, radius):
+    def to_spherical_func(self, b, radius):
         """Convert the wedge from real space to a spherical function.
         This function serves as an interface to FRM.
         @param b: Bandwidth of the spherical function.
@@ -1681,7 +1681,7 @@ class GeneralWedge(PyTomClass):
         
         return result
     
-    def toSphericalFunc(self, b, radius):
+    def to_spherical_func(self, b, radius):
         """Convert the wedge from real space to a spherical function.
         This function serves as an interface to FRM.
         @param b: Bandwidth of the spherical function.

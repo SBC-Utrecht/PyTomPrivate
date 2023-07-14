@@ -967,10 +967,10 @@ def frm_correlate(vf, wf, vg, wg, b, max_freq, weights=None, ps=False, denominat
         # if _last_bw != bw:
         #     # mf = create_wedge_sf(wf[0], wf[1], bw)
         #     # mg = create_wedge_sf(wg[0], wg[1], bw)
-        #     mf = wf.toSphericalFunc(bw)
-        #     mg = wg.toSphericalFunc(bw)
-        mf = wf.toSphericalFunc(bw, r)
-        mg = wg.toSphericalFunc(bw, r)
+        #     mf = wf.to_spherical_func(bw)
+        #     mg = wg.to_spherical_func(bw)
+        mf = wf.to_spherical_func(bw, r)
+        mg = wg.to_spherical_func(bw, r)
 
         if ps:
             corr1, corr2, corr3 = sph_correlate_ps(vol2sf(ff, r, bw), mf, vol2sf(gg, r, bw), mg, to_calculate)

@@ -420,7 +420,7 @@ class Wedge(object):
     def apply(self, data):
         raise NotImplementedError("Abstract method! Please overwrite it.")
 
-    def toSphericalFunc(self, bw, radius):
+    def to_spherical_func(self, bw, radius):
         raise NotImplementedError("Abstract method! Please overwrite it.")
 
 
@@ -470,7 +470,7 @@ class GeneralWedge(Wedge):
 
         return res
 
-    def toSphericalFunc(self, bw, radius):
+    def to_spherical_func(self, bw, radius):
         assert bw <= 128
 
         # start sampling
@@ -578,7 +578,7 @@ class SingleTiltWedge(Wedge):
 
         return wedge_vol
 
-    def toSphericalFunc(self, bw, radius=None, threshold=0.5):
+    def to_spherical_func(self, bw, radius=None, threshold=0.5):
         """Convert the wedge from k-space to a spherical function. \
         currently some hard-coded parameters in - bw <=128, r=45 for max bw, default vol 100
         
@@ -588,7 +588,7 @@ class SingleTiltWedge(Wedge):
 
         @return: a spherical function in numpy.array - default 100x100x100 if no self.vol defined
         """
-        assert bw <= 128, "toSphericalFunc: bw currently limited to <= 128"
+        assert bw <= 128, "to_spherical_func: bw currently limited to <= 128"
 
         # if no missing wedge
         if self.start_ang == -90 and self.end_ang == 90:
