@@ -4,7 +4,7 @@ from pytom.lib.pytom_volume import reducedToFull, fullToReduced, vol, max
 from math import sqrt
 
 
-def profile2FourierVol( profile, dim=None, reduced=False):
+def profile_to_fourier_vol( profile, dim=None, reduced=False):
     """
     create Volume from 1d radial profile, e.g., to modulate signal with \
     specific function such as CTF or FSC. Simple linear interpolation is used\
@@ -93,10 +93,10 @@ def filter_volume_by_profile( volume, profile):
     @rtype: L{pytom.lib.pytom_volume.vol}
     @author: FF
     """
-    from pytom.basic.filter import profile2FourierVol
+    from pytom.basic.filter import profile_to_fourier_vol
     from pytom.basic.fourier import convolute, powerspectrum
 
-    kernel = profile2FourierVol( profile=profile, dim=volume.size_x(), reduced=False)
+    kernel = profile_to_fourier_vol( profile=profile, dim=volume.size_x(), reduced=False)
     outvol = convolute(v=volume, k=kernel, kernel_in_fourier=True)
     return outvol
 
@@ -708,8 +708,8 @@ def wiener_filter(fsc, even_ctf_sum, odd_ctf_sum, fudge=1):
     fsc[rmax:] = 0  # set to 0 after first crossing to prevent artifacts
 
     # turn radial average profile and fsc profile into volumes
-    fsc_vol = profile2FourierVol(fsc, dim=sx)
-    radial_vol = profile2FourierVol(radial, dim=sx)
+    fsc_vol = profile_to_fourier_vol(fsc, dim=sx)
+    radial_vol = profile_to_fourier_vol(radial, dim=sx)
 
     even_filter = vol(sx, sy, sz)
     even_filter.setAll(0.)

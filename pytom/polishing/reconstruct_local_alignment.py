@@ -227,11 +227,11 @@ def run_single_tilt_angle(subtomogram, ang, offset, vol_size, particle_position,
         '/data/gijsvds/ctem/05_Subtomogram_Analysis/Alignment/GLocal/mask_200_75_5.mrc')
 
     import os
-    from pytom.agnostic.filter import filter_volume_by_profile, profile2FourierVol
+    from pytom.agnostic.filter import filter_volume_by_profile, profile_to_fourier_vol
     fsc_path = ''
     if os.path.isfile(fsc_path):
         profile = [line.split()[0] for line in open(fsc_path, 'r').readlines()]
-        fsc_mask3d = profile2FourierVol(profile, subtomogram.shape)
+        fsc_mask3d = profile_to_fourier_vol(profile, subtomogram.shape)
 
         subtomogram = applyFourierFilterFull(subtomogram, fsc_mask3d)
 
@@ -263,7 +263,7 @@ def run_single_tilt_angle(subtomogram, ang, offset, vol_size, particle_position,
 
         if os.path.isfile(fsc_path):
             profile = [line.split()[0] for line in open(fsc_path, 'r').readlines()]
-            fsc_mask2d = profile2FourierVol(profile, patch.shape)
+            fsc_mask2d = profile_to_fourier_vol(profile, patch.shape)
             patch = applyFourierFilterFull(patch, fsc_mask2d)
 
 

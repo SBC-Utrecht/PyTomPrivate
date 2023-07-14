@@ -213,7 +213,7 @@ class pytom_FilterTest(unittest.TestCase):
 
     def test_profile(self):
         """test filter by 1-d profile"""
-        from pytom.basic.filter import profile2FourierVol
+        from pytom.basic.filter import profile_to_fourier_vol
         from pytom.basic.fourier import convolute, powerspectrum
         from pytom.lib.pytom_volume import vol
         from math import sqrt
@@ -222,7 +222,7 @@ class pytom_FilterTest(unittest.TestCase):
         profile = vol(16,1,1)
         for ii in range(0,16):
             profile.setV(ii, ii, 0, 0)
-        kernel = profile2FourierVol( profile=profile, dim=None, reduced=False)
+        kernel = profile_to_fourier_vol( profile=profile, dim=None, reduced=False)
         
         # point 
         volume = vol(32,32,32)

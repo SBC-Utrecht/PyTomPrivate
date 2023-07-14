@@ -330,7 +330,7 @@ def wiener_like_filter_1d(
     # r[r > 1] = 1
     # r = xp.fft.ifftshift(r)
 
-    return profile2FourierVol(wiener, dim=shape)
+    return profile_to_fourier_vol(wiener, dim=shape)
 
 
 def wiener_like_filter(
@@ -1058,7 +1058,7 @@ def rotate_weighting(weighting, rotation, mask=None, binarize=False):
     return returnVolume
 
 
-def profile2FourierVol(profile, dim=None, reduced=False):
+def profile_to_fourier_vol(profile, dim=None, reduced=False):
     """
     create Volume from 1d radial profile, e.g., to modulate signal with \
     specific function such as CTF or FSC. Simple linear interpolation is used\
@@ -1185,7 +1185,7 @@ def filter_volume_by_profile(volume, profile):
         reduced = False
         convolute = applyFourierFilterFull
 
-    kernel = profile2FourierVol(profile=profile, dim=volume.shape, reduced=reduced)
+    kernel = profile_to_fourier_vol(profile=profile, dim=volume.shape, reduced=reduced)
     outvol = convolute(volume, kernel)
     return outvol
 
