@@ -65,7 +65,7 @@ def generate_template_from_pdb(structure_file_path, spacing, binning=1, modify_s
     import os
     from pytom.simulation.microscope import create_ctf, display_microscope_function
     from pytom.agnostic.transform import resize
-    from pytom.agnostic.filter import applyFourierFilterFull
+    from pytom.agnostic.filter import apply_fourier_filter_full
     from pytom.agnostic.tools import paste_in_center
     from pytom.simulation.support import create_gaussian_low_pass
     from pytom.simulation.potential import iasa_integration_parallel, iasa_integration_gpu, call_chimera
@@ -136,7 +136,7 @@ def generate_template_from_pdb(structure_file_path, spacing, binning=1, modify_s
             print('Skipping plotting due to error.')
 
     # filter the template
-    template = applyFourierFilterFull(template, xp.fft.ifftshift(filter))
+    template = apply_fourier_filter_full(template, xp.fft.ifftshift(filter))
 
     # binning
     if binning > 1:
@@ -152,7 +152,7 @@ def generate_template_from_map(map_file_path, spacing, original_spacing=None, bi
     from pytom.agnostic.io import read, read_pixelsize
     from pytom.simulation.microscope import create_ctf, display_microscope_function
     from pytom.agnostic.transform import resize
-    from pytom.agnostic.filter import applyFourierFilterFull
+    from pytom.agnostic.filter import apply_fourier_filter_full
     from pytom.agnostic.tools import paste_in_center
     from pytom.simulation.support import create_gaussian_low_pass
 
@@ -206,7 +206,7 @@ def generate_template_from_map(map_file_path, spacing, original_spacing=None, bi
             print('Skipping plotting due to error.')
 
     # filter the template
-    template = applyFourierFilterFull(template, xp.fft.ifftshift(filter))
+    template = apply_fourier_filter_full(template, xp.fft.ifftshift(filter))
 
     # binning
     if binning > 1:

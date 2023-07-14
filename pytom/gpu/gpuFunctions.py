@@ -1,18 +1,18 @@
 from pytom.gpu.initialize import device, xp
 
-def applyFourierFilter(particle, filter):
+def apply_fourier_filter(particle, filter):
     return xp.fft.irfftn(xp.fft.rfftn(particle) * filter)
 
-def applyFourierFilterFull(particle, filter):
+def apply_fourier_filter_full(particle, filter):
     return xp.fft.ifftn(xp.fft.fftn(particle) * filter)
 
 def applyRotatedStaticFourierFilter(particle, filter, rotation, rotation_order='rzxz'):
-    return applyFourierFilter(particle, filter.transform(rotation=rotation, rotation_order=rotation_order))
+    return apply_fourier_filter(particle, filter.transform(rotation=rotation, rotation_order=rotation_order))
 
 def applyRotatedFilter(particle, filter, rotation, rotation_order='rzxz'):
-    return applyFourierFilter(particle, transform(filter, rotation=rotation, rotation_order=rotation_order, device=device))
+    return apply_fourier_filter(particle, transform(filter, rotation=rotation, rotation_order=rotation_order, device=device))
 
-def applyFourierFilters(particle, filters):
+def apply_fourier_filters(particle, filters):
     '''Apply a series of filters in fourier space to a real space object
     @param particle: 2D/3D image or volume
     @type particle: ndarray

@@ -66,8 +66,8 @@ def reduce_resolution_fourier(input, spacing, resolution):
     """
     gaussian_filter = create_gaussian_low_pass(input.shape, spacing, resolution)
     if 'gpu' in device:
-        from pytom.agnostic.filter import applyFourierFilterFull
-        return applyFourierFilterFull(input, xp.fft.ifftshift(gaussian_filter))
+        from pytom.agnostic.filter import apply_fourier_filter_full
+        return apply_fourier_filter_full(input, xp.fft.ifftshift(gaussian_filter))
     else:
         from pytom.agnostic.transform import fourier_filter
         return fourier_filter(input, gaussian_filter, human=True)

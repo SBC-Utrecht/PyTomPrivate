@@ -234,7 +234,7 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
     @change: limit for wedgeSum set to 1% or particles to avoid division by small numbers - FF
     """
     from pytom.agnostic.io import read, write, read_size
-    from pytom.agnostic.filter import bandpass as lowpassFilter, applyFourierFilterFull
+    from pytom.agnostic.filter import bandpass as lowpassFilter, apply_fourier_filter_full
     from pytom.voltools import transform
     from pytom.basic.structures import Reference
     from pytom.agnostic.normalise import mean0std1
@@ -374,7 +374,7 @@ def averageGPU(particleList, averageName, showProgressBar=False, verbose=False,
         write(f'{root}-WedgeSumInverted{ext}', xp.fft.fftshift(wedgeSum))
 
     # the wedge sum should already be centered in the corner ?
-    result = applyFourierFilterFull(result, wedgeSum)  # prev wedgeSumINV
+    result = apply_fourier_filter_full(result, wedgeSum)  # prev wedgeSumINV
 
     # do a low pass filter
     result = lowpassFilter(result, sx/2-2, (sx/2-1)/10.)[0]

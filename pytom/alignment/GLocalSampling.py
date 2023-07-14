@@ -315,7 +315,7 @@ def mainAlignmentLoop(alignmentJob, verbose=False):
             remove(alignmentJob.destination+"/"+'CurrentMask.xml')
 
         else:
-            from pytom.gpu.gpuFunctions import applyFourierFilter
+            from pytom.gpu.gpuFunctions import apply_fourier_filter
             from pytom.agnostic.io import read
             print(">>>>>>>>> Aligning Even ....")
             resultsEven = mpi.parfor(alignParticleListGPU, list(zip(evenSplitList,
@@ -404,7 +404,7 @@ def mainAlignmentLoop(alignmentJob, verbose=False):
                 # # write(fname3, average)
                 # # write(fname2, weight)
                 #
-                #write(fname, applyFourierFilter(average, weight))
+                #write(fname, apply_fourier_filter(average, weight))
                 # average *= 0
                 # weight *= 0
                 cvols[name] = read(fname)
@@ -856,12 +856,12 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
 
     if 'gpu' in device:
         from pytom.agnostic.tools import invert_WedgeSum
-        from pytom.agnostic.filter import applyFourierFilter, bandpass
+        from pytom.agnostic.filter import apply_fourier_filter, bandpass
         write(f'{root}-PreWedge{ext}', unweiAv)
         write(f'{root}-WedgeSumUnscaled{ext}', wedgeSum)
         wedgeSum = invert_WedgeSum(invol=wedgeSum, r_max=unweiAv.shape[0] / 2 - 2., lowlimit=.05 * len(particleList),
                         lowval=.05 * len(particleList))
-        unweiAv = applyFourierFilter(unweiAv, wedgeSum)
+        unweiAv = apply_fourier_filter(unweiAv, wedgeSum)
         unweiAv = bandpass(unweiAv, high=unweiAv.shape[0]//2-2, sigma=(unweiAv.shape[0]//2-1)/10.)
         write(averageName, unweiAv)
     else:

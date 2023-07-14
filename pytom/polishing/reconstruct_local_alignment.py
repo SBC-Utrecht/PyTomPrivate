@@ -211,7 +211,7 @@ def run_single_tilt_angle(subtomogram, ang, offset, vol_size, particle_position,
     from math import cos, sin, pi, sqrt
     from pytom.agnostic.tools import create_circle
     from pytom.agnostic.transform import cut_from_projection
-    from pytom.agnostic.filter import applyFourierFilterFull, bandpass_circle
+    from pytom.agnostic.filter import apply_fourier_filter_full, bandpass_circle
     from pytom.agnostic.io import read, write
     from pytom.agnostic.correlation import meanUnderMask, stdUnderMask
     import os
@@ -233,7 +233,7 @@ def run_single_tilt_angle(subtomogram, ang, offset, vol_size, particle_position,
         profile = [line.split()[0] for line in open(fsc_path, 'r').readlines()]
         fsc_mask3d = profile_to_fourier_vol(profile, subtomogram.shape)
 
-        subtomogram = applyFourierFilterFull(subtomogram, fsc_mask3d)
+        subtomogram = apply_fourier_filter_full(subtomogram, fsc_mask3d)
 
 
     # Cross correlate the templat
@@ -264,7 +264,7 @@ def run_single_tilt_angle(subtomogram, ang, offset, vol_size, particle_position,
         if os.path.isfile(fsc_path):
             profile = [line.split()[0] for line in open(fsc_path, 'r').readlines()]
             fsc_mask2d = profile_to_fourier_vol(profile, patch.shape)
-            patch = applyFourierFilterFull(patch, fsc_mask2d)
+            patch = apply_fourier_filter_full(patch, fsc_mask2d)
 
 
         template = normalize_image(template, mask2d, mask2d.sum())
@@ -355,7 +355,7 @@ def run_single_tilt_angle(subtomogram, ang, offset, vol_size, particle_position,
             ax_2_2.axis('off')
 
             axis_title(ax_0_0, "Cutout")
-            ax_0_0.imshow(applyFourierFilterFull(patch,xp.fft.fftshift(ff)))
+            ax_0_0.imshow(apply_fourier_filter_full(patch,xp.fft.fftshift(ff)))
             axis_title(ax_0_1, "Template")
             ax_0_1.imshow(template)
             axis_title(ax_0_2, "Shifted Cutout\n(based on cross correlation)")

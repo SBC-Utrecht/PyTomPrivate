@@ -54,9 +54,9 @@ def bandpass_circle(image, low=0, high=-1, sigma=0, ff=1):
         )
 
     if ff is None:
-        res = applyFourierFilterFull(image, xp.fft.fftshift(mask))
+        res = apply_fourier_filter_full(image, xp.fft.fftshift(mask))
     else:
-        res = applyFourierFilterFull(image, xp.fft.fftshift(mask) * ff)
+        res = apply_fourier_filter_full(image, xp.fft.fftshift(mask) * ff)
 
     return res
 
@@ -1176,21 +1176,21 @@ def filter_volume_by_profile(volume, profile):
     @rtype: L{pytom.lib.pytom_volume.vol}
     @author: FF
     """
-    from pytom.agnostic.filter import applyFourierFilter, applyFourierFilterFull
+    from pytom.agnostic.filter import apply_fourier_filter, apply_fourier_filter_full
 
     if volume.shape[0] != volume.shape[-1]:
         reduced = True
-        convolute = applyFourierFilter
+        convolute = apply_fourier_filter
     else:
         reduced = False
-        convolute = applyFourierFilterFull
+        convolute = apply_fourier_filter_full
 
     kernel = profile_to_fourier_vol(profile=profile, dim=volume.shape, reduced=reduced)
     outvol = convolute(volume, kernel)
     return outvol
 
 
-def applyFourierFilter(particle, filter):
+def apply_fourier_filter(particle, filter):
     # cast numpy to cupy if needed
     particle = xp.array(particle)
     return xp.fft.irfftn(xp.fft.rfftn(particle, particle.shape) * filter).real.astype(
@@ -1198,7 +1198,7 @@ def applyFourierFilter(particle, filter):
     )
 
 
-def applyFourierFilterFull(particle, filter):
+def apply_fourier_filter_full(particle, filter):
     # cast numpy to cupy if needed
     particle = xp.array(particle)
     return xp.fft.ifftn(xp.fft.fftn(particle) * filter).real.astype(xp.float32)

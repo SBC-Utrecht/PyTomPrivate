@@ -2,7 +2,7 @@ from pytom.gpu.initialize import xp, device
 from pytom.basic.structures import Rotation as RotationPytomC
 from pytom.agnostic.io import read
 from pytom.agnostic.transform import fftshift, fourier_reduced2full
-from pytom.agnostic.filter import applyFourierFilter
+from pytom.agnostic.filter import apply_fourier_filter
 
 
 class PyTomClassError(Exception):
@@ -293,12 +293,12 @@ class Preprocessing(PyTomClass):
         if self._weightingOn and (not bypassFlag):
             from pytom.agnostic.io import read
             from pytom.agnostic.structures import Weight as weight
-            from pytom.agnostic.filter import applyFourierFilter
+            from pytom.agnostic.filter import apply_fourier_filter
 
             # TODO What exactly is read here? I interpreted this as a volume
             wedgeSum = read(self._weightingFile)
 
-            applyFourierFilter(volume, wedgeSum)
+            apply_fourier_filter(volume, wedgeSum)
 
         if self._substractParticle and particle.__class__ == vol:
             volume -= particle
@@ -807,7 +807,7 @@ class Reference(PyTomClass):
         # if flag is set and both files exist, do subtract particle from reference
 
         from pytom.agnostic.io import read
-        from pytom.gpu.gpuFunctions import applyFourierFilter as convolute
+        from pytom.gpu.gpuFunctions import apply_fourier_filter as convolute
         from pytom.agnostic.filter import rotate_weighting
         from pytom.agnostic.tools import invert_WedgeSum
         from pytom.agnostic.filter import filter_volume_by_profile
@@ -1401,7 +1401,7 @@ class SingleTiltWedge(PyTomClass):
             raise TypeError('SingleTiltWedge: You must provide a xp.array here!')
 
         if self._wedge_angle1 > 0 or self._wedge_angle2 > 0:
-            from pytom.agnostic.filter import applyFourierFilter as filter
+            from pytom.agnostic.filter import apply_fourier_filter as filter
 
             wedgeFilter = self.return_wedge_volume(volume.shape[0], volume.shape[1], volume.shape[2], rotation)
             result = filter(volume, wedgeFilter)
@@ -1633,7 +1633,7 @@ be generated. If omitted / 0, filter is fixed to size/2.
         @rtype: L{pytom.lib.pytom_volume.vol}
         @author: Thomas Hrabe
         """
-        from pytom.agnostic.filter import applyFourierFilter
+        from pytom.agnostic.filter import apply_fourier_filter
 
         if not volume.__class__ == xp.array:
             raise TypeError('You must provide a pytom.lib.pytom_volume.vol here!')
@@ -1641,7 +1641,7 @@ be generated. If omitted / 0, filter is fixed to size/2.
         wedgeVolume = self.return_wedge_volume(volume.size_x(), volume.size_y(), volume.size_z(),
                                              humanUnderstandable=False, rotation=rotation)
 
-        result = applyFourierFilter(volume, wedgeVolume)
+        result = apply_fourier_filter(volume, wedgeVolume)
 
         return result
 
@@ -1701,7 +1701,7 @@ class Wedge3dCTF(PyTomClass):
 
         wedge = self.return_wedge_volume()
 
-        return applyFourierFilter(volume, wedge)
+        return apply_fourier_filter(volume, wedge)
 
     def to_spherical_func(self, b, radius=None):
         """Convert the wedge from real space to a spherical function.
@@ -1797,7 +1797,7 @@ class GeneralWedge(PyTomClass):
         if not volume.__class__ == xp.array:
             raise TypeError('You must provide a xp.ndarray here!')
 
-        from pytom.agnostic.filter import applyFourierFilter as filter
+        from pytom.agnostic.filter import apply_fourier_filter as filter
         wedgeFilter = self.returnWedgeFilter(None, None, None, rotation)
         result = filter(volume, wedgeFilter)
         return result
@@ -3299,7 +3299,7 @@ class ParticleList(PyTomClass):
         """
         from pytom.lib.pytom_volume import variance
         from pytom.tools.ProgressBar import FixedProgBar
-        from pytom.agnostic.filter import applyFourierFilter
+        from pytom.agnostic.filter import apply_fourier_filter
 
         if verbose:
             progressBar = FixedProgBar(0, len(self._particleList), '')
@@ -3337,7 +3337,7 @@ class ParticleList(PyTomClass):
                 progressBar.update(num_processed)
 
         # take care the wedge weighting
-        result = applyFourierFilter(sum_var, 1/sum_w)
+        result = apply_fourier_filter(sum_var, 1/sum_w)
 
         return result
 
@@ -4946,11 +4946,11 @@ class Weight():
         self.rotation = [phi, theta, psi]
 
     def apply(self, volume):
-        from pytom.agnostic.filter import applyFourierFilter
+        from pytom.agnostic.filter import apply_fourier_filter
 
         wedge = self.getWeightVolume()
 
-        return applyFourierFilter(volume, wedge)
+        return apply_fourier_filter(volume, wedge)
 
     def getWeightVolume(self, reducedComplex=True):
         from pytom.agnostic.filter import create_wedge
