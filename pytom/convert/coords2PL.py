@@ -31,8 +31,7 @@ def convertCoords2PL(coordinate_files, particleList_file, subtomoPrefix=None, we
             pass
     pl.toXMLFile(particleList_file)
 
-
-if __name__ == '__main__':
+def entry_point():
     import sys
     from pytom.tools.script_helper import ScriptHelper, ScriptOption
     from pytom.tools.parse_script_options import parse_script_options
@@ -101,3 +100,6 @@ if __name__ == '__main__':
     assert len(wedge_angle) == len(coordName)*2
     convertCoords2PL(coordinate_files=coordName, particleList_file=plName, subtomoPrefix=subtomoPrefix,
                      wedge_angles=wedge_angle,angleList=angleList)
+
+if __name__ == '__main__':
+    entry_point()
