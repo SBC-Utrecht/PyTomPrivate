@@ -39,7 +39,7 @@ def convertCoords2PL(coordinate_files, particleList_file, subtomoPrefix=None, we
             pass
     if tomogram_name is not None:
         for particle in pl:
-            pl.getPickPosition().setOriginFilename(tomogram_name)
+            particle.getPickPosition().setOriginFilename(tomogram_name)
     pl.toXMLFile(particleList_file)
 
 def entry_point():
@@ -65,15 +65,15 @@ def entry_point():
                           options=options)
     if len(sys.argv) == 1:
         print(helper)
-        sys.exit()
+        return
     try:
         plName, coordName, subtomoPrefix, w, r, angleList, tomogram_name, help = parse_script_options(sys.argv[1:], helper)
     except Exception as e:
         print(e)
-        sys.exit()
+        raise e
     if help is True:
         print(helper)
-        sys.exit()
+        return
     if w:
         if len(w.split(',')) > 1:
             wedge_angle = []
