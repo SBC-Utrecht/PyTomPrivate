@@ -779,7 +779,7 @@ class CommonFunctions():
             exefile.close()
 
             if self.widgets[mode+'queue'].isChecked():
-                dd = subprocess.run([f'{self.qcommand}',f'{exefilename}'], text=True, capture_output=True)
+                dd = subprocess.run([self.qcommand, exefilename], text=True, capture_output=True)
                 print('Submitted')
                 text = dd.stdout[:-1]
                 id = text.split()[-1]
@@ -1118,7 +1118,7 @@ class CommonFunctions():
         outjob.close()
 
         if self.checkbox[id].isChecked():
-            dd = subprocess.run([f'{self.qcommand}',f'{execfilename}'],
+            dd = subprocess.run([self.qcommand, execfilename],
                     shell=True, text=True, capture_output=True)
             text = dd.stdout[:-1]
             try:
@@ -1180,7 +1180,7 @@ class CommonFunctions():
 
             if queue:
 
-                dd = subprocess.run([f'{self.qcommand}',f'{exefilename}'], text=True, capture_output=True)
+                dd = subprocess.run([self.qcommand, exefilename], text=True, capture_output=True)
                 text = dd.stdout[:-1]
                 id = text.split()[-1]
                 logcopy = os.path.join(self.projectname, f'LogFiles/{id}_{os.path.basename(exefilename)}')
@@ -3900,7 +3900,7 @@ class ParticlePicker(QMainWindow, CommonFunctions):
             self.close()
 
     def setAngle(self):
-        folder = os.path.dirname(subprocess.run(['ls','-alrt', f'{self.tomogram_name}'], text=True, capture_output=True).stdout.splitlines()[-1])
+        folder = os.path.dirname(subprocess.run(['ls','-alrt', self.tomogram_name], text=True, capture_output=True).stdout.splitlines()[-1])
         try:
             specimen_angle_file = os.path.join(folder, 'specimen_rotation_angle.txt')
             if os.path.exists(specimen_angle_file):
@@ -3998,7 +3998,7 @@ class ParticlePicker(QMainWindow, CommonFunctions):
             self.leftimage.addItem(self.lineL)
             return
         try:
-            tt = os.path.dirname(subprocess.run(['ls','-alrt', f'{self.tomogram_name}'], text=True, capture_output=True).stdout.splitlines()[-1])
+            tt = os.path.dirname(subprocess.run(['ls','-alrt', self.tomogram_name], text=True, capture_output=True).stdout.splitlines()[-1])
             self.folder = tt
             zlimitfile = os.path.join(tt, 'z_limits.txt')
 
@@ -4047,7 +4047,7 @@ class ParticlePicker(QMainWindow, CommonFunctions):
             print('\n\n\n', e)
 
     def save_angle(self):
-        tt = os.path.dirname(subprocess.run(['ls','-alrt',f'{self.tomogram_name}'], text=True, capture_output=True).stdout.splitlines()[-1])
+        tt = os.path.dirname(subprocess.run(['ls','-alrt',self.tomogram_name], text=True, capture_output=True).stdout.splitlines()[-1])
         self.folder = tt
         sra_file = os.path.join(tt, 'specimen_rotation_angle.txt')
         if os.path.exists(os.path.join(os.path.dirname(sra_file), 'WBP_Reconstruction.sh')):
@@ -4249,7 +4249,7 @@ class SelectModules(QWidget):
         self.p = parent
 
         q = "module avail --long 2>&1 | awk 'NR >2 {print $1}'"
-        avail = [line for line in subprocess.run(q, shell=True, capture_output=True, text=True).stdout.splitlines() 
+        avail = [line for line in subprocess.run([q], shell=True, capture_output=True, text=True).stdout.splitlines() 
                 if not line.startswith('/')
                 and not line.startswith('shared') and not 'intel' in line]
         # only add pytom, imod, and motioncor, rest is contained now in the conda environment
