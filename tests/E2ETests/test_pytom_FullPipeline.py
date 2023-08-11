@@ -626,7 +626,7 @@ mrcs2mrc.py -f ctfCorrected.st -t {self.tomoname}/ctf/sorted_ctf -p sorted_ctf -
         gen_mask_fsc(read(model), 2, f'{self.projectname}/05_Subtomogram_Analysis/Validation/maskFinalAverage.mrc', 1,
                      1.5)
 
-        cwd = f'cd {self.projectname}/05_Subtomogram_Analysis/Validation'
+        cwd = f'{self.projectname}/05_Subtomogram_Analysis/Validation'
         cmd = ['fsc.py',
                 f'--v1 {outdir}/average-Final-Even.em',
                 f'--v2 {outdir}/average-Final-Odd.em',
