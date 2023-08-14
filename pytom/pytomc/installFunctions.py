@@ -210,27 +210,42 @@ def generateExecuteables(libPaths=None,binPaths=None,pyPaths=None,python_version
 
 def generatePyTomScript(pytomDirectory,python_version):
     
-    pytomCommand = f"""#!/usr/bin/env bash
-cat {sys.prefix}/pytom_data/LICENSE.txt
+    pytomCommand = '\n'.join([
+    "#!/usr/bin/env bash",
+    f"cat {sys.prefix}/pytom_data/LICENSE.txt",
+    """FID=0
 
-FID=0
-export PYTOM_GPU=-1
+if [[ -n "${CUDA_VISIBLE_DEVICES}" ]]; then
+    CVD=1
+    #Replace all commas to IFS and cast to array
+    CVDArr=(${CUDA_VISIBLE_DEVICES//,/${IFS}})
+else
+    CVD=0
+fi
 
 for a in $*
 do
     if [ $FID -eq 1 ]; then
         FID=0
-        export PYTOM_GPU="$a"
+        if [ $CVD -eq 1 ]; then
+            #Assume we are selecting one of the available gpus
+            if [ "${CVDArr[a]}" ]; then
+                RUN_CVD="CUDA_VISIBLE_DEVICES=${CVDArr[a]}"
+            else
+                echo "Given GPU flag is outside of the range for CUDA_VISIBLE_DEVICES, defaulting to first device"
+                RUN_CVD="CUDA_VISIBLE_DEVICES=${CVDArr[0]}"
+            fi
+        else
+            #Assume the user knows what they are doing and set it ourself
+            RUN_CVD="CUDA_VISIBLE_DEVICES=${a}"
+        fi
     fi
 
     if [ "$a" = '-g' ] || [ "$a" = '--gpuID' ]; then
-        export PYTOM_GPU=1
         FID=1
     fi
-done
-
-{sys.executable} -O $*
-"""
+done""",
+    f"env $RUN_CVD {sys.executable} -O $* "])
 
     f = open(pytomDirectory + os.sep + 'bin' + os.sep + 'pytom','w')
     f.write(pytomCommand)

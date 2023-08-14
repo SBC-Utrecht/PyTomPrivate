@@ -8,9 +8,6 @@ only_run_cpu = False
 if os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
     only_run_cpu = True
 else:
-    if os.environ.get("PYTOM_GPU", None) is None:
-        os.environ['PYTOM_GPU'] = '0'
-
     from pytom.gpu.initialize import device
 
     if 'gpu' not in device:

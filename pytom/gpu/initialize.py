@@ -3,14 +3,16 @@ global xp
 global device
 global map_coordinates
 
-if 'PYTOM_GPU' in os.environ.keys() and str(os.environ['PYTOM_GPU']) != '-1':
+if os.environ.get(env_key, None) is not None:
     try:
         import cupy as xp
         import cupy.typing as xpt
-        ID = os.environ['PYTOM_GPU'].split(',')
-        xp.cuda.Device(int(ID[0])).use()
+        n_gpus = cupy.cuda.runtime.getDeviceCount()
+        all_gpus = list(range(n_gpus)) 
+        ID = all_gpus #TODO: remove ID and move everything to all_gpus
+        xp.cuda.Device().use()
         from cupyx.scipy.ndimage import map_coordinates
-        device = f'gpu:{ID[0]}'
+        device = f'gpu:{xp.cuda.runtime.getDevice()}'
 
     except Exception as e:
         print(e)
@@ -20,7 +22,6 @@ if 'PYTOM_GPU' in os.environ.keys() and str(os.environ['PYTOM_GPU']) != '-1':
 
         device = 'cpu'
 else:
-    os.system("export PYTOM_GPU=0")
     import numpy as xp
     import numpy.typing as xpt
     from scipy.ndimage import map_coordinates
