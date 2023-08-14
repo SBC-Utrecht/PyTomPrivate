@@ -180,13 +180,14 @@ class pytom_LocalTest(unittest.TestCase):
         This runs the unittest for template matching, which are located in template_match_test.py.
 
         The tests need to called with a fresh python environment because otherwise GPU functionality cannot be loaded.
-        PyTom runs GPU code by setting the environment variable PYTOM_GPU, which agnostic libraries then use to load
-        either numpy or cupy. This is done through pytom.gpu.initialize from which libraries can load the xp module.
-        For the GPU template matching test we therefore need to set PYTOM_GPU in the test.
+        PyTom runs GPU code by setting the environment variable CUDA_VISIBLE_DEVICES, 
+        which agnostic libraries then use to load either numpy or cupy. 
+        This is done through pytom.gpu.initialize from which libraries can load the xp module.
+        For the GPU template matching test we therefore need to set CUDA_VISIBLE_DEVICES in the test.
 
         However, because modules are only imported once, some tests will have already called pytom.gpu.initialize
-        when PYTOM_GPU was not yet set. After updating the environment, the module will not be reimported and the GPU
-        backend is then not available.
+        when CUDA_VISIBLE_DEVICES was not yet set. After updating the environment, the module will not be
+        reimported and the GPU backend is then not available.
 
         ====> so I now set it up to call the test with a fresh environment...
         """
