@@ -807,7 +807,8 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
     splitLists = splitParticleList(particleList, setParticleNodesRatio=setParticleNodesRatio)
     splitFactor = len(splitLists)
     assert splitFactor > 0, "splitFactor == 0, issue with parallelization"
-    if 'gpu' in device:
+    # Also check if gpu ids is not an empty list as that will have issues later
+    if 'gpu' in device and gpuIDs:
         from pytom.bin.average import averageGPU as average
         from pytom.agnostic.structures import Reference
         from pytom.agnostic.io import read, write
