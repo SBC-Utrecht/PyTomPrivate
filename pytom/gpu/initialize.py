@@ -9,7 +9,7 @@ global map_coordinates
 try:
     import cupy as xp
     import cupy.typing as xpt
-    n_gpus = cupy.cuda.runtime.getDeviceCount()
+    n_gpus = xp.cuda.runtime.getDeviceCount()
     all_gpus = list(range(n_gpus)) 
     ID = all_gpus #TODO: remove ID and move everything to all_gpus
     xp.cuda.Device().use()
