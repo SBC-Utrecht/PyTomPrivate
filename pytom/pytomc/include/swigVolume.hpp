@@ -66,7 +66,14 @@ public:
 	std::size_t size_z() const{
 		return this->getSizeZ();
 	};
-
+	/**
+	 * custom tuple wrapper
+	 */
+	std::tuple<std::size_t, std::size_t, std::size_t> shape() const{
+		std::tuple<std::size_t, std::size_t, std::size_t> out;
+     		out = std::make_tuple(this->getSizeX(), this->getSizeY(), this->getSizeZ());
+		return out;
+	};
 	float getFtSizeX() const{
 		return this->ftSizeX;
 	};

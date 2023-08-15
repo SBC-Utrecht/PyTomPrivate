@@ -4132,6 +4132,43 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_vol_shape(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  swigTom::swigVolume< float,float > *arg1 = (swigTom::swigVolume< float,float > *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  std::tuple< std::size_t,std::size_t,std::size_t > result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_swigTom__swigVolumeT_float_float_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "vol_shape" "', argument " "1"" of type '" "swigTom::swigVolume< float,float > const *""'"); 
+  }
+  arg1 = reinterpret_cast< swigTom::swigVolume< float,float > * >(argp1);
+  {
+    try {
+      result = ((swigTom::swigVolume< float,float > const *)arg1)->shape();
+    } catch (const std::exception& e) {
+      SWIG_exception(SWIG_RuntimeError, e.what());
+    }
+  }
+  {
+    PyObject * tuple = PyTuple_New(3);
+    
+    PyTuple_SetItem(tuple, 0, PyInt_FromLong(std::get<0>(result)));
+    PyTuple_SetItem(tuple, 1, PyInt_FromLong(std::get<1>(result)));
+    PyTuple_SetItem(tuple, 2, PyInt_FromLong(std::get<2>(result)));
+    
+    resultobj = tuple;
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_vol_getFtSizeX(PyObject *self, PyObject *args) {
   PyObject *resultobj = 0;
   swigTom::swigVolume< float,float > *arg1 = (swigTom::swigVolume< float,float > *) 0 ;
@@ -6001,6 +6038,43 @@ SWIGINTERN PyObject *_wrap_vol_comp_size_z(PyObject *self, PyObject *args) {
     }
   }
   resultobj = SWIG_From_size_t(static_cast< size_t >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_vol_comp_shape(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  swigTom::swigVolume< std::complex< float >,float > *arg1 = (swigTom::swigVolume< std::complex< float >,float > *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  std::tuple< std::size_t,std::size_t,std::size_t > result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_swigTom__swigVolumeT_std__complexT_float_t_float_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "vol_comp_shape" "', argument " "1"" of type '" "swigTom::swigVolume< std::complex< float >,float > const *""'"); 
+  }
+  arg1 = reinterpret_cast< swigTom::swigVolume< std::complex< float >,float > * >(argp1);
+  {
+    try {
+      result = ((swigTom::swigVolume< std::complex< float >,float > const *)arg1)->shape();
+    } catch (const std::exception& e) {
+      SWIG_exception(SWIG_RuntimeError, e.what());
+    }
+  }
+  {
+    PyObject * tuple = PyTuple_New(3);
+    
+    PyTuple_SetItem(tuple, 0, PyInt_FromLong(std::get<0>(result)));
+    PyTuple_SetItem(tuple, 1, PyInt_FromLong(std::get<1>(result)));
+    PyTuple_SetItem(tuple, 2, PyInt_FromLong(std::get<2>(result)));
+    
+    resultobj = tuple;
+  }
   return resultobj;
 fail:
   return NULL;
@@ -11695,6 +11769,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "vol_size_x", _wrap_vol_size_x, METH_O, "vol_size_x(vol self) -> std::size_t"},
 	 { "vol_size_y", _wrap_vol_size_y, METH_O, "vol_size_y(vol self) -> std::size_t"},
 	 { "vol_size_z", _wrap_vol_size_z, METH_O, "vol_size_z(vol self) -> std::size_t"},
+	 { "vol_shape", _wrap_vol_shape, METH_O, "vol_shape(vol self) -> std::tuple< std::size_t,std::size_t,std::size_t >"},
 	 { "vol_getFtSizeX", _wrap_vol_getFtSizeX, METH_O, "vol_getFtSizeX(vol self) -> float"},
 	 { "vol_getFtSizeY", _wrap_vol_getFtSizeY, METH_O, "vol_getFtSizeY(vol self) -> float"},
 	 { "vol_getFtSizeZ", _wrap_vol_getFtSizeZ, METH_O, "vol_getFtSizeZ(vol self) -> float"},
@@ -11749,6 +11824,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "vol_comp_size_x", _wrap_vol_comp_size_x, METH_O, "vol_comp_size_x(vol_comp self) -> std::size_t"},
 	 { "vol_comp_size_y", _wrap_vol_comp_size_y, METH_O, "vol_comp_size_y(vol_comp self) -> std::size_t"},
 	 { "vol_comp_size_z", _wrap_vol_comp_size_z, METH_O, "vol_comp_size_z(vol_comp self) -> std::size_t"},
+	 { "vol_comp_shape", _wrap_vol_comp_shape, METH_O, "vol_comp_shape(vol_comp self) -> std::tuple< std::size_t,std::size_t,std::size_t >"},
 	 { "vol_comp_getFtSizeX", _wrap_vol_comp_getFtSizeX, METH_O, "vol_comp_getFtSizeX(vol_comp self) -> float"},
 	 { "vol_comp_getFtSizeY", _wrap_vol_comp_getFtSizeY, METH_O, "vol_comp_getFtSizeY(vol_comp self) -> float"},
 	 { "vol_comp_getFtSizeZ", _wrap_vol_comp_getFtSizeZ, METH_O, "vol_comp_getFtSizeZ(vol_comp self) -> float"},
