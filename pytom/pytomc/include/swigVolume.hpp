@@ -67,13 +67,9 @@ public:
 		return this->getSizeZ();
 	};
 	/**
-	 * custom tuple wrapper
+	 * mimic numpy array shape attribute
 	 */
-	std::tuple<std::size_t, std::size_t, std::size_t> shape() const{
-		std::tuple<std::size_t, std::size_t, std::size_t> out;
-     		out = std::make_tuple(this->getSizeX(), this->getSizeY(), this->getSizeZ());
-		return out;
-	};
+	std::tuple<std::size_t, std::size_t, std::size_t> shape= std::make_tuple(this->getSizeX(), this->getSizeY(), this->getSizeZ());
 	float getFtSizeX() const{
 		return this->ftSizeX;
 	};

@@ -2984,12 +2984,13 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_char swig_types[0]
 #define SWIGTYPE_p_float swig_types[1]
 #define SWIGTYPE_p_std__complexT_float_t swig_types[2]
-#define SWIGTYPE_p_swigTom__swigVolumeT_float_float_t swig_types[3]
-#define SWIGTYPE_p_swigTom__swigVolumeT_std__complexT_float_t_float_t swig_types[4]
-#define SWIGTYPE_p_tom__VolumeT_float_t swig_types[5]
-#define SWIGTYPE_p_tom__VolumeT_std__complexT_float_t_t swig_types[6]
-static swig_type_info *swig_types[8];
-static swig_module_info swig_module = {swig_types, 7, 0, 0, 0, 0};
+#define SWIGTYPE_p_std__tupleT_std__size_t_std__size_t_std__size_t_t swig_types[3]
+#define SWIGTYPE_p_swigTom__swigVolumeT_float_float_t swig_types[4]
+#define SWIGTYPE_p_swigTom__swigVolumeT_std__complexT_float_t_float_t swig_types[5]
+#define SWIGTYPE_p_tom__VolumeT_float_t swig_types[6]
+#define SWIGTYPE_p_tom__VolumeT_std__complexT_float_t_t swig_types[7]
+static swig_type_info *swig_types[9];
+static swig_module_info swig_module = {swig_types, 8, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -4132,7 +4133,44 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_vol_shape(PyObject *self, PyObject *args) {
+SWIGINTERN PyObject *_wrap_vol_shape_set(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  swigTom::swigVolume< float,float > *arg1 = (swigTom::swigVolume< float,float > *) 0 ;
+  std::tuple< std::size_t,std::size_t,std::size_t > arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "vol_shape_set", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_swigTom__swigVolumeT_float_float_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "vol_shape_set" "', argument " "1"" of type '" "swigTom::swigVolume< float,float > *""'"); 
+  }
+  arg1 = reinterpret_cast< swigTom::swigVolume< float,float > * >(argp1);
+  {
+    res2 = SWIG_ConvertPtr(swig_obj[1], &argp2, SWIGTYPE_p_std__tupleT_std__size_t_std__size_t_std__size_t_t,  0  | 0);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "vol_shape_set" "', argument " "2"" of type '" "std::tuple< std::size_t,std::size_t,std::size_t >""'"); 
+    }  
+    if (!argp2) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "vol_shape_set" "', argument " "2"" of type '" "std::tuple< std::size_t,std::size_t,std::size_t >""'");
+    } else {
+      std::tuple< std::size_t,std::size_t,std::size_t > * temp = reinterpret_cast< std::tuple< std::size_t,std::size_t,std::size_t > * >(argp2);
+      arg2 = *temp;
+      if (SWIG_IsNewObj(res2)) delete temp;
+    }
+  }
+  if (arg1) (arg1)->shape = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_vol_shape_get(PyObject *self, PyObject *args) {
   PyObject *resultobj = 0;
   swigTom::swigVolume< float,float > *arg1 = (swigTom::swigVolume< float,float > *) 0 ;
   void *argp1 = 0 ;
@@ -4144,16 +4182,10 @@ SWIGINTERN PyObject *_wrap_vol_shape(PyObject *self, PyObject *args) {
   swig_obj[0] = args;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_swigTom__swigVolumeT_float_float_t, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "vol_shape" "', argument " "1"" of type '" "swigTom::swigVolume< float,float > const *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "vol_shape_get" "', argument " "1"" of type '" "swigTom::swigVolume< float,float > *""'"); 
   }
   arg1 = reinterpret_cast< swigTom::swigVolume< float,float > * >(argp1);
-  {
-    try {
-      result = ((swigTom::swigVolume< float,float > const *)arg1)->shape();
-    } catch (const std::exception& e) {
-      SWIG_exception(SWIG_RuntimeError, e.what());
-    }
-  }
+  result =  ((arg1)->shape);
   {
     PyObject * tuple = PyTuple_New(3);
     
@@ -6044,7 +6076,44 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_vol_comp_shape(PyObject *self, PyObject *args) {
+SWIGINTERN PyObject *_wrap_vol_comp_shape_set(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  swigTom::swigVolume< std::complex< float >,float > *arg1 = (swigTom::swigVolume< std::complex< float >,float > *) 0 ;
+  std::tuple< std::size_t,std::size_t,std::size_t > arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "vol_comp_shape_set", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_swigTom__swigVolumeT_std__complexT_float_t_float_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "vol_comp_shape_set" "', argument " "1"" of type '" "swigTom::swigVolume< std::complex< float >,float > *""'"); 
+  }
+  arg1 = reinterpret_cast< swigTom::swigVolume< std::complex< float >,float > * >(argp1);
+  {
+    res2 = SWIG_ConvertPtr(swig_obj[1], &argp2, SWIGTYPE_p_std__tupleT_std__size_t_std__size_t_std__size_t_t,  0  | 0);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "vol_comp_shape_set" "', argument " "2"" of type '" "std::tuple< std::size_t,std::size_t,std::size_t >""'"); 
+    }  
+    if (!argp2) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "vol_comp_shape_set" "', argument " "2"" of type '" "std::tuple< std::size_t,std::size_t,std::size_t >""'");
+    } else {
+      std::tuple< std::size_t,std::size_t,std::size_t > * temp = reinterpret_cast< std::tuple< std::size_t,std::size_t,std::size_t > * >(argp2);
+      arg2 = *temp;
+      if (SWIG_IsNewObj(res2)) delete temp;
+    }
+  }
+  if (arg1) (arg1)->shape = arg2;
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_vol_comp_shape_get(PyObject *self, PyObject *args) {
   PyObject *resultobj = 0;
   swigTom::swigVolume< std::complex< float >,float > *arg1 = (swigTom::swigVolume< std::complex< float >,float > *) 0 ;
   void *argp1 = 0 ;
@@ -6056,16 +6125,10 @@ SWIGINTERN PyObject *_wrap_vol_comp_shape(PyObject *self, PyObject *args) {
   swig_obj[0] = args;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_swigTom__swigVolumeT_std__complexT_float_t_float_t, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "vol_comp_shape" "', argument " "1"" of type '" "swigTom::swigVolume< std::complex< float >,float > const *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "vol_comp_shape_get" "', argument " "1"" of type '" "swigTom::swigVolume< std::complex< float >,float > *""'"); 
   }
   arg1 = reinterpret_cast< swigTom::swigVolume< std::complex< float >,float > * >(argp1);
-  {
-    try {
-      result = ((swigTom::swigVolume< std::complex< float >,float > const *)arg1)->shape();
-    } catch (const std::exception& e) {
-      SWIG_exception(SWIG_RuntimeError, e.what());
-    }
-  }
+  result =  ((arg1)->shape);
   {
     PyObject * tuple = PyTuple_New(3);
     
@@ -11769,7 +11832,8 @@ static PyMethodDef SwigMethods[] = {
 	 { "vol_size_x", _wrap_vol_size_x, METH_O, "vol_size_x(vol self) -> std::size_t"},
 	 { "vol_size_y", _wrap_vol_size_y, METH_O, "vol_size_y(vol self) -> std::size_t"},
 	 { "vol_size_z", _wrap_vol_size_z, METH_O, "vol_size_z(vol self) -> std::size_t"},
-	 { "vol_shape", _wrap_vol_shape, METH_O, "vol_shape(vol self) -> std::tuple< std::size_t,std::size_t,std::size_t >"},
+	 { "vol_shape_set", _wrap_vol_shape_set, METH_VARARGS, "vol_shape_set(vol self, std::tuple< std::size_t,std::size_t,std::size_t > shape)"},
+	 { "vol_shape_get", _wrap_vol_shape_get, METH_O, "vol_shape_get(vol self) -> std::tuple< std::size_t,std::size_t,std::size_t >"},
 	 { "vol_getFtSizeX", _wrap_vol_getFtSizeX, METH_O, "vol_getFtSizeX(vol self) -> float"},
 	 { "vol_getFtSizeY", _wrap_vol_getFtSizeY, METH_O, "vol_getFtSizeY(vol self) -> float"},
 	 { "vol_getFtSizeZ", _wrap_vol_getFtSizeZ, METH_O, "vol_getFtSizeZ(vol self) -> float"},
@@ -11824,7 +11888,8 @@ static PyMethodDef SwigMethods[] = {
 	 { "vol_comp_size_x", _wrap_vol_comp_size_x, METH_O, "vol_comp_size_x(vol_comp self) -> std::size_t"},
 	 { "vol_comp_size_y", _wrap_vol_comp_size_y, METH_O, "vol_comp_size_y(vol_comp self) -> std::size_t"},
 	 { "vol_comp_size_z", _wrap_vol_comp_size_z, METH_O, "vol_comp_size_z(vol_comp self) -> std::size_t"},
-	 { "vol_comp_shape", _wrap_vol_comp_shape, METH_O, "vol_comp_shape(vol_comp self) -> std::tuple< std::size_t,std::size_t,std::size_t >"},
+	 { "vol_comp_shape_set", _wrap_vol_comp_shape_set, METH_VARARGS, "vol_comp_shape_set(vol_comp self, std::tuple< std::size_t,std::size_t,std::size_t > shape)"},
+	 { "vol_comp_shape_get", _wrap_vol_comp_shape_get, METH_O, "vol_comp_shape_get(vol_comp self) -> std::tuple< std::size_t,std::size_t,std::size_t >"},
 	 { "vol_comp_getFtSizeX", _wrap_vol_comp_getFtSizeX, METH_O, "vol_comp_getFtSizeX(vol_comp self) -> float"},
 	 { "vol_comp_getFtSizeY", _wrap_vol_comp_getFtSizeY, METH_O, "vol_comp_getFtSizeY(vol_comp self) -> float"},
 	 { "vol_comp_getFtSizeZ", _wrap_vol_comp_getFtSizeZ, METH_O, "vol_comp_getFtSizeZ(vol_comp self) -> float"},
@@ -11969,6 +12034,7 @@ static void *_p_swigTom__swigVolumeT_std__complexT_float_t_float_tTo_p_tom__Volu
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_float = {"_p_float", "float *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_std__complexT_float_t = {"_p_std__complexT_float_t", "std::complex< float > *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_std__tupleT_std__size_t_std__size_t_std__size_t_t = {"_p_std__tupleT_std__size_t_std__size_t_std__size_t_t", "std::tuple< std::size_t,std::size_t,std::size_t > *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_swigTom__swigVolumeT_float_float_t = {"_p_swigTom__swigVolumeT_float_float_t", "swigTom::swigVolume< float,float > *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_swigTom__swigVolumeT_std__complexT_float_t_float_t = {"_p_swigTom__swigVolumeT_std__complexT_float_t_float_t", "swigTom::swigVolume< std::complex< float >,float > *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_tom__VolumeT_float_t = {"_p_tom__VolumeT_float_t", "tom::Volume< float > *", 0, 0, (void*)0, 0};
@@ -11978,6 +12044,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_char,
   &_swigt__p_float,
   &_swigt__p_std__complexT_float_t,
+  &_swigt__p_std__tupleT_std__size_t_std__size_t_std__size_t_t,
   &_swigt__p_swigTom__swigVolumeT_float_float_t,
   &_swigt__p_swigTom__swigVolumeT_std__complexT_float_t_float_t,
   &_swigt__p_tom__VolumeT_float_t,
@@ -11987,6 +12054,7 @@ static swig_type_info *swig_type_initial[] = {
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_float[] = {  {&_swigt__p_float, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_std__complexT_float_t[] = {  {&_swigt__p_std__complexT_float_t, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_std__tupleT_std__size_t_std__size_t_std__size_t_t[] = {  {&_swigt__p_std__tupleT_std__size_t_std__size_t_std__size_t_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_swigTom__swigVolumeT_float_float_t[] = {  {&_swigt__p_swigTom__swigVolumeT_float_float_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_swigTom__swigVolumeT_std__complexT_float_t_float_t[] = {  {&_swigt__p_swigTom__swigVolumeT_std__complexT_float_t_float_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_tom__VolumeT_float_t[] = {  {&_swigt__p_tom__VolumeT_float_t, 0, 0, 0},  {&_swigt__p_swigTom__swigVolumeT_float_float_t, _p_swigTom__swigVolumeT_float_float_tTo_p_tom__VolumeT_float_t, 0, 0},{0, 0, 0, 0}};
@@ -11996,6 +12064,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_char,
   _swigc__p_float,
   _swigc__p_std__complexT_float_t,
+  _swigc__p_std__tupleT_std__size_t_std__size_t_std__size_t_t,
   _swigc__p_swigTom__swigVolumeT_float_float_t,
   _swigc__p_swigTom__swigVolumeT_std__complexT_float_t_float_t,
   _swigc__p_tom__VolumeT_float_t,

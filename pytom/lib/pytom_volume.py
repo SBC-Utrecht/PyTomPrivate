@@ -85,10 +85,7 @@ class vol(object):
     def size_z(self):
         r"""size_z(vol self) -> std::size_t"""
         return _pytom_volume.vol_size_z(self)
-
-    def shape(self):
-        r"""shape(vol self) -> std::tuple< std::size_t,std::size_t,std::size_t >"""
-        return _pytom_volume.vol_shape(self)
+    shape = property(_pytom_volume.vol_shape_get, _pytom_volume.vol_shape_set, doc=r"""shape : std::tuple<(std::size_t,std::size_t,std::size_t)>""")
 
     def getFtSizeX(self):
         r"""getFtSizeX(vol self) -> float"""
@@ -232,10 +229,7 @@ class vol_comp(object):
     def size_z(self):
         r"""size_z(vol_comp self) -> std::size_t"""
         return _pytom_volume.vol_comp_size_z(self)
-
-    def shape(self):
-        r"""shape(vol_comp self) -> std::tuple< std::size_t,std::size_t,std::size_t >"""
-        return _pytom_volume.vol_comp_shape(self)
+    shape = property(_pytom_volume.vol_comp_shape_get, _pytom_volume.vol_comp_shape_set, doc=r"""shape : std::tuple<(std::size_t,std::size_t,std::size_t)>""")
 
     def getFtSizeX(self):
         r"""getFtSizeX(vol_comp self) -> float"""
