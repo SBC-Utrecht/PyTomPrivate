@@ -473,7 +473,7 @@ def frm_proxy(p, ref, freq, offset, binning, mask):
         wedgegpu = xp.array(vol2npy(p.getWedge()).copy())
 
         print('init gooes')
-        pos, angle, score = frm_align(vgpu, p.getWedge().convert2numpy(), refgpu, None, [4, 64], freq, offset, maskgpu)
+        pos, angle, score = frm_align(vgpu, wedgegpu, refgpu, None, [4, 64], freq, offset, maskgpu)
 
     return (Shift([pos[0]-v.size_x()//2, pos[1]-v.size_y()//2, pos[2]-v.size_z()//2]), 
             Rotation(angle), score, p.getFilename())
