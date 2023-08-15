@@ -466,7 +466,7 @@ def frm_proxy(p, ref, freq, offset, binning, mask):
 
     else:
         from pytom.lib.pytom_numpy import vol2npy
-        from pytom.agnostic.frm import frm_align
+        from pytom.lib.frm import frm_align
 
         vgpu = xp.array(vol2npy(v).copy())
         refgpu = xp.array(vol2npy(ref.getVolume()).copy())
