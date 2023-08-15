@@ -1,4 +1,3 @@
-#!/usr/bin/env pytom
 
 from pytom.gpu.initialize import device, xp
 import numpy as np
@@ -461,10 +460,11 @@ def frm_proxy(p, ref, freq, offset, binning, mask):
         else:
             mask = maskBin
 
-    if 'cpu' in device:
+    if True or 'cpu' in device: #else branch does not handle dupy arrays at the moment
         pos, angle, score = frm_align(v, p.getWedge(), ref.getVolume(), None, [4,64], freq, offset, mask)
 
     else:
+        # TODO: pytom.lib.frm does not handle cupy arrays, defaulting back to the if for now
         from pytom.lib.pytom_numpy import vol2npy
         from pytom.lib.frm import frm_align
 
