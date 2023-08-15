@@ -804,11 +804,12 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
     from pytom.bin.average import average, invert_WedgeSum
 
     import os
+    local_device = device
     splitLists = splitParticleList(particleList, setParticleNodesRatio=setParticleNodesRatio)
     splitFactor = len(splitLists)
     assert splitFactor > 0, "splitFactor == 0, issue with parallelization"
     # Also check if gpu ids is not an empty list as that will have issues later
-    if 'gpu' in device and gpuIDs:
+    if 'gpu' in local_device and gpuIDs:
         from pytom.bin.average import averageGPU as average
         from pytom.agnostic.structures import Reference
         from pytom.agnostic.io import read, write
@@ -816,7 +817,7 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
         print(f'Averaging particles on {device} for {averageName}.')
 
     else:
-        device = 'cpu' # Force CPU from here on if hit by empty gpu list
+        local_device = 'cpu'
         gpuIDs = [None,]*splitFactor
 
 
@@ -835,7 +836,7 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
     averageList = mpi.parfor( average, list(zip(splitLists, avgNameList, [showProgressBar]*splitFactor,
                                            [verbose]*splitFactor, [createInfoVolumes]*splitFactor,
                                            [weighting]*splitFactor, [norm]*splitFactor, gpuIDs)))
-    if 'gpu' in device:
+    if 'gpu' in local_device:
         xp.cuda.Device(gpuIDs[0]).use()
 
     #collect results from files
@@ -856,7 +857,7 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
     root, ext = os.path.splitext(averageName)
 
 
-    if 'gpu' in device:
+    if 'gpu' in local_device:
         from pytom.agnostic.tools import invert_WedgeSum
         from pytom.agnostic.filter import applyFourierFilter, bandpass
         write(f'{root}-PreWedge{ext}', unweiAv)
