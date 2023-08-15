@@ -816,7 +816,7 @@ def averageParallel(particleList,averageName, showProgressBar=False, verbose=Fal
         print(f'Averaging particles on {device} for {averageName}.')
 
     else:
-        device = 'cpu' #Force CPU from here on if hit by empty gpu list
+        device = 'cpu' # Force CPU from here on if hit by empty gpu list
         gpuIDs = [None,]*splitFactor
 
 

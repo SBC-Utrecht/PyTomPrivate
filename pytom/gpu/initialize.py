@@ -1,6 +1,4 @@
 import os
-import contextlib
-import io
 global xp
 global device
 global map_coordinates
