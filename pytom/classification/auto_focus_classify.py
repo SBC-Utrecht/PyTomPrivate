@@ -470,6 +470,7 @@ def frm_proxy(p, ref, freq, offset, binning, mask):
         vgpu = xp.array(vol2npy(v).copy())
         refgpu = xp.array(vol2npy(ref.getVolume()).copy())
         maskgpu = xp.array(vol2npy(mask).copy())
+        wedgegpu = xp.array(vol2npy(p.getWedge()).copy())
 
         print('init gooes')
         pos, angle, score = frm_align(vgpu, p.getWedge().convert2numpy(), refgpu, None, [4, 64], freq, offset, maskgpu)
