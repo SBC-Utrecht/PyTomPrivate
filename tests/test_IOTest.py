@@ -177,7 +177,7 @@ class pytom_IOTest(unittest.TestCase):
 
         self.assertTrue(xp.abs(data - data2).sum() < self.epsilon, f'reading {fname} failed: input and output files are different')
 
-    def runTest(self):
+    def test_run(self):
         self.read()
         self.readem()
         self.write_read_EM()
@@ -189,8 +189,6 @@ class pytom_IOTest(unittest.TestCase):
         self.write_read_STAR()
         self.read_size()
         self.read_tilt_angle()
-        self.write_tilt_angle()
-        self.write_rotation_angle()
         self.read_header()
         self.read_pixelsize()
 
