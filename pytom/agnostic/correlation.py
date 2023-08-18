@@ -665,3 +665,24 @@ def randomize_phase_beyond_freq(volume: xpt.NDArray, frequency: int) -> xpt.NDAr
         )
 
     return image.real
+
+
+def soc(
+    volume: xpt.NDArray[float],
+    reference: xpt.NDArray[float],
+    mask: Optional[xpt.NDArray[float]] = None,
+    std_v: Optional[float] = None,
+) -> xpt.NDArray[float]:
+    """
+    soc : Second Order Correlation. Correlation of correlation peaks.
+    @param volume: The volume
+    @type volume:  L{xpt.NDArray}
+    @param reference: The reference / template
+    @type reference:  L{xpt.NDArray}
+    @author: Thomas Hrabe
+    """
+
+    reference_peak = flcf(reference, reference, mask)
+    peaks = flcf(volume, reference, mask)
+
+    return flcf(peaks, reference_peak, mask)
