@@ -1,4 +1,4 @@
-# DISCLAIMER: This repo is supposed to be for internal group use only! We made it public to have access to the nice github features and we don't feel anything is sensitive. As a user please use the [user version](https://github.com/FridoF/PyTom) and report any issues there!
+# DISCLAIMER: This repo is supposed to be for internal group use only! We made it public to have access to the nice github features and we don't feel anything is sensitive. As a user please use the [user version](https://github.com/SBC-Utrecht/PyTom) and report any issues there!
 
 # PytomGUI
 
@@ -103,7 +103,7 @@ After installation you can run pytom unit tests that check the functionality of 
 
 ```
 cd tests
-./runPyTomUnitTests.py
+python -m unittest discover
 ```
 
 ## Versioning
