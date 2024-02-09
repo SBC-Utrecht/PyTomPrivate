@@ -1,4 +1,4 @@
-# DISCLAIMER: This repo is supposed to be for internal group use only! We made it public to have access to the nice github features and we don't feel anything is sensitive. As a user please use the [user version](https://github.com/SBC-Utrecht/PyTom) and report any issues there!
+# This repo is now archived. It used to be an internal development repository. As a user please use the [user version](https://github.com/SBC-Utrecht/PyTom) and report any issues there!
 
 # PytomGUI
 
